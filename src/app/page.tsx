@@ -1,69 +1,97 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useMemo } from 'react';
+import { Navbar } from '@/components/ui/layout/Navbar';
+import { HeroBanner } from '@/components/ui/home/HeroBanner';
+import { CategoryChips } from '@/components/ui/home/CategoryChips';
+import { ProductCard } from '@/components/ui/home/ProductCard';
+import { MOCK_PRODUCTS } from '@/data/mock-items';
+import { Sparkles, ArrowRight } from 'lucide-react';
+
+
+export default function HomePage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Filter products by selected category
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return MOCK_PRODUCTS;
+    }
+    return MOCK_PRODUCTS.filter((item) => item.category === selectedCategory);
+  }, [selectedCategory]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-slate-50/60 font-sans flex flex-col selection:bg-blue-100 selection:text-blue-700">
+
+      {/* 1. Global Navigation Bar */}
+      <Navbar />
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* 2. Hero Banner */}
+        <HeroBanner />
+
+        {/* 3. Category Filter Chips */}
+        <CategoryChips
+          activeCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* 4. Products Grid Section Header */}
+        <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+              Newly posted seller items
+            </h2>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              {filteredProducts.length} items
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <span>See all</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
+
+        {/* 5. Responsive Product Grid (2 cols mobile, 3-4 cols tablet, 6 cols desktop) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+
+        {/* Empty state when filter has no items */}
+        {filteredProducts.length === 0 && (
+          <div className="w-full py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+            <p className="text-sm text-slate-500 font-medium">
+              No items found in this category. Be the first to post!
+            </p>
+          </div>
+        )}
+
       </main>
+
+      {/* Modern Compact Footer */}
+      <footer className="mt-16 border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 Student Flea Market. A platform for students to exchange second-hand items.</p>
+          <div className="flex items-center gap-6 font-medium text-slate-600">
+            <a href="#" className="hover:text-blue-600 transition-colors">Operating regulations</a>
+            <a href="#" className="hover:text-blue-600 transition-colors">Safety policy</a>
+            <a href="#" className="hover:text-blue-600 transition-colors">Student support</a>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }
+
