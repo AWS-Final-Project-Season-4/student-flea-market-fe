@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, ChevronDown, PlusCircle, ShoppingCart, Menu, X } from 'lucide-react';
+import { Search, ChevronDown, PlusCircle, ShoppingCart, Menu, X, Shield, LogOut } from 'lucide-react';
+import { useAuthStore } from '@/lib/auth-store';
 
 export const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('All Categories');
+    const { user, isAuthenticated, initAuth, logout } = useAuthStore();
+
+    useEffect(() => {
+        initAuth();
+    }, [initAuth]);
+
+    const isAdmin = user?.roleName === 'Admin' || user?.role === 1;
 
     return (
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-xs">
@@ -32,7 +40,7 @@ export const Navbar: React.FC = () => {
                                 Student <span className="text-blue-600">Flea Market</span>
                             </span>
                             <span className="text-[11px] font-medium text-slate-500 hidden sm:block">
-                                Buying & Selling - Exchanging - Connecting Students
+                                Buying & Selling • Exchanging • Connecting Students
                             </span>
                         </div>
                     </Link>
@@ -56,7 +64,7 @@ export const Navbar: React.FC = () => {
                             {/* Search Text Input */}
                             <input
                                 type="text"
-                                placeholder="Find books, supplies, electronics, items for students..."
+                                placeholder="Find textbooks, dorm essentials, electronics, student gear..."
                                 className="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none px-2"
                             />
 
@@ -64,7 +72,7 @@ export const Navbar: React.FC = () => {
                             <button
                                 type="button"
                                 aria-label="Search"
-                                className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-full transition-all shrink-0 shadow-sm"
+                                className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-full transition-all shrink-0 shadow-sm cursor-pointer"
                             >
                                 <Search className="w-4 h-4" />
                             </button>
@@ -72,40 +80,76 @@ export const Navbar: React.FC = () => {
                     </div>
 
                     {/* Right Action Buttons */}
-                    <div className="hidden lg:flex items-center gap-3 shrink-0">
+                    <div className="hidden lg:flex items-center gap-2.5 shrink-0">
+
+                        {/* If Admin: Direct Shortcut to Admin Portal */}
+                        {isAdmin && (
+                            <Link
+                                href="/admin"
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 text-xs font-bold shadow-xs transition"
+                            >
+                                <Shield className="w-3.5 h-3.5" />
+                                <span>Admin Portal</span>
+                            </Link>
+                        )}
+
                         {/* Post Ad Button */}
                         <Link
                             href="/post-item"
                             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-sm font-semibold shadow-xs hover:shadow-md transition-all"
                         >
                             <PlusCircle className="w-4 h-4" />
-                            <span>Post an ad</span>
+                            <span>Post Ad</span>
                         </Link>
 
-                        {/* Login Button */}
-                        <Link
-                            href="/login"
-                            className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50 text-sm font-semibold transition-colors"
-                        >
-                            Login
-                        </Link>
+                        {/* Auth State Conditional Rendering */}
+                        {isAuthenticated && user ? (
+                            <div className="flex items-center gap-2 pl-1">
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80">
+                                    <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                                        {user.fullName?.charAt(0) || 'U'}
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-800 max-w-[120px] truncate">
+                                        {user.fullName || user.username || 'Student'}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => logout()}
+                                    title="Sign out"
+                                    className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Login Button */}
+                                <Link
+                                    href="/login"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50 text-sm font-semibold transition-colors"
+                                >
+                                    Sign In
+                                </Link>
 
-                        {/* Register Button */}
-                        <Link
-                            href="/register"
-                            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-xs transition-colors"
-                        >
-                            Register
-                        </Link>
+                                {/* Register Button */}
+                                <Link
+                                    href="/register"
+                                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-xs transition-colors"
+                                >
+                                    Sign Up
+                                </Link>
+                            </>
+                        )}
 
-                        {/* Cart & Notification Icon with Counter */}
+                        {/* Cart & Notification Icon */}
                         <Link
                             href="/cart"
                             aria-label="Cart and notifications"
-                            className="relative p-2.5 text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors ml-1"
+                            className="relative p-2.5 text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors ml-0.5"
                         >
                             <ShoppingCart className="w-5 h-5" />
-                            <span className="absolute 1 top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                            <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
                                 0
                             </span>
                         </Link>
@@ -126,7 +170,7 @@ export const Navbar: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg"
+                            className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
                             aria-label="Toggle menu"
                         >
                             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -140,7 +184,7 @@ export const Navbar: React.FC = () => {
                     <div className="flex items-center border border-slate-200 rounded-full px-3 py-1.5 bg-slate-50">
                         <input
                             type="text"
-                            placeholder="Search student items"
+                            placeholder="Search student items..."
                             className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none"
                         />
                         <button
@@ -155,26 +199,54 @@ export const Navbar: React.FC = () => {
                 {/* Mobile Dropdown Navigation Menu */}
                 {isMobileMenuOpen && (
                     <div className="lg:hidden py-4 border-t border-slate-100 flex flex-col gap-3">
+                        {isAdmin && (
+                            <Link
+                                href="/admin"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 text-slate-950 text-center font-bold text-sm flex items-center justify-center gap-2"
+                            >
+                                <Shield className="w-4 h-4" />
+                                <span>Go to Admin Portal</span>
+                            </Link>
+                        )}
                         <Link
                             href="/post-item"
                             className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm"
                         >
-                            + Post a new listing
+                            + Post New Listing
                         </Link>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Link
-                                href="/login"
-                                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-800 text-center font-medium text-sm"
-                            >
-                                Login
-                            </Link>
-                            <Link
-                                href="/register"
-                                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white text-center font-medium text-sm"
-                            >
-                                Register
-                            </Link>
-                        </div>
+                        {isAuthenticated && user ? (
+                            <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                                <div className="text-xs font-semibold text-slate-700 px-1">
+                                    Signed in as: {user.fullName || user.email}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        logout();
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="w-full py-2 px-4 rounded-xl border border-rose-200 text-rose-600 text-center font-semibold text-xs"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <Link
+                                    href="/login"
+                                    className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-800 text-center font-medium text-sm"
+                                >
+                                    Sign In
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white text-center font-medium text-sm"
+                                >
+                                    Sign Up
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
