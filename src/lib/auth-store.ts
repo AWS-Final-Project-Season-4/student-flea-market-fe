@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { UserDto, AuthResultDto, LoginRequestDto, RefreshTokenRequestDto } from '@/types/auth';
+import {
+  UserDto,
+  AuthResultDto,
+  LoginRequestDto,
+  RefreshTokenRequestDto,
+  RegisterRequestDto,
+  RegisterResultDto,
+} from '@/types/auth';
 import { apiClient, setStoredAuth, clearStoredAuth, getStoredAccessToken, getStoredRefreshToken } from './api-client';
 
 interface AuthState {
@@ -13,6 +20,9 @@ interface AuthState {
 
   initAuth: () => void;
   login: (identifier: string, password: string, rememberMe?: boolean) => Promise<AuthResultDto>;
+  register: (payload: RegisterRequestDto) => Promise<RegisterResultDto>;
+  verifyEmail: (email: string, code: string) => Promise<{ message: string }>;
+  resendVerificationCode: (email: string) => Promise<{ message: string }>;
   logout: () => Promise<void>;
   setUser: (user: UserDto) => void;
   clearError: () => void;
@@ -103,6 +113,77 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  register: async (payload: RegisterRequestDto) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await apiClient.post<RegisterResultDto>('/Auth/register', payload);
+      set({ isLoading: false, error: null });
+      return response.data;
+    } catch (err: any) {
+      const serverErrors = err.response?.data?.errors;
+      let detailedMessage = '';
+      if (serverErrors && typeof serverErrors === 'object') {
+        detailedMessage = Object.values(serverErrors).flat().join('. ');
+      }
+
+      const errorMessage =
+        detailedMessage ||
+        err.response?.data?.message ||
+        err.response?.data?.Message ||
+        (err.code === 'ERR_NETWORK'
+          ? 'Unable to connect to backend server (verify http://localhost:5033).'
+          : 'Registration failed. Please check your information and try again.');
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      throw new Error(errorMessage);
+    }
+  },
+
+  verifyEmail: async (email: string, code: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await apiClient.post<{ message: string }>('/Auth/verify-email', {
+        email,
+        code,
+      });
+      set({ isLoading: false, error: null });
+      return response.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.Message ||
+        'Verification failed. Please check your 6-digit code.';
+
+      set({
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      throw new Error(errorMessage);
+    }
+  },
+
+  resendVerificationCode: async (email: string) => {
+    try {
+      const response = await apiClient.post<{ message: string }>('/Auth/resend-verification-code', {
+        email,
+      });
+      return response.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.Message ||
+        'Failed to resend verification code.';
+      throw new Error(errorMessage);
+    }
+  },
+
   logout: async () => {
     const refreshToken = get().refreshToken || getStoredRefreshToken();
 
@@ -135,4 +216,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
-

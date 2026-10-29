@@ -36,10 +36,39 @@ export interface RefreshTokenRequestDto {
   refreshToken: string;
 }
 
+export interface RegisterRequestDto {
+  fullName: string;
+  username: string; // Required
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phoneNumber: string;
+  schoolName?: string; // Optional
+  studentCode?: string; // Optional
+}
+
+export interface RegisterResultDto {
+  message: string;
+  user: UserDto;
+  verificationEmail: string;
+}
+
+export interface VerifyEmailRequestDto {
+  email: string;
+  code: string;
+}
+
+export interface SendVerificationCodeRequestDto {
+  email: string;
+}
+
+export interface ResendVerificationCodeRequestDto {
+  email: string;
+}
+
 export interface ApiErrorResponse {
   success?: boolean;
   message?: string;
   code?: string;
   errors?: string[];
 }
-
