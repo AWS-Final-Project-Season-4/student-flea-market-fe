@@ -36,14 +36,14 @@ function LoginForm() {
     // Handle notice if just registered and verified
     useEffect(() => {
         if (registeredParam === 'true') {
-            setSuccessMessage('Account registered and verified successfully! You can now sign in.');
+            setSuccessMessage('Account registered and verified successfully! You can now login.');
         }
     }, [registeredParam]);
 
     // Handle warning if redirected from protected admin route
     useEffect(() => {
         if (authErrorParam === 'unauthorized_admin') {
-            setLocalError('This area requires Administrator privileges. Please sign in with an Admin account.');
+            setLocalError('This area requires Administrator privileges. Please login with an Admin account.');
         }
     }, [authErrorParam]);
 
@@ -60,7 +60,7 @@ function LoginForm() {
 
         try {
             const authResult = await login(emailOrUsername.trim(), password, rememberMe);
-            setSuccessMessage('Signed in successfully! Redirecting...');
+            setSuccessMessage('Login successfully! Redirecting...');
 
             // Route redirection based on role
             setTimeout(() => {
@@ -87,7 +87,7 @@ function LoginForm() {
                 <div className="mb-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-serif font-bold text-[#2A211B] tracking-tight">
-                            Sign In
+                            Login
                         </h2>
                         <span className="text-xs px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EFE8DD] text-[#7A6D63] font-medium">
                             Student Flea Market
@@ -187,7 +187,7 @@ function LoginForm() {
                                 <span>Authenticating with server...</span>
                             </>
                         ) : (
-                            'Sign In'
+                            'Login'
                         )}
                     </button>
                 </form>

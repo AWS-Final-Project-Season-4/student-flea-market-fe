@@ -1,3 +1,9 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//                       REPORTS                         //
+//                                                       //
+///////////////////////////////////////////////////////////
+
 'use client';
 
 import React, { useState } from 'react';
@@ -71,9 +77,8 @@ export default function AdminReportsPage() {
           >
             <div className="space-y-1.5 flex-1">
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  rpt.targetType === 'Listing' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                }`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${rpt.targetType === 'Listing' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                  }`}>
                   {rpt.targetType === 'Listing' ? 'Marketplace Listing' : 'User Account'}
                 </span>
                 <span className="text-xs text-slate-400">• {rpt.id} • {rpt.reportedAt}</span>
@@ -106,9 +111,8 @@ export default function AdminReportsPage() {
                   </button>
                 </div>
               ) : (
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  rpt.status === 'RESOLVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
-                }`}>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${rpt.status === 'RESOLVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                  }`}>
                   {rpt.status === 'RESOLVED' ? 'Action Taken' : 'Dismissed'}
                 </span>
               )}

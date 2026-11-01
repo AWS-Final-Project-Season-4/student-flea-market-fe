@@ -6,9 +6,10 @@ import { ProductItem } from '@/data/mock-items';
 
 interface ProductCardProps {
     product: ProductItem;
+    onContact?: (product: ProductItem) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) => {
     const [isLiked, setIsLiked] = useState(false);
 
     return (
@@ -28,10 +29,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
                     {/* Floating Condition Badge (Top-Left) */}
                     <div
-                        className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold text-white shadow-xs ${product.conditionVariant === 'orange'
-                            ? 'bg-orange-500'
-                            : 'bg-emerald-500'
-                            }`}
+                        className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold text-white shadow-xs ${
+                            product.conditionVariant === 'orange'
+                                ? 'bg-orange-500'
+                                : 'bg-emerald-500'
+                        }`}
                     >
                         {product.condition}
                     </div>
@@ -44,11 +46,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                             setIsLiked(!isLiked);
                         }}
                         aria-label="Save to favorite list"
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/85 backdrop-blur-xs hover:bg-white text-slate-500 hover:text-rose-500 shadow-xs transition-colors"
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/85 backdrop-blur-xs hover:bg-white text-slate-500 hover:text-rose-500 shadow-xs transition-colors cursor-pointer"
                     >
                         <Heart
-                            className={`w-4 h-4 transition-colors ${isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-400'
-                                }`}
+                            className={`w-4 h-4 transition-colors ${
+                                isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-400'
+                            }`}
                         />
                     </button>
                 </div>
@@ -80,7 +83,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="mt-2.5">
                 <button
                     type="button"
-                    className="w-full py-2 px-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-98 text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all text-center"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        onContact?.(product);
+                    }}
+                    className="w-full py-2 px-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-98 text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all text-center cursor-pointer"
                 >
                     Contact / Exchange
                 </button>

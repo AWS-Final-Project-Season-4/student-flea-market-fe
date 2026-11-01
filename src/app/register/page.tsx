@@ -662,7 +662,7 @@ function RegisterForm() {
                             href="/login"
                             className="font-semibold text-[#B87333] hover:text-[#995922] hover:underline transition"
                         >
-                            Sign In
+                            Sign-in
                         </Link>
                     </p>
 
@@ -688,7 +688,7 @@ function RegisterForm() {
                                 </svg>
                             </div>
                             <div>
-                                <h4 className="text-base font-bold text-[#2A211B]">Sign in with Google</h4>
+                                <h4 className="text-base font-bold text-[#2A211B]">Login with Google</h4>
                                 <p className="text-xs text-[#7A6D63]">to continue to Student Flea Market</p>
                             </div>
                         </div>

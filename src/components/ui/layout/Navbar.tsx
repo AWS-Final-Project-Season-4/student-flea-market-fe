@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, ChevronDown, PlusCircle, ShoppingCart, Menu, X, Shield, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export const Navbar: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,28 +23,7 @@ export const Navbar: React.FC = () => {
                 <div className="flex items-center justify-between h-20 gap-4">
 
                     {/* Brand Logo & Slogan */}
-                    <Link href="/" className="flex items-center gap-3 shrink-0 group">
-                        <div className="relative w-11 h-11 flex items-center justify-center">
-                            {/* Decorative 3D Book Icon */}
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-amber-400 to-orange-500 p-0.5 shadow-sm transform group-hover:scale-105 transition-transform duration-200">
-                                <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                                    <div className="space-y-1">
-                                        <span className="block w-5 h-1 bg-sky-500 rounded-full" />
-                                        <span className="block w-6 h-1 bg-amber-500 rounded-full" />
-                                        <span className="block w-4 h-1 bg-orange-500 rounded-full" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-                                Student <span className="text-blue-600">Flea Market</span>
-                            </span>
-                            <span className="text-[11px] font-medium text-slate-500 hidden sm:block">
-                                Buying & Selling • Exchanging • Connecting Students
-                            </span>
-                        </div>
-                    </Link>
+                    <BrandLogo variant="full" />
 
                     {/* Centered Search Bar */}
                     <div className="hidden md:flex flex-1 max-w-2xl mx-2">
@@ -129,7 +109,7 @@ export const Navbar: React.FC = () => {
                                     href="/login"
                                     className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50 text-sm font-semibold transition-colors"
                                 >
-                                    Sign In
+                                    Login
                                 </Link>
 
                                 {/* Register Button */}
@@ -137,7 +117,7 @@ export const Navbar: React.FC = () => {
                                     href="/register"
                                     className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-xs transition-colors"
                                 >
-                                    Sign Up
+                                    Register
                                 </Link>
                             </>
                         )}
@@ -237,7 +217,7 @@ export const Navbar: React.FC = () => {
                                     href="/login"
                                     className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-800 text-center font-medium text-sm"
                                 >
-                                    Sign In
+                                    Login
                                 </Link>
                                 <Link
                                     href="/register"

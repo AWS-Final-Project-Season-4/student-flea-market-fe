@@ -1,3 +1,9 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//                  USE MANAGEMENT                       //
+//                                                       //
+///////////////////////////////////////////////////////////
+
 'use client';
 
 import React, { useState } from 'react';
@@ -141,33 +147,30 @@ export default function AdminUsersPage() {
           <button
             type="button"
             onClick={() => setRoleFilter('ALL')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-              roleFilter === 'ALL'
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${roleFilter === 'ALL'
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             All Accounts
           </button>
           <button
             type="button"
             onClick={() => setRoleFilter('User')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-              roleFilter === 'User'
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${roleFilter === 'User'
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Students (Users)
           </button>
           <button
             type="button"
             onClick={() => setRoleFilter('Admin')}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-              roleFilter === 'Admin'
+            className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${roleFilter === 'Admin'
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Administrators
           </button>
@@ -254,11 +257,10 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           onClick={() => toggleStatus(u.id)}
-                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                            u.status === 'Active'
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${u.status === 'Active'
                               ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                          }`}
+                            }`}
                         >
                           {u.status === 'Active' ? (
                             <>

@@ -1,3 +1,9 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//                 LISTING POLICY TYPES                  //
+//                                                       //
+///////////////////////////////////////////////////////////
+
 export interface PolicyMetadata {
     title: string;
     version: string;

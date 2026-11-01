@@ -1,3 +1,9 @@
+///////////////////////////////////////////////////////////
+//                                                       //
+//                  API CLIENT (AXIOS)                   //
+//                                                       //
+///////////////////////////////////////////////////////////
+
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { AuthResultDto, RefreshTokenRequestDto } from '@/types/auth';
 

@@ -1,7 +1,7 @@
 export interface CategoryItem {
     id: string;
     name: string;
-    iconName: 'BookOpen' | 'Laptop' | 'Cpu' | 'PenTool' | 'Shirt' | 'Grid';
+    iconName: 'LayoutGrid' | 'BookOpen' | 'Laptop' | 'Home' | 'Shirt' | 'Sparkles' | 'PenTool' | 'Utensils';
 }
 
 export interface ProductItem {
@@ -16,13 +16,14 @@ export interface ProductItem {
 }
 
 export const CATEGORIES: CategoryItem[] = [
-    { id: 'all', name: 'All Categories', iconName: 'BookOpen' },
+    { id: 'all', name: 'All Categories', iconName: 'LayoutGrid' },
     { id: 'books', name: 'Books & Textbooks', iconName: 'BookOpen' },
-    { id: 'electronics', name: 'Electronics & IT', iconName: 'Laptop' },
-    { id: 'appliances', name: 'Dorm Essentials', iconName: 'Cpu' },
-    { id: 'stationery', name: 'Stationery', iconName: 'PenTool' },
-    { id: 'fashion', name: 'Student Fashion', iconName: 'Shirt' },
-    { id: 'others', name: 'Other Items', iconName: 'Grid' },
+    { id: 'electronics', name: 'Electronics', iconName: 'Laptop' },
+    { id: 'dorm-living', name: 'Dorm & Living', iconName: 'Home' },
+    { id: 'fashion', name: 'Fashion', iconName: 'Shirt' },
+    { id: 'beauty-health', name: 'Beauty & Health', iconName: 'Sparkles' },
+    { id: 'stationery-study', name: 'Stationery & Study', iconName: 'PenTool' },
+    { id: 'food-drinks', name: 'Food & Drinks', iconName: 'Utensils' },
 ];
 
 export const MOCK_PRODUCTS: ProductItem[] = [
@@ -34,7 +35,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
         conditionVariant: 'emerald',
         location: 'Dorm Area A',
         imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=500&auto=format&fit=crop&q=80',
-        category: 'stationery',
+        category: 'stationery-study',
     },
     {
         id: 'prod-02',
@@ -54,7 +55,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
         conditionVariant: 'emerald',
         location: 'Main Campus',
         imageUrl: 'https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=500&auto=format&fit=crop&q=80',
-        category: 'appliances',
+        category: 'dorm-living',
     },
     {
         id: 'prod-04',
@@ -74,7 +75,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
         conditionVariant: 'emerald',
         location: 'Campus 1',
         imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=80',
-        category: 'stationery',
+        category: 'stationery-study',
     },
     {
         id: 'prod-06',
@@ -124,7 +125,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
         conditionVariant: 'emerald',
         location: 'Dorm Area B',
         imageUrl: 'https://images.unsplash.com/photo-1580481077195-c328a37db719?w=500&auto=format&fit=crop&q=80',
-        category: 'appliances',
+        category: 'dorm-living',
     },
     {
         id: 'prod-11',
@@ -138,12 +139,52 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-12',
-        title: 'Desk Succulent & Mini Plant Pot',
-        price: '45,000 VND',
+        title: 'Mini Ionic Hair Dryer 1200W',
+        price: '140,000 VND',
         condition: 'Like New',
         conditionVariant: 'emerald',
+        location: 'Dorm Area B',
+        imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80',
+        category: 'beauty-health',
+    },
+    {
+        id: 'prod-13',
+        title: 'Smart Digital Bluetooth Body Scale',
+        price: '120,000 VND',
+        condition: '99% New',
+        conditionVariant: 'emerald',
+        location: 'Campus 1',
+        imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&auto=format&fit=crop&q=80',
+        category: 'beauty-health',
+    },
+    {
+        id: 'prod-14',
+        title: 'Da Lat Dried Fruit & Snack Mix (500g)',
+        price: '65,000 VND',
+        condition: 'Unopened',
+        conditionVariant: 'emerald',
         location: 'Dorm Area A',
-        imageUrl: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=500&auto=format&fit=crop&q=80',
-        category: 'others',
+        imageUrl: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=500&auto=format&fit=crop&q=80',
+        category: 'food-drinks',
+    },
+    {
+        id: 'prod-15',
+        title: 'Highlands Coffee Gift Voucher (100k)',
+        price: '70,000 VND',
+        condition: 'Valid till Dec',
+        conditionVariant: 'orange',
+        location: 'Campus 1',
+        imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=500&auto=format&fit=crop&q=80',
+        category: 'food-drinks',
+    },
+    {
+        id: 'prod-16',
+        title: 'Foldable Student Study Bed-Desk',
+        price: '150,000 VND',
+        condition: '98% New',
+        conditionVariant: 'emerald',
+        location: 'Dorm Area B',
+        imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=500&auto=format&fit=crop&q=80',
+        category: 'dorm-living',
     },
 ];
