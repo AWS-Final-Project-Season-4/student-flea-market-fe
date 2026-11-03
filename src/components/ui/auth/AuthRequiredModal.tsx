@@ -104,7 +104,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
                         className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-98 font-semibold text-sm flex items-center justify-center gap-2 transition-all"
                     >
                         <UserPlus className="w-4 h-4" />
-                        <span>Sign Up</span>
+                        <span>Register</span>
                     </Link>
                 </div>
 

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 
@@ -27,8 +29,21 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     lg: 'text-xl sm:text-2xl',
   };
 
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (href === '/') {
+      e.preventDefault();
+      if (typeof window !== 'undefined') {
+        if (window.location.pathname === '/' && !window.location.search) {
+          window.location.reload();
+        } else {
+          window.location.href = '/';
+        }
+      }
+    }
+  };
+
   const content = (
-    <div className={`inline-flex items-center gap-3 shrink-0 group ${className}`}>
+    <div className={`inline-flex items-center gap-3 shrink-0 group cursor-pointer ${className}`}>
       {/* Clean, Sharp, Professional Logo Container */}
       <div
         className={`${iconSizes[size]} bg-gradient-to-tr from-blue-700 via-blue-600 to-sky-500 shadow-sm flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-white/20 overflow-hidden shrink-0`}
@@ -99,7 +114,12 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className="inline-block">
+      <Link
+        href={href}
+        onClick={handleLogoClick}
+        className="inline-block cursor-pointer select-none"
+        title="Student Flea Market - Click to reload homepage"
+      >
         {content}
       </Link>
     );

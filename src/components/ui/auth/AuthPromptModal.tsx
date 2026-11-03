@@ -76,7 +76,7 @@ export const AuthPromptModal: React.FC = () => {
 
         {/* Subtitle / Description */}
         <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-xs mb-6">
-          Would you like to sign up / log in to enjoy the best experience on Student Market?
+          Would you like to register or login to enjoy the best experience on Student Market?
         </p>
 
         {/* Actions */}

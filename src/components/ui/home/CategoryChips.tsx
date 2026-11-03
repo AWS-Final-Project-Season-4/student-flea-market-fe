@@ -12,6 +12,7 @@ import {
     Utensils,
 } from 'lucide-react';
 import { CATEGORIES } from '@/data/mock-items';
+import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 interface CategoryChipsProps {
     activeCategory: string;
@@ -22,6 +23,9 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
     activeCategory,
     onSelectCategory,
 }) => {
+    const { language } = useLanguageStore();
+    const t = DICTIONARY[language];
+
     // Render corresponding icon dynamically
     const renderCategoryIcon = (iconName: string, isActive: boolean) => {
         const iconClass = `w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-600'}`;
@@ -52,6 +56,9 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
             <div className="w-full flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar">
                 {CATEGORIES.map((category) => {
                     const isActive = activeCategory === category.id;
+                    const localizedName =
+                        t.categories[category.id as keyof typeof t.categories] || category.name;
+
                     return (
                         <button
                             key={category.id}
@@ -64,7 +71,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
                             }`}
                         >
                             {renderCategoryIcon(category.iconName, isActive)}
-                            <span>{category.name}</span>
+                            <span>{localizedName}</span>
                         </button>
                     );
                 })}

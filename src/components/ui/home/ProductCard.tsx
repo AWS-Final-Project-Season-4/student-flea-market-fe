@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Heart, MapPin } from 'lucide-react';
 import { ProductItem } from '@/data/mock-items';
+import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 interface ProductCardProps {
     product: ProductItem;
@@ -11,6 +12,8 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) => {
     const [isLiked, setIsLiked] = useState(false);
+    const { language } = useLanguageStore();
+    const t = DICTIONARY[language];
 
     return (
         <div className="group bg-white rounded-2xl border border-slate-100 p-2.5 sm:p-3 shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
@@ -89,7 +92,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     }}
                     className="w-full py-2 px-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-98 text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow-md transition-all text-center cursor-pointer"
                 >
-                    Contact / Exchange
+                    {t.productCard.contactBtn}
                 </button>
             </div>
 

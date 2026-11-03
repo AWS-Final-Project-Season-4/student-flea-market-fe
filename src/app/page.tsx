@@ -6,21 +6,29 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/ui/layout/Navbar';
 import { HeroBanner } from '@/components/ui/home/HeroBanner';
 import { CategoryChips } from '@/components/ui/home/CategoryChips';
 import { ProductCard } from '@/components/ui/home/ProductCard';
 import { MOCK_PRODUCTS, ProductItem } from '@/data/mock-items';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Search } from 'lucide-react';
 import { AuthPromptModal } from '@/components/ui/auth/AuthPromptModal';
 import { AuthRequiredModal } from '@/components/ui/auth/AuthRequiredModal';
 import { SellerContactModal } from '@/components/ui/home/SellerContactModal';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useAuthStore } from '@/lib/auth-store';
+import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
-export default function HomePage() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
+
+  const { language } = useLanguageStore();
+  const t = DICTIONARY[language];
+
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
   const [isAuthRequiredOpen, setIsAuthRequiredOpen] = useState(false);
@@ -32,13 +40,23 @@ export default function HomePage() {
     initAuth();
   }, [initAuth]);
 
-  // Filter products by selected category
+  // Filter products by selected category and active search query
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return MOCK_PRODUCTS;
+    let list = MOCK_PRODUCTS;
+    if (selectedCategory !== 'all') {
+      list = list.filter((item) => item.category === selectedCategory);
     }
-    return MOCK_PRODUCTS.filter((item) => item.category === selectedCategory);
-  }, [selectedCategory]);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q) ||
+          item.location.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [selectedCategory, searchQuery]);
 
   // Handle click on Contact / Exchange button
   const handleContactExchange = (product: ProductItem) => {
@@ -53,7 +71,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50/60 font-sans flex flex-col selection:bg-blue-100 selection:text-blue-700">
 
-      {/* 1. Global Navigation Bar */}
+      {/* 1. Global Navigation Bar with TopZone Search & Flag Language Switcher */}
       <Navbar />
 
       {/* Welcome Auth Prompt Modal for guests upon first visit */}
@@ -85,6 +103,31 @@ export default function HomePage() {
           onSelectCategory={setSelectedCategory}
         />
 
+        {/* Search Results Notice Banner if search query is active */}
+        {searchQuery.trim() && (
+          <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-900 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Search className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-medium">
+                  {t.home.searchingFor} <span className="font-bold text-blue-950">"{searchQuery}"</span>
+                </p>
+                <p className="text-[11px] text-blue-700/80">
+                  {filteredProducts.length} {t.home.matchingFound}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/"
+              className="text-xs font-semibold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-100/70 border border-blue-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
+            >
+              {t.home.clearFilter}
+            </Link>
+          </div>
+        )}
+
         {/* 4. Products Grid Section Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
@@ -92,10 +135,10 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4" />
             </div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              Newly posted seller items
+              {searchQuery.trim() ? t.home.searchResultsTitle : t.home.recentTitle}
             </h2>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
-              {filteredProducts.length} items
+              {filteredProducts.length} {t.home.itemsCount}
             </span>
           </div>
 
@@ -103,7 +146,7 @@ export default function HomePage() {
             type="button"
             className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group cursor-pointer"
           >
-            <span>See all</span>
+            <span>{t.home.seeAll}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -119,11 +162,14 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Empty state when filter has no items */}
+        {/* Empty state when filter or search has no items */}
         {filteredProducts.length === 0 && (
           <div className="w-full py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200">
-            <p className="text-sm text-slate-500 font-medium">
-              No items found in this category. Be the first to post!
+            <p className="text-sm text-slate-700 font-semibold mb-1">
+              {t.home.emptyTitle}
+            </p>
+            <p className="text-xs text-slate-500">
+              {t.home.emptySubtitle}
             </p>
           </div>
         )}
@@ -136,22 +182,30 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <BrandLogo variant="compact" size="sm" />
             <span className="hidden sm:inline text-slate-300">|</span>
-            <p>© 2026 Student Flea Market. A platform for students to exchange second-hand items.</p>
+            <p>© 2026 Student Flea Market. {t.home.footerDesc}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 font-medium text-slate-600">
             <Link href="/policies/term-of-service" className="hover:text-blue-600 transition-colors">
-              Terms of Service
+              {t.home.termsOfService}
             </Link>
             <Link href="/policies/privacy-policy" className="hover:text-blue-600 transition-colors">
-              Privacy Policy
+              {t.home.privacyPolicy}
             </Link>
             <Link href="/policies/refund-dispute" className="hover:text-blue-600 transition-colors">
-              Refund & Dispute
+              {t.home.refundDispute}
             </Link>
           </div>
         </div>
       </footer>
 
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50/60" />}>
+      <HomeContent />
+    </Suspense>
   );
 }
