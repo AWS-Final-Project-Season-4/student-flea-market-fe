@@ -2,20 +2,28 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { X, LogIn, UserPlus, ShieldAlert, MapPin } from 'lucide-react';
+import { X, LogIn, UserPlus, ShieldAlert, MapPin, PlusCircle, TrendingUp } from 'lucide-react';
 import { ProductItem } from '@/data/mock-items';
+import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
+
+export type AuthRequiredReason = 'contact' | 'post_item' | 'post_ad';
 
 interface AuthRequiredModalProps {
     isOpen: boolean;
     onClose: () => void;
     product?: ProductItem | null;
+    reason?: AuthRequiredReason;
 }
 
 export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
     isOpen,
     onClose,
     product,
+    reason = 'contact',
 }) => {
+    const { language } = useLanguageStore();
+    const t = DICTIONARY[language];
+
     // Close on Escape key
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -28,6 +36,23 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
     }, [isOpen, onClose]);
 
     if (!isOpen) return null;
+
+    // Localized titles & descriptions based on trigger reason
+    let title: string = t.authRequired.contactTitle;
+    let desc: string = t.authRequired.contactDesc;
+    let icon = <ShieldAlert className="w-6 h-6 text-blue-600" />;
+    let iconBg = 'bg-blue-50 border-blue-100';
+
+    if (reason === 'post_item') {
+        title = t.authRequired.postItemTitle;
+        desc = t.authRequired.postItemDesc;
+        icon = <PlusCircle className="w-6 h-6 text-blue-600" />;
+    } else if (reason === 'post_ad') {
+        title = t.authRequired.postAdTitle;
+        desc = t.authRequired.postAdDesc;
+        icon = <TrendingUp className="w-6 h-6 text-amber-600" />;
+        iconBg = 'bg-amber-50 border-amber-200';
+    }
 
     return (
         <div
@@ -50,22 +75,22 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
                 </button>
 
                 {/* Header Icon */}
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center mb-3">
-                    <ShieldAlert className="w-6 h-6 text-blue-600" />
+                <div className={`w-12 h-12 rounded-2xl ${iconBg} border flex items-center justify-center mb-3`}>
+                    {icon}
                 </div>
 
                 {/* Title */}
                 <h3 className="text-xl font-bold text-slate-900 mb-1.5">
-                    Login to continue
+                    {title}
                 </h3>
 
                 {/* Subtitle */}
                 <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4 max-w-sm">
-                    Please login with your student account to contact with the seller and exchange this item.
+                    {desc}
                 </p>
 
-                {/* Selected Product Card Preview (if available) */}
-                {product && (
+                {/* Selected Product Card Preview (if reason is contact and product is available) */}
+                {reason === 'contact' && product && (
                     <div className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center gap-3 mb-5 text-left">
                         <img
                             src={product.imageUrl}
@@ -88,34 +113,25 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full">
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full mt-2">
                     <Link
                         href="/login"
                         onClick={onClose}
                         className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-xs transition-all"
                     >
                         <LogIn className="w-4 h-4" />
-                        <span>Login</span>
+                        <span>{t.navbar.login}</span>
                     </Link>
 
                     <Link
                         href="/register"
                         onClick={onClose}
-                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-98 font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+                        className="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 transition-all"
                     >
-                        <UserPlus className="w-4 h-4" />
-                        <span>Register</span>
+                        <UserPlus className="w-4 h-4 text-slate-500" />
+                        <span>{t.navbar.register}</span>
                     </Link>
                 </div>
-
-                {/* Dismiss button */}
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="mt-3 text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                >
-                    Maybe later
-                </button>
             </div>
         </div>
     );

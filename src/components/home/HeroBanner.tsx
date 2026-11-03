@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { ShieldCheck, MapPin, ArrowRight, Plus } from 'lucide-react';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
-export const HeroBanner: React.FC = () => {
+interface HeroBannerProps {
+    onPostItemClick?: () => void;
+}
+
+export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
     const { language } = useLanguageStore();
     const t = DICTIONARY[language];
 
@@ -74,14 +78,15 @@ export const HeroBanner: React.FC = () => {
                                 <ArrowRight className="w-4 h-4 text-blue-900" />
                             </button>
 
-                            {/* Secondary Button */}
-                            <Link
-                                href="/login"
-                                className="bg-blue-900/40 border border-white/30 text-white font-medium px-5 sm:px-6 py-2.5 rounded-full hover:bg-blue-900/60 flex items-center gap-2 transition-all active:scale-98 text-xs sm:text-sm"
+                            {/* Secondary Button: Post an Item (Free listing flow) */}
+                            <button
+                                type="button"
+                                onClick={onPostItemClick}
+                                className="bg-blue-900/40 border border-white/30 text-white font-medium px-5 sm:px-6 py-2.5 rounded-full hover:bg-blue-900/60 flex items-center gap-2 transition-all active:scale-98 text-xs sm:text-sm cursor-pointer"
                             >
                                 <span>{t.hero.btnPost}</span>
                                 <Plus className="w-4 h-4 text-white" />
-                            </Link>
+                            </button>
                         </div>
 
                     </div>

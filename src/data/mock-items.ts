@@ -1,7 +1,7 @@
 export interface CategoryItem {
     id: string;
     name: string;
-    iconName: 'LayoutGrid' | 'BookOpen' | 'Laptop' | 'Home' | 'Shirt' | 'Sparkles' | 'PenTool' | 'Utensils';
+    iconName: 'LayoutGrid' | 'BookOpen' | 'Laptop' | 'Home' | 'Shirt' | 'Lipstick' | 'Clover' | 'PenTool' | 'Utensils';
 }
 
 export interface ProductItem {
@@ -16,12 +16,12 @@ export interface ProductItem {
 }
 
 export const CATEGORIES: CategoryItem[] = [
-    { id: 'all', name: 'All Categories', iconName: 'LayoutGrid' },
+    { id: 'all', name: 'All', iconName: 'LayoutGrid' },
     { id: 'books', name: 'Books & Textbooks', iconName: 'BookOpen' },
     { id: 'electronics', name: 'Electronics', iconName: 'Laptop' },
     { id: 'dorm-living', name: 'Dorm & Living', iconName: 'Home' },
     { id: 'fashion', name: 'Fashion', iconName: 'Shirt' },
-    { id: 'beauty-health', name: 'Beauty & Health', iconName: 'Sparkles' },
+    { id: 'beauty-health', name: 'Beauty & Health', iconName: 'Lipstick' },
     { id: 'stationery-study', name: 'Stationery & Study', iconName: 'PenTool' },
     { id: 'food-drinks', name: 'Food & Drinks', iconName: 'Utensils' },
 ];

@@ -277,9 +277,6 @@ function RegisterForm() {
                                 Student Flea Market
                             </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-[#7A6D63] mt-1.5 leading-relaxed">
-                            Join our campus marketplace to buy, sell, and trade easily.
-                        </p>
                     </div>
 
                     {/* Error Banner */}
@@ -662,7 +659,7 @@ function RegisterForm() {
                             href="/login"
                             className="font-semibold text-[#B87333] hover:text-[#995922] hover:underline transition"
                         >
-                            Sign-in
+                            Login
                         </Link>
                     </p>
 
@@ -786,9 +783,6 @@ export default function RegisterPage() {
                     <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-serif font-bold text-[#2A211B] tracking-wide leading-tight whitespace-nowrap drop-shadow-xs">
                         Student Flea Market
                     </h1>
-                    <p className="text-xs sm:text-sm text-[#7A6D63] mt-2 font-medium">
-                        The trusted student-to-student exchange platform
-                    </p>
                 </div>
 
                 <div className="relative z-10 pointer-events-none" />

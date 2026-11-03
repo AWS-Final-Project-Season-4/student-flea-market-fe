@@ -47,7 +47,11 @@ export function UKFlag({ className = 'w-5 h-3.5' }: { className?: string }) {
     );
 }
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+    onPostAdClick?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentQuery = searchParams.get('q') || '';
@@ -262,13 +266,24 @@ export const Navbar: React.FC = () => {
                                 )}
 
                                 {/* Post Ad Button */}
-                                <Link
-                                    href="/post-item"
-                                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-sm font-semibold shadow-xs hover:shadow-md transition-all"
-                                >
-                                    <PlusCircle className="w-4 h-4" />
-                                    <span>{t.navbar.postAd}</span>
-                                </Link>
+                                {onPostAdClick ? (
+                                    <button
+                                        type="button"
+                                        onClick={onPostAdClick}
+                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-sm font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                                    >
+                                        <TrendingUp className="w-4 h-4" />
+                                        <span>{t.navbar.postAd}</span>
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/post-item"
+                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-sm font-semibold shadow-xs hover:shadow-md transition-all"
+                                    >
+                                        <TrendingUp className="w-4 h-4" />
+                                        <span>{t.navbar.postAd}</span>
+                                    </Link>
+                                )}
 
                                 {/* Auth State Conditional Rendering */}
                                 {isAuthenticated && user ? (
@@ -362,13 +377,28 @@ export const Navbar: React.FC = () => {
                                     <span>{t.navbar.adminPortal}</span>
                                 </Link>
                             )}
-                            <Link
-                                href="/post-item"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm"
-                            >
-                                {t.navbar.postListingMobile}
-                            </Link>
+                            {onPostAdClick ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        onPostAdClick();
+                                    }}
+                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>{t.navbar.postAd}</span>
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/post-item"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm flex items-center justify-center gap-2"
+                                >
+                                    <TrendingUp className="w-4 h-4" />
+                                    <span>{t.navbar.postListingMobile}</span>
+                                </Link>
+                            )}
                             {isAuthenticated && user ? (
                                 <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
                                     <div className="text-xs font-semibold text-slate-700 px-1">

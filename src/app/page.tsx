@@ -14,7 +14,7 @@ import { HeroBanner } from '@/components/ui/home/HeroBanner';
 import { CategoryChips } from '@/components/ui/home/CategoryChips';
 import { ProductCard } from '@/components/ui/home/ProductCard';
 import { MOCK_PRODUCTS, ProductItem } from '@/data/mock-items';
-import { Sparkles, ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import { AuthPromptModal } from '@/components/ui/auth/AuthPromptModal';
 import { AuthRequiredModal } from '@/components/ui/auth/AuthRequiredModal';
 import { SellerContactModal } from '@/components/ui/home/SellerContactModal';
@@ -131,9 +131,6 @@ function HomeContent() {
         {/* 4. Products Grid Section Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
-              <Sparkles className="w-4 h-4" />
-            </div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
               {searchQuery.trim() ? t.home.searchResultsTitle : t.home.recentTitle}
             </h2>
