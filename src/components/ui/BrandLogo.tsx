@@ -46,7 +46,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <div className={`inline-flex items-center gap-3 shrink-0 group cursor-pointer ${className}`}>
       {/* Clean, Sharp, Professional Logo Container */}
       <div
-        className={`${iconSizes[size]} bg-gradient-to-tr from-blue-700 via-blue-600 to-sky-500 shadow-sm flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-white/20 overflow-hidden shrink-0`}
+        className={`${iconSizes[size]} bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] shadow-sm flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-white/20 overflow-hidden shrink-0`}
       >
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full p-1.5 drop-shadow-xs">
           <defs>
@@ -86,7 +86,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           {/* Bold Clean 'S' inside the bag (Student) */}
           <path
             d="M27.5 24C26.8 23 25.5 22.5 24 22.5C22 22.5 20.5 23.7 20.5 25.5C20.5 27.2 21.8 28.2 24 28.8C26.5 29.5 27.8 30.5 27.8 32.5C27.8 34.6 26 36 23.8 36C21.8 36 20.2 35 19.5 33.5"
-            stroke="#1D4ED8"
+            stroke="#A8744F"
             strokeWidth="3.2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -96,14 +96,14 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
       {/* Typography */}
       {variant !== 'icon' && (
-        <div className="flex flex-col">
+        <div className="flex flex-col shrink-0">
           <span
-            className={`font-black ${titleSizes[size]} tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors leading-tight`}
+            className={`font-bold ${titleSizes[size]} tracking-tight whitespace-nowrap leading-tight`}
           >
-            Student <span className="text-blue-600">Flea Market</span>
+            <span className="text-[#C89B6D] group-hover:text-[#A8744F] transition-colors">Student Flea Market</span>
           </span>
           {variant === 'full' && (
-            <span className="text-[11px] font-medium text-slate-500 hidden sm:block">
+            <span className="text-[11px] font-medium text-slate-500 hidden xl:block whitespace-nowrap">
               Buying & Selling • Exchanging • Connecting Students
             </span>
           )}
@@ -117,7 +117,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       <Link
         href={href}
         onClick={handleLogoClick}
-        className="inline-block cursor-pointer select-none"
+        className="inline-block shrink-0 cursor-pointer select-none"
         title="Student Flea Market - Click to reload homepage"
       >
         {content}

@@ -47,6 +47,72 @@ export function UKFlag({ className = 'w-5 h-3.5' }: { className?: string }) {
     );
 }
 
+// Cute Smiling Empty Cart Illustration
+export function CuteEmptyCartIllustration({ className = 'w-24 h-24' }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+            {/* Soft Ambient Background Circle */}
+            <circle cx="60" cy="62" r="44" fill="#FAF5EE" />
+
+            {/* Sparkles / Confetti Dots */}
+            <circle cx="36" cy="32" r="3" fill="#F5A764" />
+            <circle cx="84" cy="34" r="2.5" fill="#FCD34D" />
+            <circle cx="28" cy="64" r="2" fill="#E89650" />
+            <circle cx="94" cy="60" r="3" fill="#FDBA74" />
+            <path d="M48 18L50 22L54 24L50 26L48 30L46 26L42 24L46 22L48 18Z" fill="#F5A764" opacity="0.75" />
+
+            {/* Shopping Bag Handles */}
+            <path
+                d="M49 46C49 39 53.5 34 60 34C66.5 34 71 39 71 46"
+                stroke="#B87B4E"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+            />
+
+            {/* Main Kraft Bag Body */}
+            <path
+                d="M38 46H82L78 86C77.7 89 75 91 72 91H48C45 91 42.3 89 42 86L38 46Z"
+                fill="#F3D5A5"
+            />
+            {/* Bag Fold Top */}
+            <path
+                d="M38 46H82L80 52H40L38 46Z"
+                fill="#E8BE88"
+            />
+
+            {/* Cute Kawaii Face */}
+            {/* Eyes */}
+            <ellipse cx="52" cy="63" rx="2.5" ry="3" fill="#2A211B" />
+            <circle cx="51.2" cy="61.8" r="0.9" fill="white" />
+
+            <ellipse cx="68" cy="63" rx="2.5" ry="3" fill="#2A211B" />
+            <circle cx="67.2" cy="61.8" r="0.9" fill="white" />
+
+            {/* Blushing Cheeks */}
+            <ellipse cx="46.5" cy="67" rx="3.5" ry="2" fill="#FB7185" opacity="0.45" />
+            <ellipse cx="73.5" cy="67" rx="3.5" ry="2" fill="#FB7185" opacity="0.45" />
+
+            {/* Sweet Smiling Mouth */}
+            <path
+                d="M55.5 68C57.5 72.5 62.5 72.5 64.5 68"
+                stroke="#2A211B"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+            />
+
+            {/* Hanging Price Tag */}
+            <path
+                d="M74 72L84 76C85 76.5 86 78 85.5 79L82.5 87C82 88 80.5 88.5 79.5 88L70 84"
+                fill="#D1FAE5"
+                stroke="#6EE7B7"
+                strokeWidth="1.2"
+            />
+            <circle cx="73" cy="75" r="1.5" fill="#10B981" />
+            <path d="M78 80L80 84" stroke="#059669" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+    );
+}
+
 interface NavbarProps {
     onPostAdClick?: () => void;
 }
@@ -182,20 +248,35 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                     <div className="flex items-center justify-between h-20 gap-4">
 
                         {/* Brand Logo & Slogan */}
-                        <BrandLogo variant="full" />
+                        <div className="shrink-0"><BrandLogo variant="full" /></div>
 
                         {/* Right Action Cluster: Search Icon, Flag Language Button, Post Ad, Auth, Cart */}
                         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
-                            {/* 1. TOPZONE-STYLE SEARCH TRIGGER (Kính lúp nhỏ gọn) */}
+                            {/* 1. SEARCH TRIGGER */}
+                            {/* Mobile Icon Button */}
                             <button
                                 type="button"
                                 onClick={() => setIsSearchOpen(true)}
                                 aria-label={t.navbar.searchAria}
-                                title={`${t.navbar.searchAria} (Ctrl+K)`}
-                                className="p-2.5 text-slate-700 hover:text-blue-600 hover:bg-slate-100 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
+                                title={t.navbar.searchAria}
+                                className="sm:hidden p-2 text-slate-700 hover:text-blue-600 hover:bg-slate-100 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
                             >
                                 <Search className="w-5 h-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
+                            </button>
+
+                            {/* Desktop Search Bar with Dim Placeholder */}
+                            <button
+                                type="button"
+                                onClick={() => setIsSearchOpen(true)}
+                                aria-label={t.navbar.searchAria}
+                                title={t.navbar.searchAria}
+                                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-100/90 hover:bg-slate-100 border border-slate-200/80 text-slate-400 hover:text-slate-600 transition-all cursor-pointer w-36 md:w-48 lg:w-60 xl:w-72 group shadow-2xs"
+                            >
+                                <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
+                                <span className="text-xs sm:text-sm text-slate-400 group-hover:text-slate-500 truncate">
+                                    {t.navbar.searchPlaceholder}
+                                </span>
                             </button>
 
                             {/* 2. LANGUAGE SWITCHER WITH FLAG ICONS (Nút Language có cờ sinh động) */}
@@ -219,9 +300,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 setLanguage('vi');
                                                 setIsLanguageOpen(false);
                                             }}
-                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                                language === 'vi' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
-                                            }`}
+                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${language === 'vi' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
+                                                }`}
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <VietnamFlag />
@@ -235,9 +315,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 setLanguage('en');
                                                 setIsLanguageOpen(false);
                                             }}
-                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${
-                                                language === 'en' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
-                                            }`}
+                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${language === 'en' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
+                                                }`}
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <UKFlag />
@@ -288,11 +367,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 {/* Auth State Conditional Rendering */}
                                 {isAuthenticated && user ? (
                                     <div className="flex items-center gap-2 pl-1">
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200/80">
-                                            <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#EADBCE]">
+                                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E89650] to-[#F5A764] text-white font-bold flex items-center justify-center text-xs shadow-2xs">
                                                 {user.fullName?.charAt(0) || 'U'}
                                             </div>
-                                            <span className="text-xs font-semibold text-slate-800 max-w-[120px] truncate">
+                                            <span className="text-xs font-semibold text-[#2A211B] max-w-[120px] truncate">
                                                 {user.fullName || user.username || 'Student'}
                                             </span>
                                         </div>
@@ -300,7 +379,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             type="button"
                                             onClick={() => logout()}
                                             title={t.navbar.logout}
-                                            className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                            className="p-2 rounded-xl border border-[#EADBCE] text-[#7A6D63] hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer"
                                         >
                                             <LogOut className="w-4 h-4" />
                                         </button>
@@ -325,17 +404,54 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     </>
                                 )}
 
-                                {/* Cart & Notification Icon */}
-                                <Link
-                                    href="/cart"
-                                    aria-label={t.navbar.cartAria}
-                                    className="relative p-2.5 text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors ml-0.5"
-                                >
-                                    <ShoppingCart className="w-5 h-5" />
-                                    <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
-                                        0
-                                    </span>
-                                </Link>
+                                {/* Cart & Shopee-style Empty Cart Popover */}
+                                <div className="relative group/cart">
+                                    <Link
+                                        href="/cart"
+                                        aria-label={t.navbar.cartAria}
+                                        className="relative p-2.5 text-slate-700 hover:text-[#C46A28] hover:bg-[#FAF7F2] rounded-full transition-colors ml-0.5 flex items-center justify-center cursor-pointer"
+                                    >
+                                        <ShoppingCart className="w-5 h-5 text-slate-700 group-hover/cart:text-[#C46A28] transition-colors" />
+                                        <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                                            0
+                                        </span>
+                                    </Link>
+
+                                    {/* Shopee-style Floating Popover on Hover */}
+                                    <div className="absolute right-0 top-full pt-2.5 z-50 invisible opacity-0 translate-y-1 group-hover/cart:visible group-hover/cart:opacity-100 group-hover/cart:translate-y-0 transition-all duration-200 pointer-events-none group-hover/cart:pointer-events-auto">
+                                        <div className="w-[300px] sm:w-[320px] bg-white rounded-2xl shadow-[0_12px_36px_rgba(42,33,27,0.14)] border border-[#EADBCE] p-6 text-center relative overflow-hidden">
+                                            {/* Caret / Tooltip Arrow */}
+                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-[#EADBCE] rotate-45" />
+
+                                            {/* Cute Kawaii Illustration (Shopee style) */}
+                                            <div className="flex justify-center mb-3">
+                                                <CuteEmptyCartIllustration className="w-24 h-24 drop-shadow-xs" />
+                                            </div>
+
+                                            {/* No Products Yet Header */}
+                                            <p className="text-sm font-bold text-[#2A211B] mb-1">
+                                                {language === 'vi' ? 'Chưa Có Sản Phẩm' : 'No Products Yet'}
+                                            </p>
+                                            <p className="text-xs text-[#7A6D63] mb-4 leading-relaxed">
+                                                {language === 'vi'
+                                                    ? 'Giỏ hàng của bạn đang trống. Hãy bắt đầu mua sắm nào!'
+                                                    : 'Your shopping cart is empty. Shopping Now!'}
+                                            </p>
+
+                                            {/* Action Button */}
+                                            <Link
+                                                href="/#products"
+                                                onClick={() => {
+                                                    const productSection = document.querySelector('.grid');
+                                                    productSection?.scrollIntoView({ behavior: 'smooth' });
+                                                }}
+                                                className="inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-semibold text-white bg-[#F5A764] hover:bg-[#E89650] shadow-xs hover:shadow-md transition-all active:scale-98 cursor-pointer"
+                                            >
+                                                {language === 'vi' ? 'Mua sắm ngay' : 'Shop Now'}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* 4. MOBILE CONTROLS (Cart + Hamburger Menu Toggle) */}

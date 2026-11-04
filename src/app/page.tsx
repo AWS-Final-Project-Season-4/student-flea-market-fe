@@ -105,23 +105,23 @@ function HomeContent() {
 
         {/* Search Results Notice Banner if search query is active */}
         {searchQuery.trim() && (
-          <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-900 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#FAF7F2] border border-[#EADBCE] text-[#2A211B] shadow-2xs animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#F5A764] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Search className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-xs sm:text-sm font-medium">
-                  {t.home.searchingFor} <span className="font-bold text-blue-950">"{searchQuery}"</span>
+                  {t.home.searchingFor} <span className="font-bold text-[#2A211B]">"{searchQuery}"</span>
                 </p>
-                <p className="text-[11px] text-blue-700/80">
+                <p className="text-[11px] text-[#7A6D63]">
                   {filteredProducts.length} {t.home.matchingFound}
                 </p>
               </div>
             </div>
             <Link
               href="/"
-              className="text-xs font-semibold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-100/70 border border-blue-200 px-3 py-1.5 rounded-xl transition cursor-pointer"
+              className="text-xs font-semibold text-[#8C532B] hover:text-[#6D3D1E] bg-white hover:bg-amber-50/50 border border-[#EADBCE] px-3 py-1.5 rounded-xl transition cursor-pointer"
             >
               {t.home.clearFilter}
             </Link>

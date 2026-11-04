@@ -12,6 +12,79 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, User, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useLanguageStore } from '@/lib/language-store';
+import { VietnamFlag, UKFlag } from '@/components/ui/layout/Navbar';
+
+
+function formatAuthMessage(msg: string | null, lang: 'vi' | 'en'): string | null {
+    if (!msg) return null;
+
+    if (lang === 'vi') {
+        if (msg.includes('Please enter both your identifier') || msg.includes('Vui lòng nhập cả') || msg.includes('EMPTY_FIELDS')) {
+            return 'Vui lòng nhập đầy đủ tài khoản (email hoặc tên đăng nhập) và mật khẩu.';
+        }
+        if (msg.includes('Login successfully') || msg.includes('Đăng nhập thành công')) {
+            return 'Đăng nhập thành công! Đang chuyển hướng...';
+        }
+        if (msg.includes('requires Administrator privileges') || msg.includes('quyền Quản trị viên')) {
+            return 'Khu vực này yêu cầu quyền Quản trị viên. Vui lòng đăng nhập bằng tài khoản Admin.';
+        }
+        if (msg.includes('registered and verified successfully') || msg.includes('xác thực tài khoản thành công')) {
+            return 'Đăng ký và xác thực tài khoản thành công! Bạn có thể đăng nhập ngay.';
+        }
+        if (msg.includes('Authentication failed') || msg.includes('check your credentials') || msg.includes('INVALID_CREDENTIALS') || msg.includes('không đúng') || msg.includes('không chính xác')) {
+            return 'Email, tên tài khoản hoặc mật khẩu không chính xác.';
+        }
+        if (msg.includes('Unable to connect') || msg.includes('ERR_NETWORK') || msg.includes('kết nối đến máy chủ')) {
+            return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.';
+        }
+        if (msg.includes('banned') || msg.includes('ACCOUNT_BANNED') || msg.includes('bị khóa')) {
+            return 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.';
+        }
+        if (msg.includes('inactive') || msg.includes('ACCOUNT_INACTIVE') || msg.includes('chưa được kích hoạt')) {
+            return 'Tài khoản chưa được kích hoạt.';
+        }
+        if (msg.includes('not verified') || msg.includes('EMAIL_NOT_VERIFIED') || msg.includes('chưa được xác thực')) {
+            return 'Email chưa được xác thực. Vui lòng kiểm tra hộp thư để xác thực mã OTP.';
+        }
+        if (msg.includes('Google authentication failed')) {
+            return 'Đăng nhập Google thất bại. Vui lòng nhập thông tin đăng nhập thủ công.';
+        }
+        if (msg.includes('Authenticating with Google')) {
+            return 'Đang xác thực với tài khoản Google...';
+        }
+        if (msg.includes('Welcome back')) {
+            return msg.replace('Welcome back', 'Chào mừng quay trở lại').replace('Redirecting...', 'Đang chuyển hướng...');
+        }
+    } else {
+        if (msg.includes('không đúng') || msg.includes('không chính xác') || msg.includes('INVALID_CREDENTIALS')) {
+            return 'Invalid email, username, or password.';
+        }
+        if (msg.includes('bị khóa') || msg.includes('ACCOUNT_BANNED')) {
+            return 'Your account has been banned. Please contact the administrator.';
+        }
+        if (msg.includes('chưa được kích hoạt') || msg.includes('ACCOUNT_INACTIVE')) {
+            return 'Your account is currently inactive.';
+        }
+        if (msg.includes('chưa được xác thực') || msg.includes('EMAIL_NOT_VERIFIED')) {
+            return 'Email is not verified. Please check your inbox and verify the OTP.';
+        }
+        if (msg.includes('Vui lòng nhập cả') || msg.includes('Vui lòng nhập đầy đủ')) {
+            return 'Please enter both your identifier (email or username) and password.';
+        }
+        if (msg.includes('Đăng nhập thành công')) {
+            return 'Login successfully! Redirecting...';
+        }
+        if (msg.includes('Không thể kết nối')) {
+            return 'Unable to connect to backend server. Please check your network.';
+        }
+        if (msg.includes('yêu cầu quyền Quản trị viên')) {
+            return 'This area requires Administrator privileges. Please login with an Admin account.';
+        }
+    }
+
+    return msg;
+}
 
 function LoginForm() {
     const router = useRouter();
@@ -21,6 +94,7 @@ function LoginForm() {
     const registeredParam = searchParams.get('registered');
 
     const { login, isLoading, error: storeError, clearError, initAuth } = useAuthStore();
+    const { language, setLanguage } = useLanguageStore();
 
     const [emailOrUsername, setEmailOrUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
@@ -120,14 +194,43 @@ function LoginForm() {
                 <div className="mb-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-3xl font-serif font-bold text-[#2A211B] tracking-tight">
-                            Login
+                            {language === 'vi' ? 'Đăng nhập' : 'Login'}
                         </h2>
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EFE8DD] text-[#7A6D63] font-medium">
-                            Student Flea Market
-                        </span>
+                                                {/* Horizontal Language Switcher: ENG (left) | VIE (right) */}
+                        <div className="flex items-center p-0.5 rounded-full bg-[#FAF7F2] border border-[#EADBCE] text-[11px] font-semibold shrink-0">
+                            {/* ENG on Left */}
+                            <button
+                                type="button"
+                                onClick={() => setLanguage('en')}
+                                title="Switch to English"
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                    language === 'en'
+                                        ? 'bg-white text-[#2A211B] shadow-2xs font-bold border border-[#EADBCE]'
+                                        : 'text-[#8C7E74] hover:text-[#2A211B]'
+                                }`}
+                            >
+                                <UKFlag className="w-4 h-2.5" />
+                                <span>ENG</span>
+                            </button>
+
+                            {/* VIE on Right */}
+                            <button
+                                type="button"
+                                onClick={() => setLanguage('vi')}
+                                title="Chuyển sang Tiếng Việt"
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                    language === 'vi'
+                                        ? 'bg-white text-[#2A211B] shadow-2xs font-bold border border-[#EADBCE]'
+                                        : 'text-[#8C7E74] hover:text-[#2A211B]'
+                                }`}
+                            >
+                                <VietnamFlag className="w-4 h-2.5" />
+                                <span>VIE</span>
+                            </button>
+                        </div>
                     </div>
                     <p className="text-xs sm:text-sm text-[#7A6D63] mt-2 leading-relaxed">
-                        Welcome back! Please enter your details to continue.
+                        {language === 'vi' ? 'Chào mừng bạn quay lại! Vui lòng nhập thông tin để tiếp tục.' : 'Welcome back! Please enter your details to continue.'}
                     </p>
                 </div>
 
@@ -135,7 +238,7 @@ function LoginForm() {
                 {displayError && (
                     <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 flex items-start gap-2.5 text-xs leading-relaxed animate-in fade-in duration-200">
                         <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                        <div className="flex-1">{displayError}</div>
+                        <div className="flex-1">{formatAuthMessage(displayError, language)}</div>
                     </div>
                 )}
 
@@ -156,7 +259,7 @@ function LoginForm() {
                                 setEmailOrUsername(e.target.value);
                                 if (localError) setLocalError(null);
                             }}
-                            placeholder="Email or Username (e.g. admin)"
+                            placeholder={language === 'vi' ? 'Email hoặc Tên đăng nhập (vd: admin)' : 'Email or Username (e.g. admin)'}
                             className="w-full pl-10 pr-4 py-3.5 bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl text-[#2A211B] placeholder-[#A6998E] text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white transition"
                         />
                     </div>
@@ -175,7 +278,7 @@ function LoginForm() {
                                 setPassword(e.target.value);
                                 if (localError) setLocalError(null);
                             }}
-                            placeholder="Password"
+                            placeholder={language === 'vi' ? 'Mật khẩu' : 'Password'}
                             className="w-full pl-10 pr-10 py-3.5 bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl text-[#2A211B] placeholder-[#A6998E] text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white transition"
                         />
                         <button
@@ -197,14 +300,14 @@ function LoginForm() {
                                 onChange={(e) => setRememberMe(e.target.checked)}
                                 className="h-4 w-4 rounded border-[#D5C7B8] text-[#F5A764] focus:ring-[#F5A764] accent-[#F5A764] cursor-pointer"
                             />
-                            <span className="text-[#6B5E55]">Remember me</span>
+                            <span className="text-[#6B5E55]">{language === 'vi' ? 'Ghi nhớ đăng nhập' : 'Remember me'}</span>
                         </label>
 
                         <Link
                             href="/forgot-password"
                             className="font-normal text-[#A8744F] hover:text-[#885633] hover:underline transition"
                         >
-                            Forgot password?
+                            {language === 'vi' ? 'Quên mật khẩu?' : 'Forgot password?'}
                         </Link>
                     </div>
 
@@ -217,10 +320,10 @@ function LoginForm() {
                         {isLoading ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Authenticating with server...</span>
+                                <span>{language === 'vi' ? 'Đang xác thực với máy chủ...' : 'Authenticating with server...'}</span>
                             </>
                         ) : (
-                            'Login'
+                            language === 'vi' ? 'Đăng nhập' : 'Login'
                         )}
                     </button>
                 </form>
@@ -231,7 +334,7 @@ function LoginForm() {
                         <div className="w-full border-t border-[#EFE8DD]" />
                     </div>
                     <span className="relative bg-white px-3 text-[11px] text-[#A6998E] font-normal tracking-wide">
-                        Or continue with
+                        {language === 'vi' ? 'Hoặc tiếp tục với' : 'Or continue with'}
                     </span>
                 </div>
 
@@ -249,28 +352,28 @@ function LoginForm() {
                             <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
                         </svg>
                         <span className="font-semibold text-[#2A211B] group-hover:text-black">
-                            Continue with Google
+                            {language === 'vi' ? 'Tiếp tục với Google' : 'Continue with Google'}
                         </span>
                     </button>
                     <p className="text-[11px] text-center text-[#A6998E] mt-1.5">
-                        Personal @gmail.com or campus accounts accepted
+                        {language === 'vi' ? 'Chấp nhận tài khoản @gmail.com hoặc email trường' : 'Personal @gmail.com or campus accounts accepted'}
                     </p>
                 </div>
 
                 {/* Footer Sign-up Prompt */}
                 <p className="mt-7 text-center text-xs text-[#7A6D63]">
-                    Don't have any account?{' '}
+                    {language === 'vi' ? 'Chưa có tài khoản?' : "Don't have any account?"}{' '}
                     <Link
                         href="/register"
                         className="font-semibold text-[#B87333] hover:text-[#995922] hover:underline transition"
                     >
-                        Register now
+                        {language === 'vi' ? 'Đăng ký ngay' : 'Register now'}
                     </Link>
                 </p>
 
                 {/* Copyright */}
                 <p className="mt-3 text-center text-[11px] text-[#A6998E]">
-                    Copyright © 2026 - Student Flea Market. All rights reserved.
+                    {language === 'vi' ? 'Bản quyền © 2026 - Student Flea Market. Mọi quyền được bảo lưu.' : 'Copyright © 2026 - Student Flea Market. All rights reserved.'}
                 </p>
             </div>
 
@@ -282,7 +385,7 @@ function LoginForm() {
                     </div>
                     <div className="flex-1 pr-1">
                         <p className="text-xs sm:text-sm font-medium leading-snug">
-                            {successMessage}
+                            {formatAuthMessage(successMessage, language)}
                         </p>
                     </div>
                 </div>
@@ -414,7 +517,6 @@ export default function LoginPage() {
                 {/* Top Brand Identity */}
                 <div className="relative z-10 text-center px-4 sm:px-6 pt-8 sm:pt-12 w-full max-w-none mx-auto">
                     <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-serif font-bold text-[#2A211B] tracking-wide leading-tight whitespace-nowrap drop-shadow-xs">
-                        Student Flea Market
                     </h1>
                 </div>
 

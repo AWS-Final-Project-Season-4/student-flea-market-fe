@@ -11,7 +11,7 @@ export type Language = 'vi' | 'en';
 export const DICTIONARY = {
   vi: {
     navbar: {
-      searchPlaceholder: 'Tìm kiếm sản phẩm, giáo trình, đồ điện sinh viên...',
+      searchPlaceholder: 'Tìm kiếm trên SFM',
       suggestions: 'Gợi ý:',
       adminPortal: 'Cổng Admin',
       postAd: 'Đẩy tin bán gấp',
@@ -120,7 +120,7 @@ export const DICTIONARY = {
   },
   en: {
     navbar: {
-      searchPlaceholder: 'Search textbooks, electronics, student gear...',
+      searchPlaceholder: 'Search on SFM',
       suggestions: 'Suggestions:',
       adminPortal: 'Admin Portal',
       postAd: 'Post Ad (Boost)',

@@ -116,14 +116,13 @@ function RegisterForm() {
             return;
         }
 
-        // 5. Password validation
-        if (password.length < 6) {
-            setLocalError('Password must be at least 6 characters long.');
+        // 5. Password validation (At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char)
+        if (password.length < 8) {
+            setLocalError('Password must be at least 8 characters long.');
             return;
         }
-
-        if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-            setLocalError('Password must contain at least one letter and one number.');
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])/.test(password)) {
+            setLocalError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
             return;
         }
 
@@ -380,7 +379,7 @@ function RegisterForm() {
                                     setPassword(e.target.value);
                                     if (localError) setLocalError(null);
                                 }}
-                                placeholder="Password (min 6 chars, 1 letter, 1 number)"
+                                placeholder="Password (min 8 chars, upper, lower, number, special)"
                                 className="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl text-[#2A211B] placeholder-[#A6998E] text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white transition"
                             />
                             <button

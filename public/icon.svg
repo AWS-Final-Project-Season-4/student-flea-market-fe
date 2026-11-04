@@ -1,0 +1,29 @@
+<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="favBgClean" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F5A764" />
+      <stop offset="100%" stop-color="#D97724" />
+    </linearGradient>
+    <linearGradient id="favGoldClean" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Warm Amber / Beige Rounded Square -->
+  <rect width="48" height="48" rx="14" fill="url(#favBgClean)" />
+
+  <!-- Bag Handles -->
+  <path d="M19 15C19 11.8 21.2 9.5 24 9.5C26.8 9.5 29 11.8 29 15" stroke="white" stroke-width="3.2" stroke-linecap="round" />
+
+  <!-- Clean White Shopping Bag -->
+  <path d="M12 15H36L33.8 39.5C33.6 41 32.4 42 30.8 42H17.2C15.6 42 14.4 41 14.2 39.5L12 15Z" fill="white" />
+
+  <!-- Golden Graduation Tassel -->
+  <path d="M19 13.5C16.8 15 15.2 17 14.5 20.2" stroke="url(#favGoldClean)" stroke-width="2.2" stroke-linecap="round" />
+  <circle cx="14.5" cy="21.5" r="1.8" fill="url(#favGoldClean)" />
+
+  <!-- Bold 'S' inside -->
+  <path d="M27.5 24C26.8 23 25.5 22.5 24 22.5C22 22.5 20.5 23.7 20.5 25.5C20.5 27.2 21.8 28.2 24 28.8C26.5 29.5 27.8 30.5 27.8 32.5C27.8 34.6 26 36 23.8 36C21.8 36 20.2 35 19.5 33.5" stroke="#8C532B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
+

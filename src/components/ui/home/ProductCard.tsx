@@ -64,7 +64,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     {/* Title */}
                     <h3
                         title={product.title}
-                        className="font-semibold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors"
+                        className="font-semibold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-[#C46A28] transition-colors"
                     >
                         {product.title}
                     </h3>
