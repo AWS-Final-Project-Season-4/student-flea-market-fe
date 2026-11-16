@@ -11,6 +11,10 @@ export type Language = 'vi' | 'en';
 export const DICTIONARY = {
   vi: {
     navbar: {
+      slogan: 'Mua bán • Trao đổi • Kết nối sinh viên',
+      emptyCartTitle: 'Chưa Có Sản Phẩm',
+      emptyCartDesc: 'Giỏ hàng của bạn đang trống. Hãy bắt đầu mua sắm nào!',
+      shopNow: 'Mua sắm ngay',
       searchPlaceholder: 'Tìm kiếm trên SFM',
       suggestions: 'Gợi ý:',
       adminPortal: 'Cổng Admin',
@@ -41,7 +45,7 @@ export const DICTIONARY = {
       headlinePart2: 'Tiết kiệm & An toàn',
       subtitle: 'Giáo trình, quạt điện, ấm đun, đồ dùng học tập giá hạt dẻ từ bạn bè cùng trường.',
       btnBrowse: 'Xem đồ đang bán',
-      btnPost: 'Đăng đồ cần pass',
+      btnPost: 'Đăng đồ cần pass (Free)',
       trustBadge1: 'Gặp mặt trực tiếp - Giao dịch an toàn',
       trustBadge2: 'Khu vực KTX & Quanh trường',
     },
@@ -65,7 +69,7 @@ export const DICTIONARY = {
       clearFilter: 'Xóa bộ lọc',
       emptyTitle: 'Không tìm thấy món đồ phù hợp.',
       emptySubtitle: 'Hãy thử tìm bằng từ khóa hoặc danh mục khác nhé!',
-      footerDesc: 'Nền tảng mua bán & trao đổi đồ dùng sinh viên đã qua sử dụng.',
+      footerDesc: 'Nền tảng mua bán & trao đổi đồ dùng sinh viên.',
       termsOfService: 'Điều khoản dịch vụ',
       privacyPolicy: 'Chính sách bảo mật',
       refundDispute: 'Hoàn tiền & Khiếu nại',
@@ -81,6 +85,50 @@ export const DICTIONARY = {
       postItemDesc: 'Vui lòng đăng nhập với tài khoản sinh viên để đăng bán đồ cũ miễn phí.',
       postAdTitle: 'Đăng nhập để đẩy tin bán gấp',
       postAdDesc: 'Vui lòng đăng nhập để sử dụng tính năng quảng cáo và đẩy tin lên xu hướng.',
+      cartTitle: 'Đăng nhập để mua sắm',
+      cartDesc: 'Vui lòng đăng nhập với tài khoản sinh viên để xem giỏ hàng và mua sắm món đồ bạn yêu thích.',
+    },
+    authPrompt: {
+      title: 'Xin chào!',
+      desc: 'Bạn có muốn đăng nhập hoặc đăng ký để trải nghiệm mua sắm đồ sinh viên tốt nhất?',
+    },
+    sellerContact: {
+      title: 'Liên hệ người bán & Trao đổi',
+      subtitle: 'Thương lượng và hẹn gặp trực tiếp tại khuôn viên trường',
+      verifiedStudent: 'Sinh viên đã xác thực',
+      copy: 'Sao chép',
+      copied: 'Đã sao chép',
+    },
+    register: {
+      title: 'Tạo tài khoản',
+      subtitle: 'Chào mừng bạn! Vui lòng điền thông tin để đăng ký tài khoản sinh viên.',
+      fullName: 'Họ và tên',
+      fullNamePlaceholder: 'Họ và tên (vd: Nguyễn Văn A)',
+      username: 'Tên tài khoản',
+      usernamePlaceholder: 'Tên tài khoản (vd: nguyenvana)',
+      email: 'Email sinh viên hoặc cá nhân',
+      emailPlaceholder: 'Địa chỉ email (vd: alex@gmail.com)',
+      phoneNumber: 'Số điện thoại',
+      phoneNumberPlaceholder: 'Số điện thoại (vd: +84 987 654 321)',
+      password: 'Mật khẩu',
+      passwordPlaceholder: 'Mật khẩu (tối thiểu 8 ký tự, hoa, thường, số, ký tự đặc biệt)',
+      confirmPassword: 'Xác nhận mật khẩu',
+      confirmPasswordPlaceholder: 'Nhập lại mật khẩu',
+      campusToggle: 'Thông tin trường & KTX (Tùy chọn)',
+      schoolName: 'Tên trường Đại học / Cao đẳng',
+      schoolNamePlaceholder: 'Trường ĐH / CĐ (vd: Đại học FPT)',
+      studentCode: 'Mã số sinh viên (MSSV)',
+      studentCodePlaceholder: 'Mã SV (vd: SE123456)',
+      btnSubmit: 'Đăng ký tài khoản',
+      haveAccount: 'Đã có tài khoản?',
+      loginNow: 'Đăng nhập ngay',
+      otpTitle: 'Xác thực Email của bạn',
+      otpSubtitle: 'Chúng tôi đã gửi mã xác thực 6 chữ số đến:',
+      btnVerify: 'Xác thực & Kích hoạt tài khoản',
+      resend: 'Gửi lại mã xác thực',
+      resendIn: 'Gửi lại sau',
+      successTitle: 'Tài khoản đã xác thực!',
+      successSubtitle: 'Tài khoản Student Flea Market của bạn đã được kích hoạt. Đang chuyển đến đăng nhập...',
     },
     postItemModal: {
       title: 'Đăng đồ cần pass (Miễn phí)',
@@ -120,6 +168,10 @@ export const DICTIONARY = {
   },
   en: {
     navbar: {
+      slogan: 'Buying & Selling • Exchanging • Connecting Students',
+      emptyCartTitle: 'No Products Yet',
+      emptyCartDesc: 'Your shopping cart is empty. Start shopping now!',
+      shopNow: 'Shop Now',
       searchPlaceholder: 'Search on SFM',
       suggestions: 'Suggestions:',
       adminPortal: 'Admin Portal',
@@ -150,7 +202,7 @@ export const DICTIONARY = {
       headlinePart2: 'Save More, Trade Safe',
       subtitle: 'Textbooks, desk fans, electric kettles, and study essentials at friendly student prices.',
       btnBrowse: 'Browse Listings',
-      btnPost: 'Post an Item',
+      btnPost: 'Post an Item (Free)',
       trustBadge1: 'Face-to-face meetups - Safe deals',
       trustBadge2: 'Dormitory & Campus Area',
     },
@@ -174,7 +226,7 @@ export const DICTIONARY = {
       clearFilter: 'Clear filter',
       emptyTitle: 'No items matched your search criteria.',
       emptySubtitle: 'Try a different keyword or category!',
-      footerDesc: 'A platform for students to exchange second-hand items.',
+      footerDesc: 'A platform for students to exchange items.',
       termsOfService: 'Terms of Service',
       privacyPolicy: 'Privacy Policy',
       refundDispute: 'Refund & Dispute',
@@ -190,6 +242,50 @@ export const DICTIONARY = {
       postItemDesc: 'Please login with your student account to post your pre-loved student gear for free.',
       postAdTitle: 'Login to boost your listing',
       postAdDesc: 'Please login to use advertisement and boost your items to trending status.',
+      cartTitle: 'Login to start shopping',
+      cartDesc: 'Please login with your student account to access your cart and start shopping.',
+    },
+    authPrompt: {
+      title: 'Hi!',
+      desc: 'Would you like to register or login to enjoy the best experience on Student Flea Market?',
+    },
+    sellerContact: {
+      title: 'Contact Seller & Exchange',
+      subtitle: 'Negotiate and arrange a direct meetup on campus',
+      verifiedStudent: 'Verified Student',
+      copy: 'Copy',
+      copied: 'Copied',
+    },
+    register: {
+      title: 'Create Account',
+      subtitle: 'Welcome! Please fill in your details to create a student account.',
+      fullName: 'Full Name',
+      fullNamePlaceholder: 'Full Name (e.g. Alex Johnson)',
+      username: 'Username',
+      usernamePlaceholder: 'Username (e.g. alex_johnson)',
+      email: 'Student or personal email',
+      emailPlaceholder: 'Email Address (e.g. alex@gmail.com)',
+      phoneNumber: 'Phone number',
+      phoneNumberPlaceholder: 'Phone Number (e.g. +84 987 654 321)',
+      password: 'Password',
+      passwordPlaceholder: 'Password (min 8 chars, upper, lower, number, special)',
+      confirmPassword: 'Confirm Password',
+      confirmPasswordPlaceholder: 'Confirm Password',
+      campusToggle: 'Campus details (Optional)',
+      schoolName: 'University / College Name',
+      schoolNamePlaceholder: 'University / School (e.g. FPT University)',
+      studentCode: 'Student ID Code (MSSV)',
+      studentCodePlaceholder: 'Student ID (e.g. SE123456)',
+      btnSubmit: 'Create Account',
+      haveAccount: 'Already have an account?',
+      loginNow: 'Login now',
+      otpTitle: 'Verify Your Email',
+      otpSubtitle: 'We have sent a 6-digit verification code to:',
+      btnVerify: 'Verify & Activate Account',
+      resend: 'Resend verification code',
+      resendIn: 'Resend in',
+      successTitle: 'Account Verified!',
+      successSubtitle: 'Your Student Flea Market account has been activated. Redirecting you to sign in...',
     },
     postItemModal: {
       title: 'Post an Item (Free Listing)',
@@ -242,6 +338,7 @@ export const useLanguageStore = create<LanguageState>((set, get) => ({
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('sfm_lang', lang);
+        document.documentElement.lang = lang;
       } catch (e) {
         console.error(e);
       }
@@ -261,6 +358,7 @@ if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('sfm_lang') as Language | null;
     if (saved === 'vi' || saved === 'en') {
       useLanguageStore.setState({ language: saved });
+      document.documentElement.lang = saved;
     }
   } catch (e) {
     console.error(e);

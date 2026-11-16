@@ -2,13 +2,29 @@
 
 import React, { useState } from 'react';
 import { Heart, MapPin } from 'lucide-react';
-import { ProductItem } from '@/data/mock-items';
+import { ProductItem, formatItemCodeDisplay } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 interface ProductCardProps {
     product: ProductItem;
     onContact?: (product: ProductItem) => void;
 }
+
+export const formatCardCondition = (cond: string, lang: 'vi' | 'en') => {
+    if (lang === 'en') return cond;
+    if (cond === 'Like New') return 'Như mới';
+    if (cond.includes('New')) return cond.replace('New', 'Mới');
+    return cond;
+};
+
+export const formatCardLocation = (loc: string, lang: 'vi' | 'en') => {
+    if (lang === 'en') return loc;
+    if (loc.startsWith('Dorm Area ')) return loc.replace('Dorm Area ', 'KTX Khu ');
+    if (loc === 'Main Campus Gate') return 'Cổng trường chính';
+    if (loc === 'Campus Library') return 'Thư viện trường';
+    if (loc === 'Student Activity Center') return 'Nhà văn hóa SV';
+    return loc;
+};
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) => {
     const [isLiked, setIsLiked] = useState(false);
@@ -32,13 +48,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
 
                     {/* Floating Condition Badge (Top-Left) */}
                     <div
-                        className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-bold text-white shadow-xs ${
+                        className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-white shadow-xs ${
                             product.conditionVariant === 'orange'
                                 ? 'bg-orange-500'
                                 : 'bg-emerald-500'
                         }`}
                     >
-                        {product.condition}
+                        {formatCardCondition(product.condition, language)}
                     </div>
 
                     {/* Floating Favorite Wishlist Heart Button (Top-Right) */}
@@ -60,24 +76,34 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                 </div>
 
                 {/* Product Details */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                     {/* Title */}
                     <h3
                         title={product.title}
-                        className="font-semibold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-[#C46A28] transition-colors"
+                        className="font-serif font-bold text-sm sm:text-base text-[#2A211B] line-clamp-1 group-hover:text-[#C46A28] transition-colors"
                     >
                         {product.title}
                     </h3>
 
-                    {/* Price */}
-                    <div className="text-sm sm:text-base font-extrabold text-orange-600">
-                        {product.price}
+                    {/* Price and Item Code Badge */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm sm:text-base font-extrabold text-orange-600">
+                            {product.price}
+                        </div>
+                        {product.itemCode && (
+                            <span
+                                title={`${language === 'vi' ? 'Mã món đồ' : 'Item Code'}: ${formatItemCodeDisplay(product.itemCode)}`}
+                                className="font-mono text-[10px] sm:text-[11px] font-bold text-[#A8744F] bg-[#FAF7F2] border border-[#EADBCE] px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
+                            >
+                                {formatItemCodeDisplay(product.itemCode)}
+                            </span>
+                        )}
                     </div>
 
                     {/* Campus Location */}
                     <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 pb-1">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{product.location}</span>
+                        <span className="truncate">{formatCardLocation(product.location, language)}</span>
                     </div>
                 </div>
             </div>

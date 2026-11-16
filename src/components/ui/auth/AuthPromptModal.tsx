@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { X, LogIn, UserPlus } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 export const AuthPromptModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, isInitialized, initAuth } = useAuthStore();
+  const { language } = useLanguageStore();
+  const t = DICTIONARY[language];
 
   useEffect(() => {
     initAuth();
@@ -56,27 +59,27 @@ export const AuthPromptModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-slate-100">
+      <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-[#EADBCE]">
 
         {/* Close Button */}
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-4 right-4 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF7F2] hover:bg-[#F3EADF] text-[#8C7E74] hover:text-[#2A211B] flex items-center justify-center transition-colors cursor-pointer"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Title */}
-        <h2 className="text-xl sm:text-2xl font-bold text-blue-600 mb-2 mt-2 flex items-center justify-center gap-2">
-          <span>Hi!</span>
+        <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#2A211B] mb-2 mt-2 flex items-center justify-center gap-2">
+          <span>{t.authPrompt.title}</span>
           <span className="text-2xl select-none">👋</span>
         </h2>
 
         {/* Subtitle / Description */}
-        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-xs mb-6">
-          Would you like to register or login to enjoy the best experience on Student Market?
+        <p className="text-[#6D5D52] text-xs sm:text-sm leading-relaxed max-w-xs mb-6">
+          {t.authPrompt.desc}
         </p>
 
         {/* Actions */}
@@ -84,19 +87,19 @@ export const AuthPromptModal: React.FC = () => {
           <Link
             href="/login"
             onClick={handleClose}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl border border-blue-600 text-blue-600 font-semibold text-xs sm:text-sm hover:bg-blue-50 transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl bg-[#F5A764] hover:bg-[#E89650] text-white font-semibold text-xs sm:text-sm transition-all shadow-xs cursor-pointer active:scale-98"
           >
             <LogIn className="w-4 h-4" />
-            <span>Login</span>
+            <span>{t.navbar.login}</span>
           </Link>
 
           <Link
             href="/register"
             onClick={handleClose}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs sm:text-sm hover:bg-blue-700 transition-colors shadow-xs"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl border border-[#EADBCE] hover:border-[#D5BEA8] hover:bg-[#FAF7F2] text-[#2A211B] font-semibold text-xs sm:text-sm transition-all shadow-2xs cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Register</span>
+            <UserPlus className="w-4 h-4 text-[#8C7E74]" />
+            <span>{t.navbar.register}</span>
           </Link>
         </div>
 
@@ -104,4 +107,3 @@ export const AuthPromptModal: React.FC = () => {
     </div>
   );
 };
-

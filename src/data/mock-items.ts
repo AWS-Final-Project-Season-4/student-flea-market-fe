@@ -6,6 +6,7 @@ export interface CategoryItem {
 
 export interface ProductItem {
     id: string;
+    itemCode: string;
     title: string;
     price: string;
     condition: string;
@@ -26,9 +27,19 @@ export const CATEGORIES: CategoryItem[] = [
     { id: 'food-drinks', name: 'Food & Drinks', iconName: 'Utensils' },
 ];
 
+export const formatItemCodeDisplay = (code?: string): string => {
+    if (!code) return '';
+    const clean = code.trim().toUpperCase().replace('-', '');
+    if (clean.length === 8) {
+        return `${clean.slice(0, 2)}-${clean.slice(2)}`;
+    }
+    return clean;
+};
+
 export const MOCK_PRODUCTS: ProductItem[] = [
     {
         id: 'prod-01',
+        itemCode: 'ST7K9A2P', // ST: Stationery
         title: 'Casio FX-580VN X Calculator',
         price: '500,000 VND',
         condition: '99% New',
@@ -39,6 +50,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-02',
+        itemCode: 'BK8X2M4N', // BK: Books
         title: 'Introduction to Engineering Textbook',
         price: '50,000 VND',
         condition: 'Like New',
@@ -49,6 +61,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-03',
+        itemCode: 'DL3P5Q9R', // DL: Dorm & Living
         title: 'Compact Rice Cooker 1.2L',
         price: '500,000 VND',
         condition: 'Like New',
@@ -59,6 +72,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-04',
+        itemCode: 'EL4D6E8F', // EL: Electronics
         title: 'Desktop PC Set (Core i5, 8GB RAM)',
         price: '3,000,000 VND',
         condition: 'Like New',
@@ -69,6 +83,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-05',
+        itemCode: 'ST9G2H5J', // ST: Stationery
         title: 'Eye-care LED Desk Lamp',
         price: '300,000 VND',
         condition: 'Like New',
@@ -79,6 +94,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-06',
+        itemCode: 'FA6K8M3N', // FA: Fashion
         title: 'Waterproof Laptop Backpack',
         price: '250,000 VND',
         condition: '98% New',
@@ -89,6 +105,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-07',
+        itemCode: 'BK2P4R7S', // BK: Books
         title: 'Data Structures & Algorithms in C++',
         price: '80,000 VND',
         condition: 'Like New',
@@ -99,6 +116,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-08',
+        itemCode: 'EL5T8V1W', // EL: Electronics
         title: 'Wireless Bluetooth Over-ear Headphones',
         price: '350,000 VND',
         condition: '99% New',
@@ -109,6 +127,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-09',
+        itemCode: 'FA3X7Y9Z', // FA: Fashion
         title: 'Unisex University Hoodie Sweatshirt',
         price: '180,000 VND',
         condition: 'Discounted',
@@ -119,6 +138,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-10',
+        itemCode: 'DL8A2C4D', // DL: Dorm & Living
         title: 'Ergonomic Mesh Swivel Chair',
         price: '450,000 VND',
         condition: 'Like New',
@@ -129,6 +149,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-11',
+        itemCode: 'EL1E3F6G', // EL: Electronics
         title: 'iPhone 11 Pro 64GB Midnight Green',
         price: '4,800,000 VND',
         condition: '95% New',
@@ -139,6 +160,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-12',
+        itemCode: 'BH7H9J2K', // BH: Beauty & Health
         title: 'Mini Ionic Hair Dryer 1200W',
         price: '140,000 VND',
         condition: 'Like New',
@@ -149,6 +171,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-13',
+        itemCode: 'BH4M6N8P', // BH: Beauty & Health
         title: 'Smart Digital Bluetooth Body Scale',
         price: '120,000 VND',
         condition: '99% New',
@@ -159,6 +182,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-14',
+        itemCode: 'FD9R2S4T', // FD: Food & Drinks
         title: 'Da Lat Dried Fruit & Snack Mix (500g)',
         price: '65,000 VND',
         condition: 'Unopened',
@@ -169,6 +193,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-15',
+        itemCode: 'FD5V7W9X', // FD: Food & Drinks
         title: 'Highlands Coffee Gift Voucher (100k)',
         price: '70,000 VND',
         condition: 'Valid till Dec',
@@ -179,6 +204,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     },
     {
         id: 'prod-16',
+        itemCode: 'DL3Z6A8B', // DL: Dorm & Living
         title: 'Foldable Student Study Bed-Desk',
         price: '150,000 VND',
         condition: '98% New',

@@ -16,11 +16,19 @@ export interface UserDto {
   commonArea?: string | null;
   dormitory?: string | null;
   role: number;
-  roleName: 'User' | 'Admin' | 'AiService' | string;
+  roleName: 'User' | 'Admin' | 'AiService' | 'Moderator' | string;
+  isAdmin?: boolean;
+  isModerator?: boolean;
+  isStaff?: boolean;
   status: number;
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt?: string | null;
+  sellerStatus?: number;
+  sellerStatusName?: string;
+  canSell?: boolean;
+  banReason?: string | null;
+  isBanned?: boolean;
 }
 
 export interface AuthResultDto {
@@ -72,9 +80,29 @@ export interface ResendVerificationCodeRequestDto {
   email: string;
 }
 
+export interface ForgotPasswordRequestDto {
+  email: string;
+}
+
+export interface VerifyResetCodeRequestDto {
+  email: string;
+  code: string;
+}
+
+export interface ResetPasswordRequestDto {
+  email: string;
+  code: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface GoogleLoginRequestDto {
+  idToken: string;
+}
+
 export interface ApiErrorResponse {
   success?: boolean;
   message?: string;
   code?: string;
-  errors?: string[];
+  errors?: Array<string | { field?: string; message?: string }>;
 }

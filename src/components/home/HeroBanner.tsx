@@ -47,12 +47,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                     <div className="w-full lg:max-w-xl text-center lg:text-left">
 
                         {/* Top Badge: Warm Caramel Beige Badge */}
-                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F5A764]/20 border border-[#F5A764]/40 text-[#A85A24] font-bold text-xs sm:text-sm tracking-wider uppercase shadow-2xs">
+                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F5A764]/20 border border-[#F5A764]/40 text-[#A85A24] font-semibold text-xs tracking-wider uppercase shadow-2xs">
                             <span>{t.hero.badge}</span>
                         </div>
 
                         {/* Headline */}
-                        <h1 className="text-2xl sm:text-4xl lg:text-[40px] xl:text-[46px] font-extrabold text-[#2A211B] tracking-tight leading-[1.18] mt-3 sm:mt-4">
+                        <h1 className="font-serif text-2xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-bold text-[#2A211B] tracking-tight leading-[1.18] mt-3 sm:mt-4">
                             <span className="block">{t.hero.headlinePart1}</span>
                             <span className="block text-[#C46A28] drop-shadow-xs mt-1 sm:mt-1.5">{t.hero.headlinePart2}</span>
                         </h1>
