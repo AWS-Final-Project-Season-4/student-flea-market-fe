@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Student Flea Market - Buy, sell, and exchange textbooks, student essentials, and dorm gear. Trao đổi đồ dùng sinh viên tiết kiệm và an toàn.",
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg?v=2', type: 'image/svg+xml' },
     ],
   },
 };
@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className="h-full antialiased" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
