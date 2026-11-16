@@ -13,10 +13,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
     const t = DICTIONARY[language];
 
     return (
-        <section className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#FBF7F0] via-[#F4E9DC] to-[#E8D7C3] border border-[#E5D5C2] text-[#2A211B] shadow-xl shadow-[#8C5E3C]/8">
+        <section className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#FBF7F0] via-[#F4E9DC] to-[#E8D7C3] dark:from-stone-900 dark:via-stone-900 dark:to-stone-800 border border-[#E5D5C2] dark:border-stone-700 text-[#2A211B] dark:text-stone-100 shadow-xl shadow-[#8C5E3C]/8 dark:shadow-black/40 transition-colors">
 
             {/* Subtle Organic Wave Overlays */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30 dark:opacity-10">
                 <svg
                     className="absolute w-[180%] h-full -top-1/4 -left-1/4"
                     viewBox="0 0 1000 600"
@@ -47,18 +47,18 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                     <div className="w-full lg:max-w-xl text-center lg:text-left">
 
                         {/* Top Badge: Warm Caramel Beige Badge */}
-                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F5A764]/20 border border-[#F5A764]/40 text-[#A85A24] font-semibold text-xs tracking-wider uppercase shadow-2xs">
+                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F5A764]/20 border border-[#F5A764]/40 text-[#A85A24] dark:text-[#F5A764] font-semibold text-xs tracking-wider uppercase shadow-2xs">
                             <span>{t.hero.badge}</span>
                         </div>
 
                         {/* Headline */}
-                        <h1 className="font-serif text-2xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-bold text-[#2A211B] tracking-tight leading-[1.18] mt-3 sm:mt-4">
+                        <h1 className="font-serif text-2xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-bold text-[#2A211B] dark:text-stone-100 tracking-tight leading-[1.18] mt-3 sm:mt-4">
                             <span className="block">{t.hero.headlinePart1}</span>
-                            <span className="block text-[#C46A28] drop-shadow-xs mt-1 sm:mt-1.5">{t.hero.headlinePart2}</span>
+                            <span className="block text-[#C46A28] dark:text-[#F5A764] drop-shadow-xs mt-1 sm:mt-1.5">{t.hero.headlinePart2}</span>
                         </h1>
 
                         {/* Subtitle */}
-                        <p className="text-[#6D5D52] text-xs sm:text-sm md:text-base max-w-lg mt-3 leading-relaxed mx-auto lg:mx-0">
+                        <p className="text-[#6D5D52] dark:text-stone-300 text-xs sm:text-sm md:text-base max-w-lg mt-3 leading-relaxed mx-auto lg:mx-0">
                             {t.hero.subtitle}
                         </p>
 
@@ -81,10 +81,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                             <button
                                 type="button"
                                 onClick={onPostItemClick}
-                                className="bg-white/90 hover:bg-white border border-[#D5BEA8] text-[#2A211B] font-semibold px-5 sm:px-6 py-2.5 rounded-full shadow-2xs hover:shadow-xs flex items-center gap-2 transition-all active:scale-98 text-xs sm:text-sm cursor-pointer"
+                                className="bg-white/90 dark:bg-stone-800/90 hover:bg-white dark:hover:bg-stone-800 border border-[#D5BEA8] dark:border-stone-600 text-[#2A211B] dark:text-stone-100 font-semibold px-5 sm:px-6 py-2.5 rounded-full shadow-2xs hover:shadow-xs flex items-center gap-2 transition-all active:scale-98 text-xs sm:text-sm cursor-pointer"
                             >
                                 <span>{t.hero.btnPost}</span>
-                                <Plus className="w-4 h-4 text-[#C46A28]" />
+                                <Plus className="w-4 h-4 text-[#C46A28] dark:text-[#F5A764]" />
                             </button>
                         </div>
 

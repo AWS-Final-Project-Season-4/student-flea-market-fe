@@ -2,12 +2,11 @@
 
 Last Updated: October 24, 2026
 
-## 1. Introduction and Acceptance of Terms
-Welcome to Student Flea Market ("Platform", "we", "us"). By registering an account, accessing, or using our marketplace platform, you ("User", "you") agree to be bound by these Terms of Service and all applicable laws of the Socialist Republic of Vietnam (including Decree No. 52/2013/ND-CP and Decree No. 85/2021/ND-CP regarding e-commerce). If you do not agree to these terms, please discontinue platform use immediately.
+## 1. Introduction and Accepted Terms
+Welcome to **Student Flea Market** ("Platform", "we", "us"). By registering an account, accessing, or using our marketplace platform, you ("User", "you") agree to be bound by these Terms of Service and all applicable laws of the Socialist Republic of Vietnam (including Decree No. 52/2013/ND-CP and Decree No. 85/2021/ND-CP regarding e-commerce). If you do not agree to these terms, please discontinue platform use immediately.
 
 ## 2. Eligibility & Account Verification
 - You must be at least 15 years old with civil act capacity under Vietnamese civil law.
-- For specialized student perks, you may be required to verify your active student status via an institutional email (@edu.vn) or student ID card.
 - You are solely responsible for maintaining the confidentiality of your login credentials.
 
 ## 3. Marketplace Intermediary Role

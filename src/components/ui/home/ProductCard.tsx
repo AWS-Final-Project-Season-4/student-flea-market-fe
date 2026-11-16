@@ -32,11 +32,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
     const t = DICTIONARY[language];
 
     return (
-        <div className="group bg-white rounded-2xl border border-slate-100 p-2.5 sm:p-3 shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
+        <div className="group bg-white dark:bg-stone-900 rounded-2xl border border-slate-100 dark:border-stone-800 p-2.5 sm:p-3 shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
 
             {/* Top Media Container */}
             <div>
-                <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 mb-3">
+                <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-stone-800 mb-3">
 
                     {/* Product Thumbnail */}
                     <img
@@ -80,20 +80,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     {/* Title */}
                     <h3
                         title={product.title}
-                        className="font-serif font-bold text-sm sm:text-base text-[#2A211B] line-clamp-1 group-hover:text-[#C46A28] transition-colors"
+                        className="font-serif font-bold text-sm sm:text-base text-[#2A211B] dark:text-stone-100 line-clamp-1 group-hover:text-[#C46A28] dark:group-hover:text-[#F5A764] transition-colors"
                     >
                         {product.title}
                     </h3>
 
                     {/* Price and Item Code Badge */}
                     <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm sm:text-base font-extrabold text-orange-600">
+                        <div className="text-sm sm:text-base font-extrabold text-orange-600 dark:text-[#F5A764]">
                             {product.price}
                         </div>
                         {product.itemCode && (
                             <span
                                 title={`${language === 'vi' ? 'Mã món đồ' : 'Item Code'}: ${formatItemCodeDisplay(product.itemCode)}`}
-                                className="font-mono text-[10px] sm:text-[11px] font-bold text-[#A8744F] bg-[#FAF7F2] border border-[#EADBCE] px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
+                                className="font-mono text-[10px] sm:text-[11px] font-bold text-[#A8744F] dark:text-[#F5A764] bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
                             >
                                 {formatItemCodeDisplay(product.itemCode)}
                             </span>
@@ -101,8 +101,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     </div>
 
                     {/* Campus Location */}
-                    <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 pb-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 dark:text-stone-400 pb-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500 shrink-0" />
                         <span className="truncate">{formatCardLocation(product.location, language)}</span>
                     </div>
                 </div>

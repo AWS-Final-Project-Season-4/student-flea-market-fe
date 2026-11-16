@@ -137,7 +137,7 @@ function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 font-sans flex flex-col selection:bg-amber-100 selection:text-amber-800">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-stone-950 font-sans flex flex-col selection:bg-amber-100 selection:text-amber-800 transition-colors duration-200">
 
       {/* 1. Global Navigation Bar */}
       <Navbar onPostAdClick={() => setIsPostAdOpen(true)} />
@@ -191,23 +191,23 @@ function HomeContent() {
 
         {/* Search Results Notice Banner if search query is active */}
         {searchQuery.trim() && (
-          <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#FAF7F2] border border-[#EADBCE] text-[#2A211B] shadow-2xs animate-in fade-in duration-200">
+          <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#FAF7F2] dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-800 text-[#2A211B] dark:text-stone-100 shadow-2xs animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-[#F5A764] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Search className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-xs sm:text-sm font-medium">
-                  {t.home.searchingFor} <span className="font-bold text-[#2A211B]">"{searchQuery}"</span>
+                  {t.home.searchingFor} <span className="font-bold text-[#2A211B] dark:text-stone-100">&ldquo;{searchQuery}&rdquo;</span>
                 </p>
-                <p className="text-[11px] text-[#7A6D63]">
+                <p className="text-[11px] text-[#7A6D63] dark:text-stone-400">
                   {products.length} {t.home.matchingFound}
                 </p>
               </div>
             </div>
             <Link
               href="/"
-              className="text-xs font-semibold text-[#8C532B] hover:text-[#6D3D1E] bg-white hover:bg-amber-50/50 border border-[#EADBCE] px-3 py-1.5 rounded-xl transition cursor-pointer"
+              className="text-xs font-semibold text-[#8C532B] dark:text-[#F5A764] hover:text-[#6D3D1E] bg-white dark:bg-stone-800 hover:bg-amber-50/50 border border-[#EADBCE] dark:border-stone-700 px-3 py-1.5 rounded-xl transition cursor-pointer"
             >
               {t.home.clearFilter}
             </Link>
@@ -217,10 +217,10 @@ function HomeContent() {
         {/* 4. Products Grid Section Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2A211B] tracking-tight">
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2A211B] dark:text-stone-100 tracking-tight">
               {searchQuery.trim() ? t.home.searchResultsTitle : t.home.recentTitle}
             </h2>
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF7F2] text-[#8C532B] border border-[#EADBCE]">
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-stone-900 text-[#8C532B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700">
               {products.length} {t.home.itemsCount}
             </span>
           </div>
@@ -230,15 +230,15 @@ function HomeContent() {
             <button
               type="button"
               onClick={() => setIsPostItemOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#A85A24] border border-amber-200 text-xs font-semibold transition cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-[#A85A24] dark:text-[#F5A764] border border-amber-200 dark:border-amber-800 text-xs font-semibold transition cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-[#C46A28]" />
+              <Plus className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764]" />
               <span>{language === 'vi' ? 'Đăng món đồ mới' : 'Post New Item'}</span>
             </button>
 
             <button
               type="button"
-              className="text-xs font-semibold text-[#A8744F] hover:text-[#7A4924] flex items-center gap-1 group cursor-pointer"
+              className="text-xs font-semibold text-[#A8744F] dark:text-[#F5A764] hover:text-[#7A4924] flex items-center gap-1 group cursor-pointer"
             >
               <span>{t.home.seeAll}</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -252,12 +252,12 @@ function HomeContent() {
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl border border-slate-100 p-3 shadow-2xs animate-pulse flex flex-col justify-between h-64"
+                className="bg-white dark:bg-stone-900 rounded-2xl border border-slate-100 dark:border-stone-800 p-3 shadow-2xs animate-pulse flex flex-col justify-between h-64"
               >
-                <div className="w-full aspect-square rounded-xl bg-slate-100 mb-3" />
+                <div className="w-full aspect-square rounded-xl bg-slate-100 dark:bg-stone-800 mb-3" />
                 <div className="space-y-2">
-                  <div className="w-3/4 h-3 rounded-md bg-slate-200" />
-                  <div className="w-1/2 h-3 rounded-md bg-slate-200" />
+                  <div className="w-3/4 h-3 rounded-md bg-slate-200 dark:bg-stone-700" />
+                  <div className="w-1/2 h-3 rounded-md bg-slate-200 dark:bg-stone-700" />
                 </div>
               </div>
             ))}
@@ -276,11 +276,11 @@ function HomeContent() {
 
         {/* Empty state when filter or search has no items */}
         {!isLoadingItems && products.length === 0 && (
-          <div className="w-full py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200 flex flex-col items-center">
-            <p className="text-sm text-slate-700 font-semibold mb-1">
+          <div className="w-full py-16 text-center bg-white dark:bg-stone-900 rounded-2xl border border-dashed border-slate-200 dark:border-stone-700 flex flex-col items-center">
+            <p className="text-sm text-slate-700 dark:text-stone-200 font-semibold mb-1">
               {t.home.emptyTitle}
             </p>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-slate-500 dark:text-stone-400 mb-4">
               {t.home.emptySubtitle}
             </p>
             <button
@@ -297,24 +297,18 @@ function HomeContent() {
       </main>
 
       {/* Modern Compact Footer */}
-      <footer className="mt-16 border-t border-slate-200 bg-white py-8 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer className="mt-16 border-t border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-950 py-8 text-xs text-slate-500 dark:text-stone-400 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <BrandLogo variant="compact" size="sm" />
-            <span className="hidden sm:inline text-slate-300">|</span>
+            <span className="hidden sm:inline text-slate-300 dark:text-stone-700">|</span>
             <p>© 2026 Student Flea Market. {t.home.footerDesc}</p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 font-medium text-slate-600">
-            <Link href="/policies/term-of-service" className="hover:text-blue-600 transition-colors">
-              {t.home.termsOfService}
-            </Link>
-            <Link href="/policies/privacy-policy" className="hover:text-blue-600 transition-colors">
-              {t.home.privacyPolicy}
-            </Link>
-            <Link href="/policies/refund-dispute" className="hover:text-blue-600 transition-colors">
-              {t.home.refundDispute}
-            </Link>
-          </div>
+          <p className="text-[11px] text-slate-400 dark:text-stone-500">
+            {language === 'vi'
+              ? 'Điều khoản & Chính sách được quản lý tại mục Cài đặt'
+              : 'Terms & Policies are available in Settings'}
+          </p>
         </div>
       </footer>
 

@@ -30,11 +30,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var l=localStorage.getItem('sfm_lang');if(l){document.documentElement.lang=l;}}catch(e){}})();`,
+            __html: `(function(){try{var l=localStorage.getItem('sfm_lang');if(l){document.documentElement.lang=l;}var t=localStorage.getItem('sfm_theme');var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();`,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#FAF7F2] dark:bg-stone-950 text-[#2A211B] dark:text-stone-100 transition-colors duration-200" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

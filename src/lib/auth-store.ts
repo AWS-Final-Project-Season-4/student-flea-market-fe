@@ -72,6 +72,7 @@ interface AuthState {
   verifyResetCode: (email: string, code: string) => Promise<{ message: string }>;
   resetPassword: (payload: ResetPasswordRequestDto) => Promise<{ message: string }>;
   logout: () => Promise<void>;
+  clearSession: () => void;
   setUser: (user: UserDto) => void;
   clearError: () => void;
 }
@@ -349,6 +350,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: null,
       });
     }
+  },
+
+  clearSession: () => {
+    clearStoredAuth();
+    set({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+    });
   },
 
   setUser: (user: UserDto) => {

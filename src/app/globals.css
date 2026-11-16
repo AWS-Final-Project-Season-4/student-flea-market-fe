@@ -135,6 +135,9 @@
   html {
     @apply font-sans;
   }
+  html.dark {
+    color-scheme: dark;
+  }
 }
 
 /* User's signature wide-tracked small accent typography */

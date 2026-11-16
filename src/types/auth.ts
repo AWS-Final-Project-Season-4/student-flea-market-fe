@@ -106,3 +106,19 @@ export interface ApiErrorResponse {
   code?: string;
   errors?: Array<string | { field?: string; message?: string }>;
 }
+
+export interface UpdateProfileRequestDto {
+  fullName?: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
+  schoolName?: string;
+  studentCode?: string;
+  commonArea?: string;
+  dormitory?: string;
+}
+
+export interface ChangePasswordRequestDto {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}

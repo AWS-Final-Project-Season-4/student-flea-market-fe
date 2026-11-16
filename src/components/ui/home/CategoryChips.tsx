@@ -79,7 +79,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
 
     // Render corresponding icon dynamically
     const renderCategoryIcon = (iconName: string, isActive: boolean) => {
-        const iconClass = `w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#7A6D63]'}`;
+        const iconClass = `w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#7A6D63] dark:text-stone-400'}`;
         switch (iconName) {
             case 'BookOpen':
                 return <BookOpen className={iconClass} />;
@@ -107,11 +107,11 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
         <div className="relative w-full py-2 group">
             {/* Left Scroll Navigation Button */}
             {canScrollLeft && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center pr-2 bg-gradient-to-r from-white via-white/90 to-transparent h-full">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center pr-2 bg-gradient-to-r from-white dark:from-stone-950 via-white/90 dark:via-stone-950/90 to-transparent h-full">
                     <button
                         type="button"
                         onClick={() => handleScroll('left')}
-                        className="w-8 h-8 rounded-full bg-white shadow-md border border-[#EADBCE] text-[#5C4E43] hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                        className="w-8 h-8 rounded-full bg-white dark:bg-stone-900 shadow-md border border-[#EADBCE] dark:border-stone-700 text-[#5C4E43] dark:text-stone-200 hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 flex items-center justify-center transition-all cursor-pointer active:scale-95"
                         aria-label="Scroll left"
                     >
                         <ChevronLeft className="w-4 h-4" />
@@ -138,7 +138,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
                             className={`flex-1 min-w-fit flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 xl:px-3.5 py-2 sm:py-2.5 rounded-full text-xs sm:text-[12.5px] xl:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-2xs ${
                                 isActive
                                     ? 'bg-gradient-to-r from-[#F5A764] to-[#E89650] text-white shadow-md shadow-[#F5A764]/30 border border-[#E89650] scale-[1.01]'
-                                    : 'bg-white text-[#5C4E43] border border-[#EADBCE] hover:border-[#F5A764]/70 hover:bg-[#FAF7F2] hover:text-[#2A211B]'
+                                    : 'bg-white dark:bg-stone-900 text-[#5C4E43] dark:text-stone-200 border border-[#EADBCE] dark:border-stone-800 hover:border-[#F5A764]/70 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 hover:text-[#2A211B] dark:hover:text-stone-100'
                             }`}
                         >
                             {renderCategoryIcon(category.iconName, isActive)}
@@ -150,11 +150,11 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
 
             {/* Right Scroll Navigation Button */}
             {canScrollRight && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center pl-2 bg-gradient-to-l from-white via-white/90 to-transparent h-full">
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center pl-2 bg-gradient-to-l from-white dark:from-stone-950 via-white/90 dark:via-stone-950/90 to-transparent h-full">
                     <button
                         type="button"
                         onClick={() => handleScroll('right')}
-                        className="w-8 h-8 rounded-full bg-white shadow-md border border-[#EADBCE] text-[#5C4E43] hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                        className="w-8 h-8 rounded-full bg-white dark:bg-stone-900 shadow-md border border-[#EADBCE] dark:border-stone-700 text-[#5C4E43] dark:text-stone-200 hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 flex items-center justify-center transition-all cursor-pointer active:scale-95"
                         aria-label="Scroll right"
                     >
                         <ChevronRight className="w-4 h-4" />

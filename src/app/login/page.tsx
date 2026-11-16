@@ -37,6 +37,9 @@ function formatAuthMessage(msg: string | null, lang: 'vi' | 'en'): string | null
         if (msg.includes('Password has been reset successfully')) {
             return 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.';
         }
+        if (msg.includes('Password changed successfully')) {
+            return 'Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.';
+        }
         if (msg.includes('Authentication failed') || msg.includes('check your credentials') || msg.includes('INVALID_CREDENTIALS') || msg.includes('không đúng') || msg.includes('không chính xác')) {
             return 'Email, tên tài khoản hoặc mật khẩu không chính xác.';
         }
@@ -98,6 +101,7 @@ function LoginForm() {
     const authErrorParam = searchParams.get('error');
     const registeredParam = searchParams.get('registered');
     const resetParam = searchParams.get('reset');
+    const passwordChangedParam = searchParams.get('passwordChanged');
 
     const { login, isLoading, error: storeError, clearError, initAuth } = useAuthStore();
     const { language, setLanguage } = useLanguageStore();
@@ -117,6 +121,9 @@ function LoginForm() {
         }
         if (resetParam === 'true') {
             return 'Password has been reset successfully! You can now login.';
+        }
+        if (passwordChangedParam === 'true') {
+            return 'Password changed successfully! Please log in again with your new password.';
         }
         return null;
     });

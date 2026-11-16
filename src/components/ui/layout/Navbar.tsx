@@ -6,17 +6,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Search,
     ChevronDown,
-    PlusCircle,
     ShoppingCart,
     Menu,
     X,
     Shield,
     LogOut,
     TrendingUp,
-    Plus,
+    User,
+    Settings,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
+import { useThemeStore } from '@/lib/theme-store';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { AuthRequiredModal, AuthRequiredReason } from '@/components/ui/auth/AuthRequiredModal';
 
@@ -130,23 +131,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(currentQuery);
+    const [prevUrlQuery, setPrevUrlQuery] = useState(currentQuery);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isAuthRequiredOpen, setIsAuthRequiredOpen] = useState(false);
     const [authRequiredReason, setAuthRequiredReason] = useState<AuthRequiredReason>('cart');
+    const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+
+    if (prevUrlQuery !== currentQuery) {
+        setPrevUrlQuery(currentQuery);
+        setSearchQuery(currentQuery);
+    }
 
     const searchInputRef = useRef<HTMLInputElement | null>(null);
     const searchContainerRef = useRef<HTMLDivElement | null>(null);
     const languageDropdownRef = useRef<HTMLDivElement | null>(null);
+    const profileDropdownRef = useRef<HTMLDivElement | null>(null);
     const { user, isAuthenticated, initAuth, logout } = useAuthStore();
+    const { initTheme } = useThemeStore();
 
     useEffect(() => {
         initAuth();
-    }, [initAuth]);
-
-    // Keep searchQuery in sync with url if it changes
-    useEffect(() => {
-        setSearchQuery(currentQuery);
-    }, [currentQuery]);
+        initTheme();
+    }, [initAuth, initTheme]);
 
     // Focus input and lock body scroll when search overlay opens
     useEffect(() => {
@@ -164,11 +171,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
         }
     }, [isSearchOpen]);
 
-    // Keyboard shortcuts: ESC to close search, Ctrl+K / Cmd+K to open
+    // Keyboard shortcuts: ESC to close search/menus, Ctrl+K / Cmd+K to open search
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isSearchOpen) {
-                setIsSearchOpen(false);
+            if (e.key === 'Escape') {
+                if (isSearchOpen) setIsSearchOpen(false);
+                if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+                if (isLanguageOpen) setIsLanguageOpen(false);
             }
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
@@ -178,9 +187,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isSearchOpen]);
+    }, [isSearchOpen, isProfileMenuOpen, isLanguageOpen]);
 
-    // Close language dropdown on outside click
+    // Close language dropdown and profile menu on outside click
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (
@@ -189,12 +198,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
             ) {
                 setIsLanguageOpen(false);
             }
+            if (
+                profileDropdownRef.current &&
+                !profileDropdownRef.current.contains(e.target as Node)
+            ) {
+                setIsProfileMenuOpen(false);
+            }
         };
-        if (isLanguageOpen) {
+        if (isLanguageOpen || isProfileMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isLanguageOpen]);
+    }, [isLanguageOpen, isProfileMenuOpen]);
 
     // Close search overlay on click/tap outside search container
     useEffect(() => {
@@ -247,7 +262,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
     return (
         <>
-            <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-xs">
+            <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-gray-100 dark:border-stone-800 shadow-xs transition-colors">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20 gap-4">
 
@@ -264,9 +279,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 onClick={() => setIsSearchOpen(true)}
                                 aria-label={t.navbar.searchAria}
                                 title={t.navbar.searchAria}
-                                className="sm:hidden p-2 text-slate-700 hover:text-blue-600 hover:bg-slate-100 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
+                                className="sm:hidden p-2 text-slate-700 dark:text-stone-300 hover:text-blue-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-stone-800 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
                             >
-                                <Search className="w-5 h-5 text-slate-600 group-hover:text-blue-600 transition-colors" />
+                                <Search className="w-5 h-5 text-slate-600 dark:text-stone-300 group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors" />
                             </button>
 
                             {/* Desktop Search Bar with Dim Placeholder */}
@@ -275,10 +290,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 onClick={() => setIsSearchOpen(true)}
                                 aria-label={t.navbar.searchAria}
                                 title={t.navbar.searchAria}
-                                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-100/90 hover:bg-slate-100 border border-slate-200/80 text-slate-400 hover:text-slate-600 transition-all cursor-pointer w-36 md:w-48 lg:w-60 xl:w-72 group shadow-2xs"
+                                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-100/90 dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 border border-slate-200/80 dark:border-stone-700 text-slate-400 dark:text-stone-400 hover:text-slate-600 dark:hover:text-stone-200 transition-all cursor-pointer w-36 md:w-48 lg:w-60 xl:w-72 group shadow-2xs"
                             >
-                                <Search className="w-4 h-4 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
-                                <span className="text-xs sm:text-sm text-slate-400 group-hover:text-slate-500 truncate">
+                                <Search className="w-4 h-4 text-slate-400 dark:text-stone-400 group-hover:text-slate-600 dark:group-hover:text-stone-200 shrink-0 transition-colors" />
+                                <span className="text-xs sm:text-sm text-slate-400 dark:text-stone-400 group-hover:text-slate-500 dark:group-hover:text-stone-300 truncate">
                                     {t.navbar.searchPlaceholder}
                                 </span>
                             </button>
@@ -289,29 +304,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     type="button"
                                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                                     title={t.navbar.langToggle}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-stone-700 hover:border-slate-300 dark:hover:border-stone-600 bg-white dark:bg-stone-900 hover:bg-slate-50 dark:hover:bg-stone-800 text-slate-800 dark:text-stone-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
                                 >
                                     {language === 'vi' ? <VietnamFlag /> : <UKFlag />}
                                     <span className="tracking-wider font-semibold">{language === 'vi' ? 'VIE' : 'ENG'}</span>
-                                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                                    <ChevronDown className="w-3 h-3 text-slate-400 dark:text-stone-400" />
                                 </button>
 
                                 {isLanguageOpen && (
-                                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-stone-900 rounded-2xl shadow-xl border border-slate-100 dark:border-stone-700 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setLanguage('vi');
                                                 setIsLanguageOpen(false);
                                             }}
-                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${language === 'vi' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
+                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-stone-800 transition cursor-pointer ${language === 'vi' ? 'font-bold text-blue-600 dark:text-amber-400 bg-blue-50/50 dark:bg-stone-800/70' : 'text-slate-700 dark:text-stone-200'
                                                 }`}
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <VietnamFlag />
                                                 <span>Tiếng Việt</span>
                                             </span>
-                                            {language === 'vi' && <span className="text-blue-600 text-xs font-bold">✓</span>}
+                                            {language === 'vi' && <span className="text-blue-600 dark:text-amber-400 text-xs font-bold">✓</span>}
                                         </button>
                                         <button
                                             type="button"
@@ -319,21 +334,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 setLanguage('en');
                                                 setIsLanguageOpen(false);
                                             }}
-                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition cursor-pointer ${language === 'en' ? 'font-bold text-blue-600 bg-blue-50/50' : 'text-slate-700'
+                                            className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-stone-800 transition cursor-pointer ${language === 'en' ? 'font-bold text-blue-600 dark:text-amber-400 bg-blue-50/50 dark:bg-stone-800/70' : 'text-slate-700 dark:text-stone-200'
                                                 }`}
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <UKFlag />
                                                 <span>English</span>
                                             </span>
-                                            {language === 'en' && <span className="text-blue-600 text-xs font-bold">✓</span>}
+                                            {language === 'en' && <span className="text-blue-600 dark:text-amber-400 text-xs font-bold">✓</span>}
                                         </button>
                                     </div>
                                 )}
                             </div>
 
                             {/* Divider for desktop */}
-                            <div className="hidden md:block w-px h-6 bg-slate-200 mx-0.5" />
+                            <div className="hidden md:block w-px h-6 bg-slate-200 dark:bg-stone-700 mx-0.5" />
 
                             {/* 3. DESKTOP ACTIONS: Admin, Post Ad, Auth, Cart */}
                             <div className="hidden md:flex items-center gap-2 sm:gap-2.5">
@@ -370,30 +385,102 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
                                 {/* Auth State Conditional Rendering */}
                                 {isAuthenticated && user ? (
-                                    <div className="flex items-center gap-2 pl-1">
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#EADBCE]">
-                                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E89650] to-[#F5A764] text-white font-bold flex items-center justify-center text-xs shadow-2xs">
-                                                {user.fullName?.charAt(0) || 'U'}
-                                            </div>
-                                            <span className="text-xs font-semibold text-[#2A211B] max-w-[120px] truncate">
-                                                {user.fullName || user.username || 'Student'}
-                                            </span>
-                                        </div>
+                                    <div ref={profileDropdownRef} className="relative pl-1">
                                         <button
                                             type="button"
-                                            onClick={() => logout()}
-                                            title={t.navbar.logout}
-                                            className="p-2 rounded-xl border border-[#EADBCE] text-[#7A6D63] hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer"
+                                            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                                            aria-expanded={isProfileMenuOpen}
+                                            aria-haspopup="menu"
+                                            title={language === 'vi' ? 'Tài khoản & Cài đặt' : 'Account & Settings'}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FAF7F2] dark:bg-stone-900 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 hover:border-[#E89650] dark:hover:border-[#E89650] transition cursor-pointer"
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            {user.avatarUrl && failedAvatarUrl !== user.avatarUrl ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img
+                                                    src={user.avatarUrl}
+                                                    alt={user.fullName || user.username || 'User'}
+                                                    referrerPolicy="no-referrer"
+                                                    onError={() => setFailedAvatarUrl(user.avatarUrl ?? null)}
+                                                    className="w-7 h-7 rounded-full object-cover shadow-2xs shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E89650] to-[#F5A764] text-white font-bold flex items-center justify-center text-xs shadow-2xs shrink-0">
+                                                    {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                                                </div>
+                                            )}
+                                            <span className="text-xs font-semibold text-[#2A211B] dark:text-stone-100 max-w-[130px] truncate">
+                                                {user.fullName || user.username || 'Student'}
+                                            </span>
+                                            <ChevronDown
+                                                className={`w-3.5 h-3.5 text-[#7A6D63] dark:text-stone-400 transition-transform duration-150 ${
+                                                    isProfileMenuOpen ? 'rotate-180' : ''
+                                                }`}
+                                            />
                                         </button>
+
+                                        {isProfileMenuOpen && (
+                                            <div
+                                                role="menu"
+                                                className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-700 shadow-[0_14px_38px_rgba(42,33,27,0.16)] dark:shadow-black/50 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                                            >
+                                                {/* Account Summary Header */}
+                                                <div className="px-4 py-2.5 border-b border-[#F0E4D7] dark:border-stone-800">
+                                                    <p className="text-xs font-bold text-[#2A211B] dark:text-stone-100 truncate">
+                                                        {user.fullName || user.username || 'Student'}
+                                                    </p>
+                                                    <p className="text-[11px] text-[#7A6D63] dark:text-stone-400 truncate mt-0.5">
+                                                        {user.email}
+                                                    </p>
+                                                </div>
+
+                                                {/* Profile */}
+                                                <div className="py-1">
+                                                    <Link
+                                                        href="/profile"
+                                                        role="menuitem"
+                                                        onClick={() => setIsProfileMenuOpen(false)}
+                                                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-[#2A211B] dark:text-stone-200 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition"
+                                                    >
+                                                        <User className="w-4 h-4 text-[#B8652B] dark:text-[#F5A764]" />
+                                                        <span>{language === 'vi' ? 'Hồ sơ cá nhân' : 'Profile'}</span>
+                                                    </Link>
+
+                                                    {/* Settings */}
+                                                    <Link
+                                                        href="/settings"
+                                                        role="menuitem"
+                                                        onClick={() => setIsProfileMenuOpen(false)}
+                                                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-[#2A211B] dark:text-stone-200 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition"
+                                                    >
+                                                        <Settings className="w-4 h-4 text-[#B8652B] dark:text-[#F5A764]" />
+                                                        <span>{language === 'vi' ? 'Cài đặt' : 'Settings'}</span>
+                                                    </Link>
+                                                </div>
+
+                                                {/* Logout inside Dropdown */}
+                                                <div className="pt-1 border-t border-[#F0E4D7] dark:border-stone-800">
+                                                    <button
+                                                        type="button"
+                                                        role="menuitem"
+                                                        onClick={() => {
+                                                            setIsProfileMenuOpen(false);
+                                                            logout();
+                                                        }}
+                                                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                                                    >
+                                                        <LogOut className="w-4 h-4" />
+                                                        <span>{t.navbar.logout}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <>
                                         {/* Login Button */}
                                         <Link
                                             href="/login"
-                                            className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50 text-sm font-semibold transition-colors"
+                                            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 text-slate-800 dark:text-stone-200 hover:border-slate-300 dark:hover:border-stone-600 hover:bg-slate-50 dark:hover:bg-stone-800 text-sm font-semibold transition-colors"
                                         >
                                             {t.navbar.login}
                                         </Link>
@@ -401,7 +488,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         {/* Register Button */}
                                         <Link
                                             href="/register"
-                                            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-xs transition-colors"
+                                            className="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-[#F5A764] hover:bg-slate-800 dark:hover:bg-[#E89650] text-white dark:text-stone-950 text-sm font-semibold shadow-xs transition-colors"
                                         >
                                             {t.navbar.register}
                                         </Link>
@@ -421,9 +508,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             }
                                         }}
                                         aria-label={t.navbar.cartAria}
-                                        className="relative p-2.5 text-slate-700 hover:text-[#C46A28] hover:bg-[#FAF7F2] rounded-full transition-colors ml-0.5 flex items-center justify-center cursor-pointer"
+                                        className="relative p-2.5 text-slate-700 dark:text-stone-200 hover:text-[#C46A28] dark:hover:text-[#F5A764] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 rounded-full transition-colors ml-0.5 flex items-center justify-center cursor-pointer"
                                     >
-                                        <ShoppingCart className="w-5 h-5 text-slate-700 group-hover/cart:text-[#C46A28] transition-colors" />
+                                        <ShoppingCart className="w-5 h-5 text-slate-700 dark:text-stone-200 group-hover/cart:text-[#C46A28] dark:group-hover/cart:text-[#F5A764] transition-colors" />
                                         <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
                                             0
                                         </span>
@@ -431,9 +518,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
                                     {/* Shopee-style Floating Popover on Hover */}
                                     <div className="absolute right-0 top-full pt-2.5 z-50 invisible opacity-0 translate-y-1 group-hover/cart:visible group-hover/cart:opacity-100 group-hover/cart:translate-y-0 transition-all duration-200 pointer-events-none group-hover/cart:pointer-events-auto">
-                                        <div className="w-[300px] sm:w-[320px] bg-white rounded-2xl shadow-[0_12px_36px_rgba(42,33,27,0.14)] border border-[#EADBCE] p-6 text-center relative overflow-hidden">
+                                        <div className="w-[300px] sm:w-[320px] bg-white dark:bg-stone-900 rounded-2xl shadow-[0_12px_36px_rgba(42,33,27,0.14)] border border-[#EADBCE] dark:border-stone-700 p-6 text-center relative overflow-hidden">
                                             {/* Caret / Tooltip Arrow */}
-                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-t border-l border-[#EADBCE] rotate-45" />
+                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white dark:bg-stone-900 border-t border-l border-[#EADBCE] dark:border-stone-700 rotate-45" />
 
                                             {/* Cute Kawaii Illustration (Shopee style) */}
                                             <div className="flex justify-center mb-3">
@@ -441,10 +528,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             </div>
 
                                             {/* No Products Yet Header */}
-                                            <p className="font-serif text-base font-bold text-[#2A211B] mb-1">
+                                            <p className="font-serif text-base font-bold text-[#2A211B] dark:text-stone-100 mb-1">
                                                 {language === 'vi' ? 'Chưa Có Sản Phẩm' : 'No Products Yet'}
                                             </p>
-                                            <p className="text-xs text-[#7A6D63] mb-4 leading-relaxed">
+                                            <p className="text-xs text-[#7A6D63] dark:text-stone-400 mb-4 leading-relaxed">
                                                 {language === 'vi'
                                                     ? 'Giỏ hàng của bạn đang trống. Hãy bắt đầu mua sắm nào!'
                                                     : 'Your shopping cart is empty. Shopping Now!'}
@@ -483,7 +570,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             router.push('/cart');
                                         }
                                     }}
-                                    className="relative p-2 text-slate-700 hover:bg-slate-100 rounded-full cursor-pointer"
+                                    className="relative p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full cursor-pointer"
                                     aria-label={t.navbar.cartAria}
                                 >
                                     <ShoppingCart className="w-5 h-5" />
@@ -494,7 +581,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 <button
                                     type="button"
                                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                    className="p-2 text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+                                    className="p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg cursor-pointer"
                                     aria-label="Toggle menu"
                                 >
                                     {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -507,7 +594,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
                     {/* Mobile Dropdown Navigation Menu */}
                     {isMobileMenuOpen && (
-                        <div className="md:hidden py-4 border-t border-slate-100 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div className="md:hidden py-4 border-t border-slate-100 dark:border-stone-800 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-150">
                             {isAdmin && (
                                 <Link
                                     href="/admin"
@@ -542,9 +629,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 </Link>
                             )}
                             {isAuthenticated && user ? (
-                                <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                                    <div className="text-xs font-semibold text-slate-700 px-1">
+                                <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-stone-800">
+                                    <div className="text-xs font-semibold text-slate-700 dark:text-stone-300 px-1">
                                         {t.navbar.signedInAs} {user.fullName || user.email}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Link
+                                            href="/profile"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
+                                        >
+                                            <User className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
+                                            <span>{language === 'vi' ? 'Hồ sơ' : 'Profile'}</span>
+                                        </Link>
+                                        <Link
+                                            href="/settings"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
+                                        >
+                                            <Settings className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
+                                            <span>{language === 'vi' ? 'Cài đặt' : 'Settings'}</span>
+                                        </Link>
                                     </div>
                                     <button
                                         type="button"
@@ -552,9 +657,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             logout();
                                             setIsMobileMenuOpen(false);
                                         }}
-                                        className="w-full py-2 px-4 rounded-xl border border-rose-200 text-rose-600 text-center font-semibold text-xs cursor-pointer"
+                                        className="w-full py-2 px-4 rounded-xl border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 text-center font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                                     >
-                                        {t.navbar.logout}
+                                        <LogOut className="w-3.5 h-3.5" />
+                                        <span>{t.navbar.logout}</span>
                                     </button>
                                 </div>
                             ) : (
@@ -562,14 +668,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     <Link
                                         href="/login"
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="w-full py-2.5 px-4 rounded-xl border border-slate-200 text-slate-800 text-center font-medium text-sm"
+                                        className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-stone-700 text-slate-800 dark:text-stone-200 text-center font-medium text-sm"
                                     >
                                         {t.navbar.login}
                                     </Link>
                                     <Link
                                         href="/register"
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white text-center font-medium text-sm"
+                                        className="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-[#F5A764] text-white dark:text-stone-950 text-center font-medium text-sm"
                                     >
                                         {t.navbar.register}
                                     </Link>
@@ -587,7 +693,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                 <div className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200">
 
                     {/* 1. White Top Search Bar Header (Đồng bộ nền trắng sáng với website) */}
-                    <div ref={searchContainerRef} className="w-full bg-white border-b border-slate-200 shadow-xl relative z-20">
+                    <div ref={searchContainerRef} className="w-full bg-white dark:bg-stone-950 border-b border-slate-200 dark:border-stone-800 shadow-xl relative z-20">
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4">
 
                             {/* Search Form */}
@@ -596,7 +702,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 className="flex-1 flex items-center gap-3 bg-transparent"
                             >
                                 {/* Magnifying Glass Icon (Slate Outline) */}
-                                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500 shrink-0" />
+                                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500 dark:text-stone-400 shrink-0" />
 
                                 {/* Input Field */}
                                 <input
@@ -611,7 +717,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         }
                                     }}
                                     placeholder={t.navbar.searchPlaceholder}
-                                    className="w-full bg-transparent text-slate-900 placeholder-slate-400 text-sm sm:text-base md:text-lg outline-none font-normal caret-blue-600"
+                                    className="w-full bg-transparent text-slate-900 dark:text-stone-100 placeholder-slate-400 dark:placeholder-stone-500 text-sm sm:text-base md:text-lg outline-none font-normal caret-blue-600"
                                 />
 
                                 {/* Clear Input button if query is not empty */}
@@ -619,7 +725,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     <button
                                         type="button"
                                         onClick={handleClearSearch}
-                                        className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                                        className="text-slate-400 hover:text-slate-700 dark:hover:text-stone-200 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
                                         title="Clear text"
                                     >
                                         <X className="w-4 h-4" />
@@ -630,8 +736,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
                         {/* Popular / Trending Suggestions Tray */}
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-4 pt-1 flex items-center gap-2 overflow-x-auto no-scrollbar">
-                            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1 shrink-0">
-                                <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-stone-400 uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-[#F5A764]" />
                                 {t.navbar.suggestions}
                             </span>
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -640,7 +746,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         key={tag}
                                         type="button"
                                         onClick={() => handleSelectTag(tag)}
-                                        className="text-xs px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/90 hover:border-blue-200 font-medium transition cursor-pointer shrink-0"
+                                        className="text-xs px-3 py-1.5 rounded-full bg-slate-100 dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-200 hover:text-blue-700 dark:hover:text-[#F5A764] border border-slate-200/90 dark:border-stone-700 hover:border-blue-200 dark:hover:border-stone-600 font-medium transition cursor-pointer shrink-0"
                                     >
                                         {tag}
                                     </button>
