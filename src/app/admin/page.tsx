@@ -6,136 +6,159 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Users,
-  Package,
-  Clock,
-  TrendingUp,
-  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
   ArrowUpRight,
-  Sparkles,
-  Search,
-  BookOpen,
-  Laptop,
-  Home,
-  Shirt,
   Check,
+  CheckCircle,
+  Clock,
+  FolderKanban,
+  Loader2,
+  Package,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  UserCheck,
+  Users,
   X,
-  ShoppingBag
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
-
-interface PendingListing {
-  id: string;
-  title: string;
-  sellerName: string;
-  sellerSchool: string;
-  category: string;
-  price: number;
-  condition: string;
-  submittedAt: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-}
-
-const INITIAL_PENDING_LISTINGS: PendingListing[] = [
-  {
-    id: 'LIST-101',
-    title: 'Calculus 1 & 2 Textbooks (Hardcover) - 95% New',
-    sellerName: 'Alex Nguyen',
-    sellerSchool: 'University of Technology (HCMUT)',
-    category: 'Books & Textbooks',
-    price: 65000,
-    condition: 'Like New',
-    submittedAt: '10 mins ago',
-    status: 'PENDING',
-  },
-  {
-    id: 'LIST-102',
-    title: 'Compact Rice Cooker Sharp 1L for Dorm Room',
-    sellerName: 'Hannah Tran',
-    sellerSchool: 'University of Economics (UEH)',
-    category: 'Dorm & Home Essentials',
-    price: 180000,
-    condition: 'Used (6 months)',
-    submittedAt: '35 mins ago',
-    status: 'PENDING',
-  },
-  {
-    id: 'LIST-103',
-    title: 'DareU EK87 Mechanical Keyboard (Brown Switch)',
-    sellerName: 'Kevin Le',
-    sellerSchool: 'University of Information Tech (UIT)',
-    category: 'Electronics & IT',
-    price: 320000,
-    condition: 'Good',
-    submittedAt: '1 hour ago',
-    status: 'PENDING',
-  },
-  {
-    id: 'LIST-104',
-    title: 'Scientific Calculator Casio FX-580VN X',
-    sellerName: 'Brian Pham',
-    sellerSchool: 'Technical Education University (HCMUTE)',
-    category: 'Study Tools',
-    price: 350000,
-    condition: 'Under Warranty',
-    submittedAt: '2 hours ago',
-    status: 'PENDING',
-  },
-  {
-    id: 'LIST-105',
-    title: 'Commuter Bicycle Asama Martin 107',
-    sellerName: 'Thomas Dang',
-    sellerSchool: 'University of Science (HCMUS)',
-    category: 'Transportation',
-    price: 600000,
-    condition: 'Good Working Condition',
-    submittedAt: '3 hours ago',
-    status: 'PENDING',
-  },
-];
+import { adminApi } from '@/lib/admin-api';
+import { itemsApi } from '@/lib/items-api';
+import {
+  AdminCategoryDto,
+  AdminSellerRequestDto,
+  ModerationDashboardDto,
+} from '@/types/admin';
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
-  const [listings, setListings] = useState<PendingListing[]>(INITIAL_PENDING_LISTINGS);
-  const [filterText, setFilterText] = useState('');
+
+  const [dashboard, setDashboard] = useState<ModerationDashboardDto | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [totalLiveItems, setTotalLiveItems] = useState<number>(0);
+  const [pendingSellers, setPendingSellers] = useState<AdminSellerRequestDto[]>([]);
+  const [categories, setCategories] = useState<AdminCategoryDto[]>([]);
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState<string>('');
+  const [busyUserId, setBusyUserId] = useState<string | null>(null);
 
-  const handleApprove = (id: string, title: string) => {
-    setListings((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'APPROVED' } : item))
-    );
-    setActionNotice(`Approved listing: "${title}"`);
-    setTimeout(() => setActionNotice(null), 4000);
+  // Reject modal state
+  const [rejectTarget, setRejectTarget] = useState<AdminSellerRequestDto | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('');
+
+  const fetchDashboardSnapshot = useCallback(async () => {
+    const [dash, sellersRes, usersRes, itemsRes, cats] = await Promise.all([
+      adminApi.getDashboard(),
+      adminApi.listSellerRequests({ status: 1, page: 1, pageSize: 50 }),
+      adminApi.listUsers({ page: 1, pageSize: 1 }),
+      itemsApi.searchItems({ page: 1, pageSize: 1 }),
+      adminApi.listCategories(),
+    ]);
+    return { dash, sellersRes, usersRes, itemsRes, cats };
+  }, []);
+
+  const loadDashboardData = useCallback(async () => {
+    setErrorMsg(null);
+    try {
+      const { dash, sellersRes, usersRes, itemsRes, cats } = await fetchDashboardSnapshot();
+      setDashboard(dash);
+      setPendingSellers(sellersRes.items);
+      setTotalUsers(usersRes.totalCount);
+      setTotalLiveItems(itemsRes.totalCount);
+      setCategories(cats);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Unable to load dashboard data.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchDashboardSnapshot]);
+
+  useEffect(() => {
+    let active = true;
+    fetchDashboardSnapshot()
+      .then(({ dash, sellersRes, usersRes, itemsRes, cats }) => {
+        if (!active) return;
+        setDashboard(dash);
+        setPendingSellers(sellersRes.items);
+        setTotalUsers(usersRes.totalCount);
+        setTotalLiveItems(itemsRes.totalCount);
+        setCategories(cats);
+        setErrorMsg(null);
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        setErrorMsg(err instanceof Error ? err.message : 'Unable to load dashboard data.');
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [fetchDashboardSnapshot]);
+
+  const handleApproveSeller = async (req: AdminSellerRequestDto) => {
+    setBusyUserId(req.userId);
+    setErrorMsg(null);
+    try {
+      await adminApi.approveSellerRequest(req.userId);
+      setActionNotice(`Approved seller access for "${req.fullName}" (${req.email}).`);
+      await loadDashboardData();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to approve seller request.');
+    } finally {
+      setBusyUserId(null);
+    }
   };
 
-  const handleReject = (id: string, title: string) => {
-    setListings((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'REJECTED' } : item))
-    );
-    setActionNotice(`Rejected listing: "${title}"`);
-    setTimeout(() => setActionNotice(null), 4000);
+  const handleConfirmRejectSeller = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectTarget) return;
+
+    setBusyUserId(rejectTarget.userId);
+    setErrorMsg(null);
+    try {
+      await adminApi.rejectSellerRequest(
+        rejectTarget.userId,
+        rejectReason.trim() || undefined
+      );
+      setActionNotice(`Rejected seller request for "${rejectTarget.fullName}".`);
+      setRejectTarget(null);
+      setRejectReason('');
+      await loadDashboardData();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to reject seller request.');
+    } finally {
+      setBusyUserId(null);
+    }
   };
 
-  const filteredListings = listings.filter(
-    (item) =>
-      item.title.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.sellerName.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.sellerSchool.toLowerCase().includes(filterText.toLowerCase())
-  );
+  const filteredSellers = pendingSellers.filter((req) => {
+    const q = filterText.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      req.fullName.toLowerCase().includes(q) ||
+      req.email.toLowerCase().includes(q) ||
+      (req.username || '').toLowerCase().includes(q) ||
+      (req.schoolName || '').toLowerCase().includes(q) ||
+      (req.phoneNumber || '').toLowerCase().includes(q)
+    );
+  });
 
-  const pendingCount = listings.filter((i) => i.status === 'PENDING').length;
+  const maxCatCount = Math.max(1, ...categories.map((c) => c.itemCount));
 
   return (
     <div className="space-y-6">
-
-      {/* ========================================================= */}
-      {/* 1. TOP WELCOME BANNER                                     */}
-      {/* ========================================================= */}
+      {/* 1. TOP WELCOME BANNER */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        {/* Subtle decorative glow */}
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-1/3 bottom-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -143,20 +166,61 @@ export default function AdminDashboardPage() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Admin Control Center v1.0</span>
+              <span>Live PostgreSQL Data • {user?.roleName || 'Admin'} Portal</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, Administrator! 👋
+              Welcome back, {user?.fullName || 'Administrator'}!
             </h2>
+            <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+              Review pending seller applications, manage marketplace categories, monitor user accounts,
+              and resolve moderation reports directly from live backend records.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLoading(true);
+                void loadDashboardData();
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh Data</span>
+            </button>
+            <Link
+              href="/admin/listings"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-sm transition shrink-0"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span>All Seller Requests</span>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Action Notification Toast */}
-      {actionNotice && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200 shadow-xs">
+      {/* Feedback Notifications */}
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-medium flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            className="text-rose-600 hover:text-rose-800 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {actionNotice && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{actionNotice}</span>
           </div>
           <button
@@ -169,16 +233,12 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 2. STATISTIC CARDS (KPIs)                                 */}
-      {/* ========================================================= */}
+      {/* 2. LIVE KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-
-        {/* KPI 1: Total Users */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Total Students
+              Registered Users
             </span>
             <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
               <Users className="w-5 h-5" />
@@ -186,21 +246,19 @@ export default function AdminDashboardPage() {
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              1,428
+              {totalUsers.toLocaleString()}
             </div>
-            <div className="flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-              +18.2%
-            </div>
+            <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+              {dashboard?.bannedUserCount ?? 0} banned
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Verified university & student emails</p>
+          <p className="text-[11px] text-slate-500 mt-1">Total accounts stored in database</p>
         </div>
 
-        {/* KPI 2: Active Listings */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Active Listings
+              Live Listings
             </span>
             <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
               <Package className="w-5 h-5" />
@@ -208,21 +266,19 @@ export default function AdminDashboardPage() {
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              892
+              {totalLiveItems.toLocaleString()}
             </div>
-            <div className="flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-              +5.4%
-            </div>
+            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+              {dashboard?.hiddenItemCount ?? 0} hidden
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Live on the student marketplace</p>
+          <p className="text-[11px] text-slate-500 mt-1">Published items visible on marketplace</p>
         </div>
 
-        {/* KPI 3: Pending Approvals */}
-        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/20 shadow-xs hover:shadow-md transition-all">
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/20 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
-              Pending Review
+              Pending Sellers
             </span>
             <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
               <Clock className="w-5 h-5" />
@@ -230,298 +286,279 @@ export default function AdminDashboardPage() {
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="text-2xl sm:text-3xl font-extrabold text-amber-950">
-              {pendingCount}
+              {pendingSellers.length}
             </div>
             <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
-              Needs review
+              {pendingSellers.length > 0 ? 'Needs approval' : 'All caught up'}
             </span>
           </div>
-          <p className="text-[11px] text-amber-700 mt-1">New listings submitted today</p>
+          <p className="text-[11px] text-amber-700 mt-1">Accounts waiting for selling permission</p>
         </div>
 
-        {/* KPI 4: Total Value / Exchanges */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Transaction Volume
+              Moderation Reports
             </span>
-            <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600">
-              <TrendingUp className="w-5 h-5" />
+            <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600">
+              <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              45.6M <span className="text-sm font-semibold text-slate-500">VND</span>
+              {(dashboard?.pendingReportCount ?? 0) + (dashboard?.reviewingReportCount ?? 0)}
             </div>
-            <div className="flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-              +24%
-            </div>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+              {dashboard?.resolvedReportCount ?? 0} resolved
+            </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">340 completed item exchanges</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {dashboard?.pendingReportCount ?? 0} pending • {dashboard?.reviewingReportCount ?? 0} reviewing
+          </p>
         </div>
-
       </div>
 
-      {/* ========================================================= */}
-      {/* 3. CHARTS & CATEGORY DISTRIBUTION                         */}
-      {/* ========================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Weekly Trend Bar Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between mb-6">
+      {/* 3. PENDING SELLER REQUESTS QUEUE + CATEGORY SNAPSHOT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Pending Seller Requests Queue (2 cols) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Weekly Listings & Activity Trend
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Daily volume of pre-owned items submitted by students</p>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
-              Last 7 days
-            </span>
-          </div>
-
-          {/* Clean Responsive CSS/SVG Bar Chart */}
-          <div className="h-56 flex items-end justify-between gap-3 sm:gap-6 pt-6 pb-2 px-2">
-            {[
-              { day: 'Mon', count: 34, height: '45%' },
-              { day: 'Tue', count: 48, height: '62%' },
-              { day: 'Wed', count: 65, height: '85%' },
-              { day: 'Thu', count: 52, height: '68%' },
-              { day: 'Fri', count: 78, height: '100%' },
-              { day: 'Sat', count: 70, height: '90%' },
-              { day: 'Sun', count: 42, height: '55%' },
-            ].map((col) => (
-              <div key={col.day} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                <span className="text-[10px] font-semibold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {col.count} items
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Pending Seller Applications
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs">
+                  {pendingSellers.length} pending
                 </span>
-                <div className="w-full max-w-[42px] bg-slate-100 group-hover:bg-amber-100 rounded-xl relative overflow-hidden transition-all flex items-end" style={{ height: '80%' }}>
-                  <div
-                    className="w-full bg-gradient-to-t from-amber-500 to-orange-400 group-hover:from-amber-600 group-hover:to-orange-500 rounded-xl transition-all duration-300"
-                    style={{ height: col.height }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-slate-600">{col.day}</span>
               </div>
-            ))}
+              <p className="text-xs text-slate-500 mt-1">
+                Approve users so they can list items immediately on the marketplace
+              </p>
+            </div>
+
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search name, email, phone..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full sm:w-56"
+              />
+            </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              Highest activity observed on Friday and Saturday
-            </span>
-            <span className="font-semibold text-slate-700">Total: 389 listings/week</span>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-700">
+              <thead className="bg-slate-50/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-4 sm:px-6">Applicant</th>
+                  <th className="py-3 px-4">Contact / Profile</th>
+                  <th className="py-3 px-4">Requested At</th>
+                  <th className="py-3 px-4 sm:px-6 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="py-10 text-center text-slate-400">
+                      <Loader2 className="w-5 h-5 animate-spin inline mr-2 text-amber-500" />
+                      Loading seller applications...
+                    </td>
+                  </tr>
+                ) : filteredSellers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-10 text-center text-slate-400">
+                      {pendingSellers.length === 0
+                        ? 'No pending seller requests right now.'
+                        : 'No applications match your filter.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSellers.map((req) => {
+                    const isBusy = busyUserId === req.userId;
+                    return (
+                      <tr key={req.userId} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4 sm:px-6">
+                          <div className="font-semibold text-slate-900">{req.fullName}</div>
+                          <div className="text-[11px] text-slate-500">
+                            {req.email}
+                            {req.username ? ` • @${req.username}` : ''}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="text-xs text-slate-800">
+                            {req.phoneNumber || <span className="text-slate-400">No phone</span>}
+                          </div>
+                          {(req.schoolName || req.studentCode) && (
+                            <div className="text-[11px] text-slate-500 truncate max-w-[200px]">
+                              {[req.schoolName, req.studentCode].filter(Boolean).join(' • ')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-slate-500">
+                          {req.requestedAt
+                            ? new Date(req.requestedAt).toLocaleString()
+                            : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleApproveSeller(req)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-2xs cursor-pointer disabled:opacity-50"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Approve</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => {
+                                setRejectTarget(req);
+                                setRejectReason('');
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-medium text-xs transition cursor-pointer disabled:opacity-50"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Reject</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Showing {filteredSellers.length} pending requests</span>
+            <Link
+              href="/admin/listings"
+              className="font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+            >
+              <span>Manage all sellers & items</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
 
-        {/* Category Share Distribution */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">
-              Category Distribution
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Share of items by student demand & category</p>
+        {/* Live Categories Snapshot (1 col) */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Categories Overview</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {dashboard?.activeCategoryCount ?? categories.filter((c) => c.isActive).length}/
+                {dashboard?.totalCategoryCount ?? categories.length} categories open
+              </p>
+            </div>
+            <Link
+              href="/admin/settings"
+              className="text-xs font-semibold text-amber-600 hover:text-amber-700 inline-flex items-center gap-1"
+            >
+              <FolderKanban className="w-3.5 h-3.5" />
+              Manage
+            </Link>
+          </div>
 
-            <div className="mt-6 space-y-4">
-              {[
-                { name: 'Books & Textbooks', percent: 42, icon: BookOpen, color: 'bg-blue-600', text: 'text-blue-600' },
-                { name: 'Electronics & IT Accessories', percent: 28, icon: Laptop, color: 'bg-amber-500', text: 'text-amber-600' },
-                { name: 'Dorm & Household Essentials', percent: 18, icon: Home, color: 'bg-emerald-500', text: 'text-emerald-600' },
-                { name: 'Fashion & Other Gear', percent: 12, icon: Shirt, color: 'bg-purple-500', text: 'text-purple-600' },
-              ].map((cat) => {
-                const Icon = cat.icon;
+          {categories.length === 0 ? (
+            <p className="text-xs text-slate-400 py-4 text-center">No categories found.</p>
+          ) : (
+            <div className="space-y-3">
+              {categories.map((cat) => {
+                const widthPct = Math.round((cat.itemCount / maxCatCount) * 100);
                 return (
-                  <div key={cat.name} className="space-y-1.5">
+                  <div key={cat.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 text-slate-700 font-medium">
-                        <Icon className={`w-3.5 h-3.5 ${cat.text}`} />
-                        <span>{cat.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-slate-800 truncate">{cat.name}</span>
+                        {!cat.isActive && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                            Closed
+                          </span>
+                        )}
                       </div>
-                      <span className="font-bold text-slate-900">{cat.percent}%</span>
+                      <span className="font-bold text-slate-900 shrink-0">
+                        {cat.itemCount} items
+                      </span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div className={`h-full ${cat.color} rounded-full`} style={{ width: `${cat.percent}%` }} />
+                      <div
+                        className={`h-full rounded-full ${
+                          cat.isActive ? 'bg-amber-500' : 'bg-slate-400'
+                        }`}
+                        style={{ width: `${Math.max(widthPct, cat.itemCount > 0 ? 6 : 0)}%` }}
+                      />
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          )}
 
-          <div className="mt-6 p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 flex items-start gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <span>
-              Semester textbooks and dorm gear exchange the fastest (often within 48 hours).
-            </span>
+          <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Voided invalid reviews: {dashboard?.voidedReviewCount ?? 0}</span>
           </div>
         </div>
-
       </div>
 
-      {/* ========================================================= */}
-      {/* 4. MODERATION TABLE: PENDING LISTINGS                     */}
-      {/* ========================================================= */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        {/* Table Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                Pending Listings Queue
-              </h3>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs">
-                {pendingCount} pending
-              </span>
+      {/* Reject Reason Modal */}
+      {rejectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Reject Seller Request</h3>
+              <button
+                type="button"
+                onClick={() => setRejectTarget(null)}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Review and moderate listings before they appear publicly on the student marketplace
+            <p className="text-xs text-slate-600">
+              Applicant: <strong>{rejectTarget.fullName}</strong> ({rejectTarget.email})
             </p>
+            <form onSubmit={handleConfirmRejectSeller} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Reason (optional — shown to the applicant)
+                </label>
+                <textarea
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  maxLength={500}
+                  placeholder="E.g., Please add a contact phone number in your Profile first."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectTarget(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={busyUserId === rejectTarget.userId}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+                >
+                  Confirm Reject
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Search Box inside Table */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search listings, sellers..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full sm:w-64"
-              />
-            </div>
-          </div>
         </div>
-
-        {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-              <tr>
-                <th className="py-3 px-4 sm:px-6">Item / Listing</th>
-                <th className="py-3 px-4">Seller / University</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Price</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 sm:px-6 text-right">Moderation Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredListings.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
-                    No matching listings found.
-                  </td>
-                </tr>
-              ) : (
-                filteredListings.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                    {/* Title */}
-                    <td className="py-3.5 px-4 sm:px-6">
-                      <div className="font-semibold text-slate-900 line-clamp-1 max-w-xs sm:max-w-md">
-                        {item.title}
-                      </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                        <span>{item.id}</span>
-                        <span>•</span>
-                        <span>{item.condition}</span>
-                        <span>•</span>
-                        <span>{item.submittedAt}</span>
-                      </div>
-                    </td>
-
-                    {/* Seller */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-medium text-slate-900">{item.sellerName}</div>
-                      <div className="text-[11px] text-slate-500 truncate max-w-[180px]">{item.sellerSchool}</div>
-                    </td>
-
-                    {/* Category */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-[11px]">
-                        {item.category}
-                      </span>
-                    </td>
-
-                    {/* Price */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="font-bold text-amber-600">
-                        {item.price.toLocaleString('en-US')} VND
-                      </span>
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      {item.status === 'PENDING' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium text-[11px]">
-                          <Clock className="w-3 h-3" />
-                          Pending
-                        </span>
-                      )}
-                      {item.status === 'APPROVED' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[11px]">
-                          <Check className="w-3 h-3" />
-                          Approved
-                        </span>
-                      )}
-                      {item.status === 'REJECTED' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-medium text-[11px]">
-                          <X className="w-3 h-3" />
-                          Rejected
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 sm:px-6 whitespace-nowrap text-right">
-                      {item.status === 'PENDING' ? (
-                        <div className="inline-flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(item.id, item.title)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-2xs cursor-pointer"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Approve</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReject(item.id, item.title)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-medium text-xs transition cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                            <span>Reject</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 font-medium">
-                          Reviewed
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Table Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing {filteredListings.length} listings</span>
-          <Link
-            href="/admin/listings"
-            className="font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
-          >
-            <span>View all marketplace listings</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-
+      )}
     </div>
   );
 }

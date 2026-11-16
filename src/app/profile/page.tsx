@@ -29,6 +29,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { Navbar } from '@/components/ui/layout/Navbar';
+import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore } from '@/lib/language-store';
 import { profileApi } from '@/lib/profile-api';
@@ -652,6 +653,9 @@ function ProfileContent() {
                   </div>
                 </form>
               </section>
+
+              {/* CARD 2: Seller Registration & Status */}
+              <SellerRequestCard variant="card" />
             </div>
           </div>
         )}

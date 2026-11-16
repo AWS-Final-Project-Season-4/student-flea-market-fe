@@ -1,28 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   X,
-  Upload,
   CheckCircle2,
-  DollarSign,
   MapPin,
-  Tag,
-  FileText,
   Sparkles,
   AlertCircle,
   Loader2,
-  Image as ImageIcon,
   Repeat,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { itemsApi } from '@/lib/items-api';
+import { canUserSell } from '@/lib/seller-api';
+import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
 import { CategoryDto, CreateItemRequestDto, ItemDetailDto } from '@/types/item';
-import { detectCategoryFromTitle, getCategoryPrefix, CategoryDetectorResult } from '@/lib/category-detector';
+import { detectCategoryFromTitle, CategoryDetectorResult } from '@/lib/category-detector';
 import { formatItemCodeDisplay } from '@/data/mock-items';
 
 interface PostItemModalProps {
@@ -31,7 +30,7 @@ interface PostItemModalProps {
   onItemCreated?: (item: ItemDetailDto) => void;
 }
 
-// Preset campus photos for quick testing when user doesn't have an image URL
+// Preset photos for quick testing when user doesn't have an image URL
 const PRESET_IMAGES = [
   { label: 'Casio / Máy tính', url: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=500&auto=format&fit=crop&q=80' },
   { label: 'Giáo trình / Sách', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80' },
@@ -48,7 +47,8 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 }) => {
   const { language } = useLanguageStore();
   const t = DICTIONARY[language];
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, syncProfile } = useAuthStore();
+  const hasSellPermission = canUserSell(user);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -70,11 +70,16 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdItem, setCreatedItem] = useState<ItemDetailDto | null>(null);
 
-  // Load categories from backend when modal opens
+  // Sync permission & load categories when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
     let isMounted = true;
+
+    if (isAuthenticated) {
+      void syncProfile();
+    }
+
     itemsApi
       .getCategories()
       .then((data) => {
@@ -83,9 +88,9 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
           setSelectedCategoryId(data[0].id);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.warn('Could not fetch backend categories, using defaults:', err);
-        // Fallback default categories if backend is booting
+        if (!isMounted) return;
         setCategories([
           { id: 1, name: 'Sách & Giáo trình', slug: 'books', order: 1, itemCount: 0 },
           { id: 2, name: 'Dụng cụ học tập', slug: 'stationery-study', order: 2, itemCount: 0 },
@@ -100,7 +105,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated, syncProfile]);
 
   if (!isOpen) return null;
 
@@ -129,7 +134,6 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
       const detected = detectCategoryFromTitle(val);
       if (detected) {
         setAutoDetected(detected);
-        // Map detected slug to available category ID
         const matched = categories.find(
           (c) =>
             c.slug.toLowerCase() === detected.categoryId.toLowerCase() ||
@@ -158,7 +162,6 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    // Basic frontend checks matching backend validation rules
     if (title.trim().length < 5) {
       setErrorMessage(
         language === 'vi'
@@ -200,35 +203,49 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
       if (onItemCreated) {
         onItemCreated(newItem);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
       console.warn('Create item failed:', err);
 
-      const status = err.response?.status;
-      const data = err.response?.data;
-      const code = data?.code || data?.error?.code;
-      const backendMsg = data?.message || data?.error?.message;
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const data = err.response?.data as
+          | { message?: string; error?: { message?: string } }
+          | undefined;
+        const backendMsg = data?.message || data?.error?.message;
 
-      if (status === 401) {
-        setErrorMessage(
-          language === 'vi'
-            ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để đăng tin.'
-            : 'Your session has expired. Please sign in again.'
-        );
-      } else if (status === 403) {
-        setErrorMessage(
-          language === 'vi'
-            ? 'Tài khoản của bạn chưa được cấp quyền Người Bán (Seller). Để test ngay, hãy đăng nhập bằng tài khoản sinh viên đã duyệt sẵn: minh / Pass1234! (hoặc admin / admin123).'
-            : 'Your account is not approved for selling yet. To test now, please sign in with an approved student account: minh / Pass1234! (or admin / admin123).'
-        );
-      } else {
+        if (status === 401) {
+          setErrorMessage(
+            language === 'vi'
+              ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để đăng tin.'
+              : 'Your session has expired. Please sign in again.'
+          );
+          return;
+        }
+        if (status === 403) {
+          void syncProfile();
+          setErrorMessage(
+            backendMsg ||
+              (language === 'vi'
+                ? 'Tài khoản của bạn chưa được cấp quyền Người Bán hoặc quyền đã thay đổi.'
+                : 'Your account does not have active seller permission yet.')
+          );
+          return;
+        }
         setErrorMessage(
           backendMsg ||
-          (language === 'vi'
-            ? 'Không thể đăng tin. Vui lòng kiểm tra lại thông tin kết nối.'
-            : 'Failed to post item. Please verify your connection.')
+            (language === 'vi'
+              ? 'Không thể đăng tin. Vui lòng kiểm tra lại thông tin kết nối.'
+              : 'Failed to post item. Please verify your connection.')
         );
+        return;
       }
+
+      setErrorMessage(
+        language === 'vi'
+          ? 'Không thể đăng tin. Vui lòng kiểm tra lại thông tin kết nối.'
+          : 'Failed to post item. Please verify your connection.'
+      );
     }
   };
 
@@ -238,13 +255,13 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 max-h-[92vh] overflow-y-auto">
+      <div className="relative w-full max-w-xl bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-stone-800 max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
           onClick={handleResetAndClose}
           disabled={isSubmitting}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 dark:bg-stone-800 hover:bg-slate-200 dark:hover:bg-stone-700 text-slate-400 hover:text-slate-600 dark:hover:text-stone-200 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
@@ -253,16 +270,16 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
         {/* State 1: Guest not logged in */}
         {!isAuthenticated ? (
           <div className="py-8 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 shadow-xs">
               <ShieldAlert className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              {language === 'vi' ? 'Đăng nhập để đăng bán đồ cũ' : 'Sign In Required'}
+            <h3 className="text-xl font-bold text-slate-900 dark:text-stone-100 mb-2">
+              {language === 'vi' ? 'Đăng nhập để đăng bán đồ' : 'Sign In Required'}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-md mb-6 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-stone-300 max-w-md mb-6 leading-relaxed">
               {language === 'vi'
-                ? 'Để đảm bảo an toàn và chống lừa đảo trong khuôn viên trường, chỉ sinh viên đã xác thực mới được đăng tin bán hoặc trao đổi đồ.'
-                : 'To ensure student safety and campus trust, only verified student accounts can list items for sale or exchange.'}
+                ? 'Vui lòng đăng nhập và đăng ký quyền Người bán để đăng tin bán, tặng miễn phí hoặc trao đổi đồ dùng an toàn trên sàn.'
+                : 'Please sign in and activate Seller Access to list items for sale, giveaway, or exchange on the marketplace.'}
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs">
               <Link
@@ -276,9 +293,40 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
               <button
                 type="button"
                 onClick={handleResetAndClose}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-stone-700 hover:bg-slate-50 dark:hover:bg-stone-800 text-slate-700 dark:text-stone-200 font-semibold text-sm transition cursor-pointer"
               >
                 {language === 'vi' ? 'Đóng lại' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        ) : !hasSellPermission ? (
+          /* State 1.5: Logged in, but canSell = false -> Interactive Seller Request Gate */
+          <div className="pt-2 space-y-4">
+            <SellerRequestCard
+              variant="modal"
+              onApproved={() => void syncProfile()}
+              onNavigateProfile={handleResetAndClose}
+            />
+
+            <div className="pt-2 border-t border-[#F0E4D7] dark:border-stone-800 flex flex-wrap items-center justify-between gap-2">
+              <Link
+                href="/profile"
+                onClick={handleResetAndClose}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B8652B] dark:text-[#F5A764] hover:underline"
+              >
+                <UserIcon className="w-3.5 h-3.5" />
+                <span>
+                  {language === 'vi'
+                    ? 'Xem & bổ sung Hồ sơ cá nhân'
+                    : 'Manage Profile Details'}
+                </span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleResetAndClose}
+                className="px-4 py-1.5 rounded-xl border border-slate-200 dark:border-stone-700 hover:bg-slate-50 dark:hover:bg-stone-800 text-xs font-semibold text-slate-600 dark:text-stone-300 transition cursor-pointer"
+              >
+                {language === 'vi' ? 'Đóng' : 'Close'}
               </button>
             </div>
           </div>
@@ -288,24 +336,24 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 shadow-xs animate-bounce">
               <CheckCircle2 className="w-9 h-9" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-stone-100 mb-1">
               {language === 'vi' ? 'Đăng tin thành công!' : 'Item Listed Successfully!'}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-sm mb-4">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-stone-300 max-w-sm mb-4">
               {language === 'vi'
-                ? 'Món đồ của bạn đã được đưa lên sàn và sẵn sàng để các bạn sinh viên khác trao đổi.'
+                ? 'Món đồ của bạn đã được đưa lên sàn và sẵn sàng để mọi người trao đổi.'
                 : 'Your listing is now live on Student Flea Market with a unique Smart ItemCode.'}
             </p>
 
             {/* Smart ItemCode Card */}
-            <div className="w-full max-w-sm p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-white border border-amber-200 mb-6 shadow-xs">
-              <p className="text-xs font-semibold text-amber-900 mb-1">
+            <div className="w-full max-w-sm p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-stone-800 dark:via-stone-800 dark:to-stone-900 border border-amber-200 dark:border-stone-700 mb-6 shadow-xs">
+              <p className="text-xs font-semibold text-amber-900 dark:text-amber-300 mb-1">
                 {language === 'vi' ? 'Mã đối soát & bàn giao (Smart ItemCode)' : 'Verification ItemCode'}
               </p>
-              <div className="text-2xl font-mono font-bold text-[#C46A28] tracking-wider my-1">
+              <div className="text-2xl font-mono font-bold text-[#C46A28] dark:text-[#F5A764] tracking-wider my-1">
                 {formatItemCodeDisplay(createdItem.itemCode)}
               </div>
-              <p className="text-[11px] text-amber-800">
+              <p className="text-[11px] text-amber-800 dark:text-stone-400">
                 {language === 'vi'
                   ? 'Mã này sẽ dùng để đối soát tại chỗ khi gặp mặt bàn giao để chống tráo hàng.'
                   : 'Use this code to verify handover and prevent counterfeit swapping.'}
@@ -315,7 +363,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
             <button
               type="button"
               onClick={handleResetAndClose}
-              className="py-2.5 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-md transition"
+              className="py-2.5 px-8 rounded-xl bg-slate-900 dark:bg-[#F5A764] hover:bg-slate-800 dark:hover:bg-[#E89650] text-white dark:text-stone-950 font-semibold text-sm shadow-md transition cursor-pointer"
             >
               {language === 'vi' ? 'Xem tin vừa đăng' : 'View Listings'}
             </button>
@@ -325,35 +373,22 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
           <>
             {/* Header */}
             <div className="mb-5">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-2">
-                <span>{language === 'vi' ? 'Đăng bán miễn phí cho SV' : 'Free Student Listing'}</span>
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 dark:bg-amber-950/60 border border-blue-100 dark:border-amber-800 text-blue-700 dark:text-[#F5A764] text-xs font-semibold mb-2">
+                <span>{language === 'vi' ? 'Đăng bán miễn phí' : 'Free Listing'}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-stone-100 tracking-tight">
                 {t.postItemModal.title}
               </h3>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+              <p className="text-slate-500 dark:text-stone-400 text-xs sm:text-sm mt-0.5">
                 {t.postItemModal.subtitle}
               </p>
             </div>
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex flex-col gap-2 animate-in fade-in">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 leading-relaxed">{errorMessage}</div>
-                </div>
-                {errorMessage.includes('minh') && (
-                  <div className="pl-6 pt-1 flex items-center gap-2">
-                    <Link
-                      href="/login"
-                      onClick={handleResetAndClose}
-                      className="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold text-xs hover:bg-rose-700 transition shadow-xs"
-                    >
-                      {language === 'vi' ? 'Đến trang Đăng nhập ngay' : 'Go to Login Now'}
-                    </Link>
-                  </div>
-                )}
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300 text-xs sm:text-sm flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                <div className="flex-1 leading-relaxed">{errorMessage}</div>
               </div>
             )}
 
@@ -361,7 +396,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* 1. Title with Real-time Category Auto-detection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                   {t.postItemModal.itemName} *
                 </label>
                 <input
@@ -371,25 +406,25 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                   onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder={
                     language === 'vi'
-                      ? 'Vd: Máy tính Casio fx-580vn x, Quạt mini KTX...'
-                      : 'E.g. Casio fx-580vn calculator, mini dorm fan...'
+                      ? 'Vd: Máy tính Casio fx-580vn x, Quạt mini...'
+                      : 'E.g. Casio fx-580vn calculator, mini fan...'
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
                 />
 
                 {/* AI Suggestion Chip */}
                 {autoDetected && (
-                  <div className="mt-2 p-2 px-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-200">
-                    <div className="flex items-center gap-2 text-xs text-amber-900 font-medium">
-                      <Sparkles className="w-4 h-4 text-[#C46A28] shrink-0 animate-pulse" />
+                  <div className="mt-2 p-2 px-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-800 border border-amber-200 dark:border-stone-700 flex items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-300 font-medium">
+                      <Sparkles className="w-4 h-4 text-[#C46A28] dark:text-[#F5A764] shrink-0 animate-pulse" />
                       <span>
                         {language === 'vi' ? 'AI Gợi ý danh mục:' : 'AI Suggested Category:'}{' '}
-                        <strong className="text-[#C46A28] font-bold">
+                        <strong className="text-[#C46A28] dark:text-[#F5A764] font-bold">
                           {language === 'vi' ? autoDetected.labelVi : autoDetected.labelEn}
                         </strong>
                       </span>
                     </div>
-                    <span className="font-mono text-[11px] font-bold text-amber-800 bg-white border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs shrink-0">
+                    <span className="font-mono text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-white dark:bg-stone-900 border border-amber-200 dark:border-stone-700 px-2 py-0.5 rounded-md shadow-2xs shrink-0">
                       {autoDetected.prefix}-XXXXXX
                     </span>
                   </div>
@@ -398,13 +433,13 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 
               {/* 2. Category Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                   {t.postItemModal.category} *
                 </label>
                 <select
                   value={selectedCategoryId}
                   onChange={(e) => handleCategorySelect(parseInt(e.target.value, 10))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
                 >
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -417,7 +452,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
               {/* 3. Price & Free Giveaway Toggle */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                     {t.postItemModal.price} *
                   </label>
                   <div className="relative">
@@ -428,7 +463,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                       disabled={isFree}
                       value={isFree ? 0 : price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full pl-3.5 pr-14 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition disabled:opacity-60 disabled:bg-slate-100"
+                      className="w-full pl-3.5 pr-14 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-stone-900"
                     />
                     <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
                       VND
@@ -437,14 +472,14 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 </div>
 
                 <div className="flex flex-col justify-end">
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition select-none">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/60 hover:bg-slate-50 dark:hover:bg-stone-800 cursor-pointer transition select-none">
                     <input
                       type="checkbox"
                       checked={isFree}
                       onChange={(e) => setIsFree(e.target.checked)}
                       className="w-4 h-4 text-emerald-600 rounded-sm focus:ring-emerald-500"
                     />
-                    <span className="text-xs font-semibold text-slate-700">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-stone-200">
                       {language === 'vi' ? '🎁 Tặng miễn phí (0 VND)' : '🎁 Free giveaway (0 VND)'}
                     </span>
                   </label>
@@ -454,13 +489,13 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
               {/* 4. Condition & Exchange Enable */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                     {t.postItemModal.condition} *
                   </label>
                   <select
                     value={condition}
                     onChange={(e) => setCondition(parseInt(e.target.value, 10))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
                   >
                     <option value={1}>{language === 'vi' ? 'Mới 100% (Brand New)' : 'Brand New (100%)'}</option>
                     <option value={2}>{language === 'vi' ? 'Như mới 99% (Like New)' : 'Like New (99%)'}</option>
@@ -470,15 +505,15 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 </div>
 
                 <div className="flex flex-col justify-end">
-                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition select-none">
+                  <label className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/60 hover:bg-slate-50 dark:hover:bg-stone-800 cursor-pointer transition select-none">
                     <input
                       type="checkbox"
                       checked={isExchangeEnabled}
                       onChange={(e) => setIsExchangeEnabled(e.target.checked)}
                       className="w-4 h-4 text-blue-600 rounded-sm focus:ring-blue-500"
                     />
-                    <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                      <Repeat className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-stone-200 flex items-center gap-1.5">
+                      <Repeat className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                       <span>{language === 'vi' ? 'Bật cho phép đổi đồ' : 'Allow Item Exchange'}</span>
                     </span>
                   </label>
@@ -487,7 +522,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 
               {/* 5. Meeting Location */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                   {t.postItemModal.location} *
                 </label>
                 <div className="relative">
@@ -499,17 +534,17 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder={
                       language === 'vi'
-                        ? 'Vd: KTX Khu A, Thư viện trường, Cổng trường...'
-                        : 'E.g.: Dorm Area A, Campus Library...'
+                        ? 'Vd: KTX Khu A, Thư viện, Quận 9...'
+                        : 'E.g.: Dorm Area A, Main Gate...'
                     }
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
                   />
                 </div>
               </div>
 
               {/* 6. Image Selection (Preset or custom URL) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1 flex items-center justify-between">
                   <span>{language === 'vi' ? 'Hình ảnh sản phẩm' : 'Product Photo'}</span>
                   <span className="text-[11px] text-slate-400">
                     {language === 'vi' ? 'Chọn ảnh mẫu hoặc nhập URL' : 'Choose preset or enter URL'}
@@ -522,13 +557,14 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white"
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-stone-700 text-xs text-slate-800 dark:text-stone-100 bg-slate-50/50 dark:bg-stone-800/80 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-stone-800"
                   />
                   {imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={imageUrl}
                       alt="Preview"
-                      className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0"
+                      className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-stone-700 shrink-0"
                     />
                   )}
                 </div>
@@ -540,10 +576,11 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setImageUrl(preset.url)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${imageUrl === preset.url
-                          ? 'bg-amber-100 text-amber-800 border-amber-300 font-semibold'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                        }`}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                        imageUrl === preset.url
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-semibold'
+                          : 'bg-slate-50 dark:bg-stone-800 text-slate-600 dark:text-stone-300 border-slate-200 dark:border-stone-700 hover:bg-slate-100 dark:hover:bg-stone-700'
+                      }`}
                     >
                       {preset.label}
                     </button>
@@ -553,7 +590,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 
               {/* 7. Description */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
                   {t.postItemModal.description}
                 </label>
                 <textarea
@@ -565,7 +602,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                       ? 'Mô tả thêm tình trạng món đồ, phụ kiện kèm theo, giờ có thể gặp...'
                       : 'Describe item details, accessories, meetup time...'
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white transition resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition resize-none"
                 />
               </div>
 

@@ -147,13 +147,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const searchContainerRef = useRef<HTMLDivElement | null>(null);
     const languageDropdownRef = useRef<HTMLDivElement | null>(null);
     const profileDropdownRef = useRef<HTMLDivElement | null>(null);
-    const { user, isAuthenticated, initAuth, logout } = useAuthStore();
+    const { user, isAuthenticated, initAuth, logout, syncProfile } = useAuthStore();
     const { initTheme } = useThemeStore();
 
     useEffect(() => {
         initAuth();
         initTheme();
     }, [initAuth, initTheme]);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            void syncProfile();
+        }
+    }, [isAuthenticated, syncProfile]);
 
     // Focus input and lock body scroll when search overlay opens
     useEffect(() => {
@@ -258,7 +264,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
         router.push(`/?q=${encodeURIComponent(tag)}`);
     };
 
-    const isAdmin = user?.roleName === 'Admin' || user?.role === 1;
+    const isAdmin = Boolean(
+        user?.isStaff ||
+        user?.isAdmin ||
+        user?.isModerator ||
+        user?.roleName === 'Admin' ||
+        user?.roleName === 'Moderator' ||
+        user?.role === 1 ||
+        user?.role === 3
+    );
 
     return (
         <>

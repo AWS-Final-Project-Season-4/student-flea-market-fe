@@ -134,8 +134,17 @@ function LoginForm() {
 
     const handleAuthSuccessRedirect = (authResult: AuthResultDto) => {
         setSuccessMessage(`Welcome back, ${authResult.user.fullName || authResult.user.email}! Redirecting...`);
+        const isStaffAccount = Boolean(
+            authResult.user.isStaff ||
+            authResult.user.isAdmin ||
+            authResult.user.isModerator ||
+            authResult.user.roleName === 'Admin' ||
+            authResult.user.roleName === 'Moderator' ||
+            authResult.user.role === 1 ||
+            authResult.user.role === 3
+        );
         setTimeout(() => {
-            if (authResult.user.roleName === 'Admin' || authResult.user.role === 1) {
+            if (isStaffAccount) {
                 router.push('/admin');
             } else if (redirectPath && !redirectPath.startsWith('/admin')) {
                 router.push(redirectPath);

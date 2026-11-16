@@ -17,6 +17,8 @@ import {
 } from '@/types/auth';
 import { apiClient, setStoredAuth, clearStoredAuth, getStoredAccessToken, getStoredRefreshToken } from './api-client';
 
+let syncProfileInFlight: Promise<UserDto | null> | null = null;
+
 function extractAuthErrorMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
     if (err.code === 'ERR_NETWORK') {
@@ -74,6 +76,7 @@ interface AuthState {
   logout: () => Promise<void>;
   clearSession: () => void;
   setUser: (user: UserDto) => void;
+  syncProfile: () => Promise<UserDto | null>;
   clearError: () => void;
 }
 
@@ -368,7 +371,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user });
     if (typeof window !== 'undefined') {
       localStorage.setItem('sfm_user', JSON.stringify(user));
+      const maxAge = 7 * 24 * 60 * 60;
+      document.cookie = `sfm_user_role=${user.roleName}; path=/; max-age=${maxAge}; SameSite=Lax`;
     }
+  },
+
+  syncProfile: async () => {
+    if (typeof window === 'undefined') return null;
+    const token = get().accessToken || getStoredAccessToken();
+    if (!token) return null;
+
+    if (syncProfileInFlight) {
+      return syncProfileInFlight;
+    }
+
+    syncProfileInFlight = apiClient
+      .get<UserDto>('/Profile')
+      .then((response) => {
+        const profile = response.data;
+        get().setUser(profile);
+        return profile;
+      })
+      .catch(() => {
+        // Silent fallback in background sync so existing cached user session stays intact
+        return null;
+      })
+      .finally(() => {
+        syncProfileInFlight = null;
+      });
+
+    return syncProfileInFlight;
   },
 
   clearError: () => set({ error: null }),

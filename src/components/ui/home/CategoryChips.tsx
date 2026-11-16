@@ -13,7 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
-import { CATEGORIES } from '@/data/mock-items';
+import { CATEGORIES, CategoryItem } from '@/data/mock-items';
+import { itemsApi } from '@/lib/items-api';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 // Custom Lucide-styled Lipstick Icon for Beauty & Health
@@ -36,6 +37,18 @@ function LipstickIcon({ className = 'w-4 h-4' }: { className?: string }) {
     );
 }
 
+function resolveCategoryIconBySlug(slug: string): CategoryItem['iconName'] {
+    const s = slug.toLowerCase();
+    if (s.includes('book') || s.includes('sach')) return 'BookOpen';
+    if (s.includes('elec') || s.includes('dien-tu') || s.includes('tech')) return 'Laptop';
+    if (s.includes('dorm') || s.includes('home') || s.includes('gia-dung')) return 'Home';
+    if (s.includes('fashion') || s.includes('thoi-trang')) return 'Shirt';
+    if (s.includes('beauty') || s.includes('health') || s.includes('sac-dep')) return 'Lipstick';
+    if (s.includes('stationery') || s.includes('study') || s.includes('tai-lieu') || s.includes('giao-duc')) return 'PenTool';
+    if (s.includes('food') || s.includes('drink') || s.includes('an-uong')) return 'Utensils';
+    return 'Clover';
+}
+
 interface CategoryChipsProps {
     activeCategory: string;
     onSelectCategory: (id: string) => void;
@@ -50,6 +63,30 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+    const [chipList, setChipList] = useState<CategoryItem[]>(() => [CATEGORIES[0]]);
+
+    useEffect(() => {
+        let active = true;
+        itemsApi
+            .getCategories()
+            .then((backendCats) => {
+                if (!active || !Array.isArray(backendCats)) return;
+                const mapped: CategoryItem[] = backendCats.map((c) => ({
+                    id: c.slug,
+                    name: c.name,
+                    iconName: resolveCategoryIconBySlug(c.slug),
+                }));
+                setChipList([{ id: 'all', name: 'All', iconName: 'LayoutGrid' }, ...mapped]);
+            })
+            .catch(() => {
+                // Keep at least 'All' chip if backend is temporarily unreachable
+                if (active) setChipList([CATEGORIES[0]]);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const checkScrollability = useCallback(() => {
         const el = scrollContainerRef.current;
@@ -68,7 +105,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
         const resizeObserver = new ResizeObserver(() => checkScrollability());
         resizeObserver.observe(el);
         return () => resizeObserver.disconnect();
-    }, [checkScrollability, language]);
+    }, [checkScrollability, language, chipList]);
 
     const handleScroll = (direction: 'left' | 'right') => {
         const el = scrollContainerRef.current;
@@ -125,7 +162,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
                 onScroll={checkScrollability}
                 className="w-full flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar scroll-smooth"
             >
-                {CATEGORIES.map((category) => {
+                {chipList.map((category) => {
                     const isActive = activeCategory === category.id;
                     const localizedName =
                         t.categories[category.id as keyof typeof t.categories] || category.name;

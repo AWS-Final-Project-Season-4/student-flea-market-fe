@@ -122,3 +122,16 @@ export interface ChangePasswordRequestDto {
   newPassword: string;
   confirmPassword: string;
 }
+
+export interface SellerStatusDto {
+  sellerStatus: number; // 0 = None, 1 = Pending, 2 = Approved, 3 = Rejected
+  sellerStatusName: string;
+  canSell: boolean;
+  requestedAt?: string | null;
+  approvedAt?: string | null;
+  rejectionReason?: string | null;
+}
+
+export interface SellerRequestDto {
+  note?: string;
+}
