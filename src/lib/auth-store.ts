@@ -16,6 +16,7 @@ import {
   ResetPasswordRequestDto,
 } from '@/types/auth';
 import { apiClient, setStoredAuth, clearStoredAuth, getStoredAccessToken, getStoredRefreshToken } from './api-client';
+import { stopChatHub } from './chat-hub';
 
 let syncProfileInFlight: Promise<UserDto | null> | null = null;
 
@@ -344,6 +345,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.warn('Logout API error:', e);
     } finally {
       clearStoredAuth();
+      void stopChatHub();
       set({
         user: null,
         accessToken: null,
@@ -357,6 +359,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearSession: () => {
     clearStoredAuth();
+    void stopChatHub();
     set({
       user: null,
       accessToken: null,

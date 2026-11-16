@@ -1,10 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Phone, MessageSquare, MapPin, ShieldCheck, Check, Copy, QrCode, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+    X,
+    MessageSquare,
+    MapPin,
+    Check,
+    Copy,
+    QrCode,
+    ChevronDown,
+    ChevronUp,
+    Download,
+    Loader2,
+    AlertCircle,
+    ArrowRight,
+} from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ProductItem, formatItemCodeDisplay } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
+import { chatApi } from '@/lib/chat-api';
 
 interface SellerContactModalProps {
     isOpen: boolean;
@@ -17,15 +32,18 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
     onClose,
     product,
 }) => {
-    const [copiedPhone, setCopiedPhone] = useState(false);
+    const router = useRouter();
     const [copiedCode, setCopiedCode] = useState(false);
     const [showQr, setShowQr] = useState(false);
+    const [isStartingChat, setIsStartingChat] = useState(false);
+    const [chatError, setChatError] = useState<string | null>(null);
     const { language } = useLanguageStore();
     const t = DICTIONARY[language];
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isOpen) {
+                setChatError(null);
                 onClose();
             }
         };
@@ -35,19 +53,33 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
 
     if (!isOpen || !product) return null;
 
-    const dummyPhone = '0987 654 321';
     const formattedCode = formatItemCodeDisplay(product.itemCode);
 
-    const handleCopyPhone = () => {
-        navigator.clipboard.writeText(dummyPhone);
-        setCopiedPhone(true);
-        setTimeout(() => setCopiedPhone(false), 2000);
+    const handleClose = () => {
+        setChatError(null);
+        setIsStartingChat(false);
+        onClose();
     };
 
     const handleCopyCode = () => {
         navigator.clipboard.writeText(formattedCode);
         setCopiedCode(true);
         setTimeout(() => setCopiedCode(false), 2000);
+    };
+
+    const handleStartChat = async () => {
+        setChatError(null);
+        setIsStartingChat(true);
+        try {
+            const conv = await chatApi.getOrCreateConversation(product.id);
+            handleClose();
+            router.push(`/chat?c=${encodeURIComponent(conv.id)}`);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Unable to start chat conversation.';
+            setChatError(msg);
+        } finally {
+            setIsStartingChat(false);
+        }
     };
 
     const handleDownloadQr = () => {
@@ -87,17 +119,17 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
+                if (e.target === e.currentTarget) handleClose();
             }}
             role="dialog"
             aria-modal="true"
         >
-            <div className="relative w-full max-w-md bg-white rounded-3xl p-5 sm:p-7 shadow-2xl animate-in zoom-in-95 duration-200 border border-[#EADBCE] max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-7 shadow-2xl animate-in zoom-in-95 duration-200 border border-[#EADBCE] dark:border-stone-800 max-h-[90vh] overflow-y-auto">
                 {/* Close Button */}
                 <button
                     type="button"
-                    onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#FAF7F2] hover:bg-[#F3EADF] text-[#8C7E74] hover:text-[#2A211B] flex items-center justify-center transition-colors cursor-pointer"
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#FAF7F2] dark:bg-stone-800 hover:bg-[#F3EADF] dark:hover:bg-stone-700 text-[#8C7E74] hover:text-[#2A211B] dark:hover:text-stone-100 flex items-center justify-center transition-colors cursor-pointer"
                     aria-label="Close"
                 >
                     <X className="w-4 h-4" />
@@ -105,32 +137,33 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
 
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-[#C46A28] border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-[#C46A28] dark:text-[#F5A764] border border-amber-200/80 dark:border-amber-800 flex items-center justify-center shrink-0 shadow-2xs">
                         <MessageSquare className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="text-base sm:text-lg font-serif font-bold text-[#2A211B] leading-tight">
+                        <h3 className="text-base sm:text-lg font-serif font-bold text-[#2A211B] dark:text-stone-100 leading-tight">
                             {t.sellerContact.title}
                         </h3>
-                        <p className="text-xs text-[#7A6D63] mt-0.5">
+                        <p className="text-xs text-[#7A6D63] dark:text-stone-400 mt-0.5">
                             {t.sellerContact.subtitle}
                         </p>
                     </div>
                 </div>
 
                 {/* Product Summary */}
-                <div className="bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl p-3 flex items-center gap-3 mb-3">
+                <div className="bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 rounded-2xl p-3 flex items-center gap-3 mb-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={product.imageUrl}
                         alt={product.title}
-                        className="w-14 h-14 rounded-xl object-cover shrink-0 bg-white border border-[#EADBCE]"
+                        className="w-14 h-14 rounded-xl object-cover shrink-0 bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-700"
                     />
                     <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-xs sm:text-sm text-[#2A211B] truncate">
+                        <h4 className="font-semibold text-xs sm:text-sm text-[#2A211B] dark:text-stone-100 truncate">
                             {product.title}
                         </h4>
                         <div className="flex items-center justify-between gap-1 mt-0.5">
-                            <span className="text-sm font-bold text-[#C46A28]">
+                            <span className="text-sm font-bold text-[#C46A28] dark:text-[#F5A764]">
                                 {product.price}
                             </span>
                             {/* Item Code Badge */}
@@ -139,7 +172,7 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                                     type="button"
                                     onClick={handleCopyCode}
                                     title={language === 'vi' ? 'Bấm để chép mã' : 'Click to copy code'}
-                                    className="font-mono text-[10px] font-bold text-[#A8744F] bg-white border border-[#EADBCE] hover:border-[#C46A28] px-2 py-0.5 rounded-md tracking-wider flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                                    className="font-mono text-[10px] font-bold text-[#A8744F] dark:text-[#F5A764] bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-700 hover:border-[#C46A28] px-2 py-0.5 rounded-md tracking-wider flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                                 >
                                     <span>{formattedCode}</span>
                                     {copiedCode ? (
@@ -150,8 +183,8 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                                 </button>
                             )}
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] text-[#7A6D63] mt-0.5">
-                            <MapPin className="w-3 h-3 text-[#A8744F] shrink-0" />
+                        <div className="flex items-center gap-1 text-[11px] text-[#7A6D63] dark:text-stone-400 mt-0.5">
+                            <MapPin className="w-3 h-3 text-[#A8744F] dark:text-[#F5A764] shrink-0" />
                             <span className="truncate">{product.location}</span>
                         </div>
                     </div>
@@ -159,24 +192,24 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
 
                 {/* QR Code Handover Toggle Box */}
                 {product.itemCode && (
-                    <div className="mb-4 rounded-2xl border border-[#EADBCE] bg-[#FAF7F2]/60 overflow-hidden transition-all">
+                    <div className="mb-4 rounded-2xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/50 overflow-hidden transition-all">
                         <button
                             type="button"
                             onClick={() => setShowQr(!showQr)}
-                            className="w-full p-2.5 px-3.5 flex items-center justify-between text-xs font-semibold text-[#2A211B] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
+                            className="w-full p-2.5 px-3.5 flex items-center justify-between text-xs font-semibold text-[#2A211B] dark:text-stone-100 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition-colors cursor-pointer"
                         >
-                            <div className="flex items-center gap-2 text-[#C46A28]">
+                            <div className="flex items-center gap-2 text-[#C46A28] dark:text-[#F5A764]">
                                 <QrCode className="w-4 h-4" />
                                 <span>{language === 'vi' ? 'Mã QR bàn giao & đối soát' : 'Handover QR & Verification'}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-[#7A6D63]">
+                            <div className="flex items-center gap-1 text-[11px] text-[#7A6D63] dark:text-stone-400">
                                 <span>{showQr ? (language === 'vi' ? 'Thu gọn' : 'Collapse') : (language === 'vi' ? 'Hiển thị' : 'Show')}</span>
                                 {showQr ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                             </div>
                         </button>
 
                         {showQr && (
-                            <div className="p-4 pt-1 bg-white border-t border-[#EADBCE] flex flex-col items-center animate-in fade-in duration-200">
+                            <div className="p-4 pt-1 bg-white dark:bg-stone-900 border-t border-[#EADBCE] dark:border-stone-700 flex flex-col items-center animate-in fade-in duration-200">
                                 <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#EADBCE] shadow-2xs mt-2">
                                     <QRCodeSVG
                                         id="seller-modal-qr-svg"
@@ -188,10 +221,10 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                                     />
                                 </div>
                                 <div className="mt-2 text-center">
-                                    <span className="font-mono font-bold text-xs tracking-widest text-[#2A211B]">
+                                    <span className="font-mono font-bold text-xs tracking-widest text-[#2A211B] dark:text-stone-100">
                                         {formattedCode}
                                     </span>
-                                    <p className="text-[10px] text-[#7A6D63] mt-0.5">
+                                    <p className="text-[10px] text-[#7A6D63] dark:text-stone-400 mt-0.5">
                                         {language === 'vi'
                                             ? 'Quét mã để xác nhận đã nhận đúng đồ khi gặp mặt trao đổi'
                                             : 'Scan this QR to verify item handover upon meetup'}
@@ -200,9 +233,9 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleDownloadQr}
-                                    className="mt-2.5 px-3 py-1 rounded-lg bg-[#FAF7F2] hover:bg-[#F3EADF] border border-[#EADBCE] text-[11px] font-semibold text-[#2A211B] flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    className="mt-2.5 px-3 py-1 rounded-lg bg-[#FAF7F2] dark:bg-stone-800 hover:bg-[#F3EADF] dark:hover:bg-stone-700 border border-[#EADBCE] dark:border-stone-700 text-[11px] font-semibold text-[#2A211B] dark:text-stone-100 flex items-center gap-1.5 transition-colors cursor-pointer"
                                 >
-                                    <Download className="w-3 h-3 text-[#A8744F]" />
+                                    <Download className="w-3 h-3 text-[#A8744F] dark:text-[#F5A764]" />
                                     <span>{language === 'vi' ? 'Lưu mã QR' : 'Save QR'}</span>
                                 </button>
                             </div>
@@ -210,72 +243,59 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                     </div>
                 )}
 
-                {/* Seller Info Box */}
-                <div className="space-y-3 mb-4">
-                    <div className="p-3 rounded-2xl bg-white border border-[#EADBCE] flex items-center justify-between shadow-2xs">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#E89650] to-[#F5A764] text-white font-bold flex items-center justify-center text-xs shadow-2xs">
-                                SV
-                            </div>
-                            <div>
-                                <div className="text-xs font-bold text-[#2A211B] flex items-center gap-1">
-                                    <span>{t.sellerContact.verifiedStudent}</span>
-                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                </div>
-                                <div className="text-[11px] text-[#7A6D63] font-mono">
-                                    {dummyPhone}
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleCopyPhone}
-                            className="px-2.5 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#EADBCE] hover:bg-[#F3EADF] text-[#2A211B] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                            {copiedPhone ? (
-                                <>
-                                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    <span>{t.sellerContact.copied}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Copy className="w-3.5 h-3.5 text-[#8C7E74]" />
-                                    <span>{t.sellerContact.copy}</span>
-                                </>
-                            )}
-                        </button>
+                {/* Error Notice */}
+                {chatError && (
+                    <div className="mb-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{chatError}</span>
                     </div>
+                )}
 
-                    {/* Actions */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                        <a
-                            href={`tel:${dummyPhone.replace(/\s+/g, '')}`}
-                            className="py-2.5 px-3 rounded-xl bg-[#F5A764] hover:bg-[#E89650] active:scale-98 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                        >
-                            <Phone className="w-4 h-4" />
-                            <span>{language === 'vi' ? 'Gọi điện' : 'Call'}</span>
-                        </a>
-
-                        <a
-                            href={`https://zalo.me/${dummyPhone.replace(/\s+/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                        >
-                            <MessageSquare className="w-4 h-4" />
-                            <span>{language === 'vi' ? 'Nhắn qua Zalo' : 'Chat via Zalo'}</span>
-                        </a>
-                    </div>
+                {/* Real-time In-App Chat CTA */}
+                <div className="mb-4 space-y-2.5">
+                    <button
+                        type="button"
+                        disabled={isStartingChat}
+                        onClick={() => void handleStartChat()}
+                        className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] active:scale-99 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-60"
+                    >
+                        {isStartingChat ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>
+                                    {language === 'vi'
+                                        ? 'Đang mở cuộc trò chuyện...'
+                                        : 'Opening conversation...'}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <MessageSquare className="w-4 h-4" />
+                                <span>
+                                    {language === 'vi'
+                                        ? 'Nhắn tin ngay với Người bán'
+                                        : 'Chat with Seller Now'}
+                                </span>
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                    <p className="text-[11px] text-center text-[#7A6D63] dark:text-stone-400">
+                        {language === 'vi'
+                            ? 'Trò chuyện trực tiếp ngay trên sàn — không lộ số điện thoại cá nhân.'
+                            : 'Real-time in-app messaging — keeps your personal phone private.'}
+                    </p>
                 </div>
 
                 {/* Safety Tips Footer */}
-                <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2 leading-relaxed">
-                    <span className="text-[#C46A28] font-bold shrink-0">💡 {language === 'vi' ? 'Mẹo an toàn:' : 'Safety Tip:'}</span>
+                <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900 text-[11px] text-amber-900 dark:text-amber-300 flex items-start gap-2 leading-relaxed">
+                    <span className="text-[#C46A28] dark:text-[#F5A764] font-bold shrink-0">
+                        💡 {language === 'vi' ? 'Mẹo an toàn:' : 'Safety Tip:'}
+                    </span>
                     <span>
                         {language === 'vi'
-                            ? 'Luôn gặp trực tiếp tại các địa điểm công cộng trong trường (sảnh KTX, căn tin) để kiểm tra món đồ trước khi thanh toán.'
-                            : 'Always meet in person at public campus areas (dorm lobbies, cafeterias) to inspect the item before payment.'}
+                            ? 'Luôn trao đổi rõ tình trạng đồ trong khung chat và gặp trực tiếp tại nơi công cộng để kiểm tra món đồ trước khi thanh toán.'
+                            : 'Discuss item details in chat and meet in public areas to inspect the item before payment.'}
                     </span>
                 </div>
             </div>
