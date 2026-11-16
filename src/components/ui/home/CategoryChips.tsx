@@ -116,7 +116,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
 
     // Render corresponding icon dynamically
     const renderCategoryIcon = (iconName: string, isActive: boolean) => {
-        const iconClass = `w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#7A6D63] dark:text-stone-400'}`;
+        const iconClass = `w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-[#4A3525] dark:text-stone-100' : 'text-[#7A6D63] dark:text-stone-400'}`;
         switch (iconName) {
             case 'BookOpen':
                 return <BookOpen className={iconClass} />;
@@ -174,8 +174,8 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
                             onClick={() => onSelectCategory(category.id)}
                             className={`flex-1 min-w-fit flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 xl:px-3.5 py-2 sm:py-2.5 rounded-full text-xs sm:text-[12.5px] xl:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-2xs ${
                                 isActive
-                                    ? 'bg-gradient-to-r from-[#F5A764] to-[#E89650] text-white shadow-md shadow-[#F5A764]/30 border border-[#E89650] scale-[1.01]'
-                                    : 'bg-white dark:bg-stone-900 text-[#5C4E43] dark:text-stone-200 border border-[#EADBCE] dark:border-stone-800 hover:border-[#F5A764]/70 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 hover:text-[#2A211B] dark:hover:text-stone-100'
+                                    ? 'bg-[#E8D7C3] dark:bg-stone-700 text-[#2A211B] dark:text-stone-100 shadow-xs border border-[#CBB092] dark:border-stone-500 scale-[1.01]'
+                                    : 'bg-white dark:bg-stone-900 text-[#5C4E43] dark:text-stone-200 border border-[#EADBCE] dark:border-stone-800 hover:border-[#D4BDA4] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 hover:text-[#2A211B] dark:hover:text-stone-100'
                             }`}
                         >
                             {renderCategoryIcon(category.iconName, isActive)}

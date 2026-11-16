@@ -47,7 +47,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <div className={`inline-flex items-center gap-3 shrink-0 group cursor-pointer ${className}`}>
       {/* Clean, Sharp, Professional Logo Container */}
       <div
-        className={`${iconSizes[size]} bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] shadow-sm flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-white/20 overflow-hidden shrink-0`}
+        className={`${iconSizes[size]} bg-gradient-to-tr from-[#C9A47E] via-[#DDC09F] to-[#EFE0CC] shadow-sm flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-[#DFC7AC]/50 overflow-hidden shrink-0`}
       >
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full p-1.5 drop-shadow-xs">
           <defs>

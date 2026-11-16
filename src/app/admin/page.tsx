@@ -21,12 +21,12 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  Sparkles,
   UserCheck,
   Users,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useLanguageStore } from '@/lib/language-store';
 import { adminApi } from '@/lib/admin-api';
 import { itemsApi } from '@/lib/items-api';
 import {
@@ -37,6 +37,8 @@ import {
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
+  const { language } = useLanguageStore();
+  const isVi = language === 'vi';
 
   const [dashboard, setDashboard] = useState<ModerationDashboardDto | null>(null);
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -157,24 +159,18 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. TOP WELCOME BANNER */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* 1. TOP WELCOME BANNER - Soft Warm Beige */}
+      <div className="bg-gradient-to-r from-[#F6EFE6] via-[#EFE4D6] to-[#E7D8C5] border border-[#DECBB3] rounded-3xl p-6 sm:p-8 text-[#2A211B] shadow-sm relative overflow-hidden">
+        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-64 h-64 bg-[#D8BA98]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-48 h-48 bg-white/50 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Live PostgreSQL Data • {user?.roleName || 'Admin'} Portal</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Welcome back, {user?.fullName || 'Administrator'}!
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2A211B]">
+              {isVi
+                ? `Chào mừng trở lại, ${user?.fullName || 'Quản trị viên'}!👋`
+                : `Welcome back, ${user?.fullName || 'Administrator'}!👋`}
             </h2>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Review pending seller applications, manage marketplace categories, monitor user accounts,
-              and resolve moderation reports directly from live backend records.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -184,17 +180,17 @@ export default function AdminDashboardPage() {
                 setIsLoading(true);
                 void loadDashboardData();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 font-semibold text-xs sm:text-sm transition cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/85 hover:bg-white text-[#3B2E24] border border-[#DECBB3] font-semibold text-xs sm:text-sm transition cursor-pointer shadow-2xs"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh Data</span>
+              <span>{isVi ? 'Làm mới dữ liệu' : 'Refresh Data'}</span>
             </button>
             <Link
               href="/admin/listings"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm shadow-sm transition shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#DFCBB2] hover:bg-[#D2BA9B] text-[#2A211B] border border-[#C9AE8B] font-bold text-xs sm:text-sm shadow-2xs transition shrink-0"
             >
-              <UserCheck className="w-4 h-4" />
-              <span>All Seller Requests</span>
+              <UserCheck className="w-4 h-4 text-[#4A3525]" />
+              <span>{isVi ? 'Tất cả đơn đăng ký bán hàng' : 'All Seller Requests'}</span>
             </Link>
           </div>
         </div>
@@ -235,85 +231,104 @@ export default function AdminDashboardPage() {
 
       {/* 2. LIVE KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-2xl p-5 border border-[#E7DAC9] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Registered Users
+            <span className="text-xs font-semibold text-[#6E5E52] uppercase tracking-wider">
+              {isVi ? 'Tài khoản đã đăng ký' : 'Registered Users'}
             </span>
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2.5 rounded-xl bg-[#EDF3F6] text-[#3E6A82]">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#2A211B]">
               {totalUsers.toLocaleString()}
             </div>
             <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
-              {dashboard?.bannedUserCount ?? 0} banned
+              {dashboard?.bannedUserCount ?? 0} {isVi ? 'bị khóa' : 'banned'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Total accounts stored in database</p>
+          <p className="text-[11px] text-[#8B796B] mt-1">
+            {isVi ? 'Tổng số tài khoản trong cơ sở dữ liệu' : 'Total accounts stored in database'}
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-2xl p-5 border border-[#E7DAC9] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Live Listings
+            <span className="text-xs font-semibold text-[#6E5E52] uppercase tracking-wider">
+              {isVi ? 'Tin đang hiển thị' : 'Live Listings'}
             </span>
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
+            <div className="p-2.5 rounded-xl bg-[#F4ECE1] text-[#845938]">
               <Package className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#2A211B]">
               {totalLiveItems.toLocaleString()}
             </div>
-            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-              {dashboard?.hiddenItemCount ?? 0} hidden
+            <span className="text-[11px] font-semibold text-[#6E5E52] bg-[#F5EFE7] px-2 py-0.5 rounded-full">
+              {dashboard?.hiddenItemCount ?? 0} {isVi ? 'đã ẩn' : 'hidden'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Published items visible on marketplace</p>
+          <p className="text-[11px] text-[#8B796B] mt-1">
+            {isVi ? 'Món đồ đang mở bán trên sàn' : 'Published items visible on marketplace'}
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/20 shadow-xs">
+        <div className="bg-white rounded-2xl p-5 border border-[#E7DAC9] bg-gradient-to-br from-white to-[#FAF4EB] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">
-              Pending Sellers
+            <span className="text-xs font-semibold text-[#7A563A] uppercase tracking-wider">
+              {isVi ? 'Seller chờ duyệt' : 'Pending Sellers'}
             </span>
-            <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+            <div className="p-2.5 rounded-xl bg-[#EFE4D5] text-[#855A3C]">
               <Clock className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-extrabold text-amber-950">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#2A211B]">
               {pendingSellers.length}
             </div>
-            <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
-              {pendingSellers.length > 0 ? 'Needs approval' : 'All caught up'}
+            <span
+              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                pendingSellers.length > 0
+                  ? 'text-amber-800 bg-amber-100'
+                  : 'text-[#6B482C] bg-[#EFE4D5]'
+              }`}
+            >
+              {pendingSellers.length > 0
+                ? isVi
+                  ? 'Cần xét duyệt'
+                  : 'Needs approval'
+                : isVi
+                  ? 'Đã duyệt hết'
+                  : 'All caught up'}
             </span>
           </div>
-          <p className="text-[11px] text-amber-700 mt-1">Accounts waiting for selling permission</p>
+          <p className="text-[11px] text-[#7A6A5D] mt-1">
+            {isVi ? 'Tài khoản đang đợi cấp quyền đăng bán' : 'Accounts waiting for selling permission'}
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-2xl p-5 border border-[#E7DAC9] shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Moderation Reports
+            <span className="text-xs font-semibold text-[#6E5E52] uppercase tracking-wider">
+              {isVi ? 'Báo cáo vi phạm' : 'Moderation Reports'}
             </span>
             <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600">
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#2A211B]">
               {(dashboard?.pendingReportCount ?? 0) + (dashboard?.reviewingReportCount ?? 0)}
             </div>
             <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              {dashboard?.resolvedReportCount ?? 0} resolved
+              {dashboard?.resolvedReportCount ?? 0} {isVi ? 'đã xử lý' : 'resolved'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {dashboard?.pendingReportCount ?? 0} pending • {dashboard?.reviewingReportCount ?? 0} reviewing
+          <p className="text-[11px] text-[#8B796B] mt-1">
+            {dashboard?.pendingReportCount ?? 0} {isVi ? 'chờ xử lý' : 'pending'} •{' '}
+            {dashboard?.reviewingReportCount ?? 0} {isVi ? 'đang xem xét' : 'reviewing'}
           </p>
         </div>
       </div>
@@ -321,83 +336,93 @@ export default function AdminDashboardPage() {
       {/* 3. PENDING SELLER REQUESTS QUEUE + CATEGORY SNAPSHOT */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Pending Seller Requests Queue (2 cols) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E7DAC9] shadow-xs overflow-hidden">
+          <div className="p-5 sm:p-6 border-b border-[#EFE5D8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                  Pending Seller Applications
+                <h3 className="text-base sm:text-lg font-bold text-[#2A211B]">
+                  {isVi ? 'Hồ sơ xin mở quyền bán hàng' : 'Pending Seller Applications'}
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs">
-                  {pendingSellers.length} pending
+                <span className="px-2.5 py-0.5 rounded-full bg-[#EFE4D5] text-[#6B482C] font-bold text-xs">
+                  {pendingSellers.length} {isVi ? 'chờ duyệt' : 'pending'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Approve users so they can list items immediately on the marketplace
+              <p className="text-xs text-[#7A6A5D] mt-1">
+                {isVi
+                  ? 'Duyệt tài khoản để người dùng có thể đăng bán đồ ngay lập tức'
+                  : 'Approve users so they can list items immediately on the marketplace'}
               </p>
             </div>
 
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-[#8B796B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search name, email, phone..."
+                placeholder={isVi ? 'Tìm tên, email, SĐT...' : 'Search name, email, phone...'}
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className="pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full sm:w-56"
+                className="pl-9 pr-4 py-2 text-xs rounded-xl border border-[#DFCEBA] bg-[#FCF9F4] text-[#2A211B] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40 w-full sm:w-56"
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+            <table className="w-full text-left text-xs text-[#3B2E24]">
+              <thead className="bg-[#FAF6F0] text-[11px] font-semibold text-[#6E5E52] uppercase tracking-wider border-b border-[#EDE2D4]">
                 <tr>
-                  <th className="py-3 px-4 sm:px-6">Applicant</th>
-                  <th className="py-3 px-4">Contact / Profile</th>
-                  <th className="py-3 px-4">Requested At</th>
-                  <th className="py-3 px-4 sm:px-6 text-right">Action</th>
+                  <th className="py-3 px-4 sm:px-6">{isVi ? 'Người đăng ký' : 'Applicant'}</th>
+                  <th className="py-3 px-4">{isVi ? 'Liên hệ / Hồ sơ' : 'Contact / Profile'}</th>
+                  <th className="py-3 px-4">{isVi ? 'Thời gian gửi' : 'Requested At'}</th>
+                  <th className="py-3 px-4 sm:px-6 text-right">{isVi ? 'Thao tác' : 'Action'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#F2E9DD]">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-400">
-                      <Loader2 className="w-5 h-5 animate-spin inline mr-2 text-amber-500" />
-                      Loading seller applications...
+                    <td colSpan={4} className="py-10 text-center text-[#8B796B]">
+                      <Loader2 className="w-5 h-5 animate-spin inline mr-2 text-[#B5916B]" />
+                      {isVi ? 'Đang tải hồ sơ...' : 'Loading seller applications...'}
                     </td>
                   </tr>
                 ) : filteredSellers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-400">
+                    <td colSpan={4} className="py-10 text-center text-[#8B796B]">
                       {pendingSellers.length === 0
-                        ? 'No pending seller requests right now.'
-                        : 'No applications match your filter.'}
+                        ? isVi
+                          ? 'Hiện chưa có yêu cầu mở quyền bán nào.'
+                          : 'No pending seller requests right now.'
+                        : isVi
+                          ? 'Không tìm thấy hồ sơ khớp bộ lọc.'
+                          : 'No applications match your filter.'}
                     </td>
                   </tr>
                 ) : (
                   filteredSellers.map((req) => {
                     const isBusy = busyUserId === req.userId;
                     return (
-                      <tr key={req.userId} className="hover:bg-slate-50/70 transition">
+                      <tr key={req.userId} className="hover:bg-[#FCF9F4] transition">
                         <td className="py-3.5 px-4 sm:px-6">
-                          <div className="font-semibold text-slate-900">{req.fullName}</div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="font-semibold text-[#2A211B]">{req.fullName}</div>
+                          <div className="text-[11px] text-[#7A6A5D]">
                             {req.email}
                             {req.username ? ` • @${req.username}` : ''}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="text-xs text-slate-800">
-                            {req.phoneNumber || <span className="text-slate-400">No phone</span>}
+                          <div className="text-xs text-[#3B2E24]">
+                            {req.phoneNumber || (
+                              <span className="text-[#A39284]">
+                                {isVi ? 'Chưa có SĐT' : 'No phone'}
+                              </span>
+                            )}
                           </div>
                           {(req.schoolName || req.studentCode) && (
-                            <div className="text-[11px] text-slate-500 truncate max-w-[200px]">
+                            <div className="text-[11px] text-[#7A6A5D] truncate max-w-[200px]">
                               {[req.schoolName, req.studentCode].filter(Boolean).join(' • ')}
                             </div>
                           )}
                         </td>
-                        <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-slate-500">
+                        <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-[#7A6A5D]">
                           {req.requestedAt
                             ? new Date(req.requestedAt).toLocaleString()
                             : '—'}
@@ -411,7 +436,7 @@ export default function AdminDashboardPage() {
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-2xs cursor-pointer disabled:opacity-50"
                             >
                               <Check className="w-3.5 h-3.5" />
-                              <span>Approve</span>
+                              <span>{isVi ? 'Duyệt' : 'Approve'}</span>
                             </button>
                             <button
                               type="button"
@@ -420,10 +445,10 @@ export default function AdminDashboardPage() {
                                 setRejectTarget(req);
                                 setRejectReason('');
                               }}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-medium text-xs transition cursor-pointer disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#DFCEBA] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-[#4E3F33] font-medium text-xs transition cursor-pointer disabled:opacity-50"
                             >
                               <X className="w-3.5 h-3.5" />
-                              <span>Reject</span>
+                              <span>{isVi ? 'Từ chối' : 'Reject'}</span>
                             </button>
                           </div>
                         </td>
@@ -435,39 +460,48 @@ export default function AdminDashboardPage() {
             </table>
           </div>
 
-          <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing {filteredSellers.length} pending requests</span>
+          <div className="p-4 bg-[#FAF6F0] border-t border-[#EDE2D4] flex items-center justify-between text-xs text-[#7A6A5D]">
+            <span>
+              {isVi
+                ? `Đang hiển thị ${filteredSellers.length} yêu cầu chờ duyệt`
+                : `Showing ${filteredSellers.length} pending requests`}
+            </span>
             <Link
               href="/admin/listings"
-              className="font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+              className="font-semibold text-[#845938] hover:text-[#5F3D23] flex items-center gap-1"
             >
-              <span>Manage all sellers & items</span>
+              <span>{isVi ? 'Quản lý toàn bộ Seller & Tin đăng' : 'Manage all sellers & items'}</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
 
         {/* Live Categories Snapshot (1 col) */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl p-6 border border-[#E7DAC9] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Categories Overview</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h3 className="text-base font-bold text-[#2A211B]">
+                {isVi ? 'Tổng quan danh mục' : 'Categories Overview'}
+              </h3>
+              <p className="text-xs text-[#7A6A5D] mt-0.5">
                 {dashboard?.activeCategoryCount ?? categories.filter((c) => c.isActive).length}/
-                {dashboard?.totalCategoryCount ?? categories.length} categories open
+                {dashboard?.totalCategoryCount ?? categories.length}{' '}
+                {isVi ? 'danh mục đang mở' : 'categories open'}
               </p>
             </div>
             <Link
               href="/admin/settings"
-              className="text-xs font-semibold text-amber-600 hover:text-amber-700 inline-flex items-center gap-1"
+              className="text-xs font-semibold text-[#845938] hover:text-[#5F3D23] inline-flex items-center gap-1"
             >
               <FolderKanban className="w-3.5 h-3.5" />
-              Manage
+              {isVi ? 'Quản lý' : 'Manage'}
             </Link>
           </div>
 
           {categories.length === 0 ? (
-            <p className="text-xs text-slate-400 py-4 text-center">No categories found.</p>
+            <p className="text-xs text-[#8B796B] py-4 text-center">
+              {isVi ? 'Chưa có danh mục nào.' : 'No categories found.'}
+            </p>
           ) : (
             <div className="space-y-3">
               {categories.map((cat) => {
@@ -476,21 +510,21 @@ export default function AdminDashboardPage() {
                   <div key={cat.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium text-slate-800 truncate">{cat.name}</span>
+                        <span className="font-medium text-[#3B2E24] truncate">{cat.name}</span>
                         {!cat.isActive && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
-                            Closed
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F5EFE7] text-[#7A6A5D]">
+                            {isVi ? 'Đã đóng' : 'Closed'}
                           </span>
                         )}
                       </div>
-                      <span className="font-bold text-slate-900 shrink-0">
-                        {cat.itemCount} items
+                      <span className="font-bold text-[#2A211B] shrink-0">
+                        {cat.itemCount} {isVi ? 'món' : 'items'}
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-[#F3ECE2] overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
-                          cat.isActive ? 'bg-amber-500' : 'bg-slate-400'
+                          cat.isActive ? 'bg-[#C4A17D]' : 'bg-[#CFC3B6]'
                         }`}
                         style={{ width: `${Math.max(widthPct, cat.itemCount > 0 ? 6 : 0)}%` }}
                       />
@@ -501,58 +535,68 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Voided invalid reviews: {dashboard?.voidedReviewCount ?? 0}</span>
+          <div className="pt-2 border-t border-[#EFE5D8] text-[11px] text-[#7A6A5D] flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-[#8C6645] shrink-0" />
+            <span>
+              {isVi ? 'Đánh giá không hợp lệ đã hủy:' : 'Voided invalid reviews:'}{' '}
+              {dashboard?.voidedReviewCount ?? 0}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Reject Reason Modal */}
       {rejectTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2A211B]/40 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-[#E4D6C4] space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Reject Seller Request</h3>
+              <h3 className="text-base font-bold text-[#2A211B]">
+                {isVi ? 'Từ chối yêu cầu bán hàng' : 'Reject Seller Request'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setRejectTarget(null)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="text-[#8B796B] hover:text-[#3B2E24] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-600">
-              Applicant: <strong>{rejectTarget.fullName}</strong> ({rejectTarget.email})
+            <p className="text-xs text-[#6E5E52]">
+              {isVi ? 'Người gửi:' : 'Applicant:'} <strong>{rejectTarget.fullName}</strong> (
+              {rejectTarget.email})
             </p>
             <form onSubmit={handleConfirmRejectSeller} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Reason (optional — shown to the applicant)
+                <label className="block text-xs font-semibold text-[#3B2E24] mb-1">
+                  {isVi ? 'Lý do (tùy chọn — hiển thị cho người dùng)' : 'Reason (optional — shown to the applicant)'}
                 </label>
                 <textarea
                   rows={3}
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   maxLength={500}
-                  placeholder="E.g., Please add a contact phone number in your Profile first."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+                  placeholder={
+                    isVi
+                      ? 'VD: Vui lòng cập nhật số điện thoại liên hệ trong Hồ sơ trước.'
+                      : 'E.g., Please add a contact phone number in your Profile first.'
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] bg-[#FCF9F4] text-xs text-[#2A211B] focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/40"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setRejectTarget(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#DFCEBA] text-xs font-semibold text-[#4E3F33] hover:bg-[#FAF6F0] cursor-pointer"
                 >
-                  Cancel
+                  {isVi ? 'Hủy' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   disabled={busyUserId === rejectTarget.userId}
                   className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
                 >
-                  Confirm Reject
+                  {isVi ? 'Xác nhận từ chối' : 'Confirm Reject'}
                 </button>
               </div>
             </form>

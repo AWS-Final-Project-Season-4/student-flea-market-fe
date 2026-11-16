@@ -37,7 +37,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
 
             {/* Soft Ambient Warm Glows */}
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white/50 blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-[#F5A764]/20 blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-[#DFC7AC]/30 blur-2xl pointer-events-none" />
 
             {/* Main Content Layout */}
             <div className="relative z-10 p-6 sm:p-8 lg:p-10">
@@ -46,15 +46,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                     {/* Left Column (Content & CTAs) */}
                     <div className="w-full lg:max-w-xl text-center lg:text-left">
 
-                        {/* Top Badge: Warm Caramel Beige Badge */}
-                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F5A764]/20 border border-[#F5A764]/40 text-[#A85A24] dark:text-[#F5A764] font-semibold text-xs tracking-wider uppercase shadow-2xs">
+                        {/* Top Badge: Calm Oat-Beige Badge */}
+                        <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#EFE4D5] dark:bg-stone-800 border border-[#DECBB5] dark:border-stone-700 text-[#7A563A] dark:text-[#E5C9A8] font-semibold text-xs tracking-wider uppercase shadow-2xs">
                             <span>{t.hero.badge}</span>
                         </div>
 
                         {/* Headline */}
                         <h1 className="font-serif text-2xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-bold text-[#2A211B] dark:text-stone-100 tracking-tight leading-[1.18] mt-3 sm:mt-4">
                             <span className="block">{t.hero.headlinePart1}</span>
-                            <span className="block text-[#C46A28] dark:text-[#F5A764] drop-shadow-xs mt-1 sm:mt-1.5">{t.hero.headlinePart2}</span>
+                            <span className="block text-[#855A3C] dark:text-[#E5C9A8] drop-shadow-xs mt-1 sm:mt-1.5">{t.hero.headlinePart2}</span>
                         </h1>
 
                         {/* Subtitle */}
@@ -64,17 +64,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
 
                         {/* Button Group */}
                         <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 mt-5 sm:mt-6">
-                            {/* Primary Button */}
+                            {/* Primary Button: Calm Warm Sand Beige */}
                             <button
                                 type="button"
                                 onClick={() => {
                                     const productSection = document.querySelector('.grid');
                                     productSection?.scrollIntoView({ behavior: 'smooth' });
                                 }}
-                                className="bg-[#F5A764] hover:bg-[#E89650] text-white font-semibold px-5 sm:px-6 py-2.5 rounded-full shadow-[0_4px_14px_rgba(245,167,100,0.35)] hover:shadow-[0_6px_20px_rgba(245,167,100,0.45)] flex items-center gap-2 transition-all active:scale-98 cursor-pointer text-xs sm:text-sm"
+                                className="bg-[#DFC9AE] hover:bg-[#D2B796] dark:bg-[#C4A17D] dark:hover:bg-[#B48F69] border border-[#CEB290] dark:border-[#B48F69] text-[#2A211B] dark:text-stone-950 font-semibold px-5 sm:px-6 py-2.5 rounded-full shadow-xs hover:shadow-sm flex items-center gap-2 transition-all active:scale-98 cursor-pointer text-xs sm:text-sm"
                             >
                                 <span>{t.hero.btnBrowse}</span>
-                                <ArrowRight className="w-4 h-4 text-white" />
+                                <ArrowRight className="w-4 h-4 text-[#4A3525] dark:text-stone-950" />
                             </button>
 
                             {/* Secondary Button: Post an Item (Free listing flow) */}
@@ -84,7 +84,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                                 className="bg-white/90 dark:bg-stone-800/90 hover:bg-white dark:hover:bg-stone-800 border border-[#D5BEA8] dark:border-stone-600 text-[#2A211B] dark:text-stone-100 font-semibold px-5 sm:px-6 py-2.5 rounded-full shadow-2xs hover:shadow-xs flex items-center gap-2 transition-all active:scale-98 text-xs sm:text-sm cursor-pointer"
                             >
                                 <span>{t.hero.btnPost}</span>
-                                <Plus className="w-4 h-4 text-[#C46A28] dark:text-[#F5A764]" />
+                                <Plus className="w-4 h-4 text-[#855A3C] dark:text-[#E5C9A8]" />
                             </button>
                         </div>
 
@@ -112,7 +112,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
 
                         {/* Bottom-Right Badge: Frosted Glassmorphism Pill */}
                         <div className="self-start z-20 mt-[-12px] ml-2 bg-white/90 backdrop-blur-md text-[#2A211B] text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md border border-[#EADBCE]">
-                            <MapPin className="w-3.5 h-3.5 text-[#C46A28] shrink-0" />
+                            <MapPin className="w-3.5 h-3.5 text-[#855A3C] shrink-0" />
                             <span>{t.hero.trustBadge2}</span>
                         </div>
 

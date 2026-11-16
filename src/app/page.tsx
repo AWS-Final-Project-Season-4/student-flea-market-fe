@@ -137,7 +137,7 @@ function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-stone-950 font-sans flex flex-col selection:bg-amber-100 selection:text-amber-800 transition-colors duration-200">
+    <div className="min-h-screen bg-[#FCF9F4] dark:bg-stone-950 font-sans flex flex-col selection:bg-[#EFE3D3] selection:text-[#5E412B] transition-colors duration-200">
 
       {/* 1. Global Navigation Bar */}
       <Navbar onPostAdClick={() => setIsPostAdOpen(true)} />
@@ -193,7 +193,7 @@ function HomeContent() {
         {searchQuery.trim() && (
           <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#FAF7F2] dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-800 text-[#2A211B] dark:text-stone-100 shadow-2xs animate-in fade-in duration-200">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#F5A764] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#DFC8AC] text-[#4A3525] flex items-center justify-center shrink-0 shadow-xs">
                 <Search className="w-4 h-4" />
               </div>
               <div>
@@ -230,9 +230,9 @@ function HomeContent() {
             <button
               type="button"
               onClick={() => setIsPostItemOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-[#A85A24] dark:text-[#F5A764] border border-amber-200 dark:border-amber-800 text-xs font-semibold transition cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F5ECE0] dark:bg-stone-800 hover:bg-[#EADBC8] dark:hover:bg-stone-700 text-[#6B482C] dark:text-[#E5C9A8] border border-[#DECCB5] dark:border-stone-700 text-xs font-semibold transition cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764]" />
+              <Plus className="w-3.5 h-3.5 text-[#855A3C] dark:text-[#E5C9A8]" />
               <span>{language === 'vi' ? 'Đăng món đồ mới' : 'Post New Item'}</span>
             </button>
 
@@ -286,7 +286,7 @@ function HomeContent() {
             <button
               type="button"
               onClick={() => setIsPostItemOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold shadow-xs hover:shadow-md transition cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DFC9AE] hover:bg-[#D2B796] text-[#2A211B] border border-[#CEB290] text-xs font-semibold shadow-2xs transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{language === 'vi' ? 'Đăng món đồ đầu tiên' : 'Post First Item'}</span>

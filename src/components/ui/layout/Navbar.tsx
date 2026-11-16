@@ -14,10 +14,13 @@ import {
     TrendingUp,
     User,
     Settings,
+    MessageCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { useThemeStore } from '@/lib/theme-store';
+import { useChatStore } from '@/lib/chat-store';
+import { startChatHub, stopChatHub } from '@/lib/chat-hub';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { AuthRequiredModal, AuthRequiredReason } from '@/components/ui/auth/AuthRequiredModal';
 
@@ -147,8 +150,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const searchContainerRef = useRef<HTMLDivElement | null>(null);
     const languageDropdownRef = useRef<HTMLDivElement | null>(null);
     const profileDropdownRef = useRef<HTMLDivElement | null>(null);
-    const { user, isAuthenticated, initAuth, logout, syncProfile } = useAuthStore();
+    const { user, isAuthenticated, isInitialized, initAuth, logout, syncProfile } = useAuthStore();
     const { initTheme } = useThemeStore();
+    const { totalUnread, refreshUnreadCount } = useChatStore();
 
     useEffect(() => {
         initAuth();
@@ -156,10 +160,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     }, [initAuth, initTheme]);
 
     useEffect(() => {
+        if (!isInitialized) return;
+        let cancelled = false;
+
         if (isAuthenticated) {
-            void syncProfile();
+            void (async () => {
+                // Ensure Axios has refreshed any expired JWT before SignalR starts negotiating
+                await Promise.allSettled([syncProfile(), refreshUnreadCount()]);
+                if (!cancelled && useAuthStore.getState().isAuthenticated) {
+                    await startChatHub();
+                }
+            })();
+        } else {
+            void stopChatHub();
         }
-    }, [isAuthenticated, syncProfile]);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isInitialized, isAuthenticated, syncProfile, refreshUnreadCount]);
 
     // Focus input and lock body scroll when search overlay opens
     useEffect(() => {
@@ -370,9 +389,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 {isAdmin && (
                                     <Link
                                         href="/admin"
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 text-xs font-bold shadow-xs transition"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FAF5EE] hover:bg-[#EFE3D3] dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-95 text-[#3B2A1E] dark:text-stone-100 border border-[#DBC6AE] dark:border-stone-600 text-xs font-bold shadow-2xs transition"
                                     >
-                                        <Shield className="w-3.5 h-3.5" />
+                                        <Shield className="w-3.5 h-3.5 text-[#855A3C] dark:text-[#E5C9A8]" />
                                         <span>{t.navbar.adminPortal}</span>
                                     </Link>
                                 )}
@@ -382,17 +401,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     <button
                                         type="button"
                                         onClick={onPostAdClick}
-                                        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-xl bg-[#E4D1B8] hover:bg-[#D7C0A2] dark:bg-[#C4A17D] dark:hover:bg-[#B48F69] active:scale-95 text-[#2A211B] dark:text-stone-950 border border-[#CEB495] dark:border-[#B48F69] text-xs sm:text-sm font-semibold shadow-2xs transition-all cursor-pointer"
                                     >
-                                        <TrendingUp className="w-4 h-4" />
+                                        <TrendingUp className="w-4 h-4 text-[#6B482C] dark:text-stone-950" />
                                         <span>{t.navbar.postAd}</span>
                                     </button>
                                 ) : (
                                     <Link
                                         href="/post-item"
-                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white text-sm font-semibold shadow-xs hover:shadow-md transition-all"
+                                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E4D1B8] hover:bg-[#D7C0A2] dark:bg-[#C4A17D] dark:hover:bg-[#B48F69] active:scale-95 text-[#2A211B] dark:text-stone-950 border border-[#CEB495] dark:border-[#B48F69] text-sm font-semibold shadow-2xs transition-all"
                                     >
-                                        <TrendingUp className="w-4 h-4" />
+                                        <TrendingUp className="w-4 h-4 text-[#6B482C] dark:text-stone-950" />
                                         <span>{t.navbar.postAd}</span>
                                     </Link>
                                 )}
@@ -509,6 +528,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     </>
                                 )}
 
+                                {/* Chat Link with Live Unread Badge (Desktop) */}
+                                {isAuthenticated && (
+                                    <Link
+                                        href="/chat"
+                                        title={language === 'vi' ? 'Tin nhắn trao đổi' : 'Messages'}
+                                        aria-label={language === 'vi' ? 'Tin nhắn trao đổi' : 'Messages'}
+                                        className="relative p-2.5 text-slate-700 dark:text-stone-200 hover:text-[#7D563A] dark:hover:text-[#E5C9A8] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 rounded-full transition-colors flex items-center justify-center"
+                                    >
+                                        <MessageCircle className="w-5 h-5" />
+                                        {totalUnread > 0 && (
+                                            <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#A67B56] rounded-full shadow-xs">
+                                                {totalUnread > 99 ? '99+' : totalUnread}
+                                            </span>
+                                        )}
+                                    </Link>
+                                )}
+
                                 {/* Cart & Shopee-style Empty Cart Popover */}
                                 <div className="relative group/cart">
                                     <button
@@ -522,9 +558,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             }
                                         }}
                                         aria-label={t.navbar.cartAria}
-                                        className="relative p-2.5 text-slate-700 dark:text-stone-200 hover:text-[#C46A28] dark:hover:text-[#F5A764] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 rounded-full transition-colors ml-0.5 flex items-center justify-center cursor-pointer"
+                                        className="relative p-2.5 text-slate-700 dark:text-stone-200 hover:text-[#7D563A] dark:hover:text-[#E5C9A8] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 rounded-full transition-colors ml-0.5 flex items-center justify-center cursor-pointer"
                                     >
-                                        <ShoppingCart className="w-5 h-5 text-slate-700 dark:text-stone-200 group-hover/cart:text-[#C46A28] dark:group-hover/cart:text-[#F5A764] transition-colors" />
+                                        <ShoppingCart className="w-5 h-5 text-slate-700 dark:text-stone-200 group-hover/cart:text-[#7D563A] dark:group-hover/cart:text-[#E5C9A8] transition-colors" />
                                         <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
                                             0
                                         </span>
@@ -563,7 +599,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                         productSection?.scrollIntoView({ behavior: 'smooth' });
                                                     }
                                                 }}
-                                                className="inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-semibold text-white bg-[#F5A764] hover:bg-[#E89650] shadow-xs hover:shadow-md transition-all active:scale-98 cursor-pointer"
+                                                className="inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-semibold text-[#2A211B] bg-[#DFC9AE] hover:bg-[#D2B796] border border-[#CEB290] shadow-2xs transition-all active:scale-98 cursor-pointer"
                                             >
                                                 {language === 'vi' ? 'Mua sắm ngay' : 'Shop Now'}
                                             </button>
@@ -572,8 +608,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 </div>
                             </div>
 
-                            {/* 4. MOBILE CONTROLS (Cart + Hamburger Menu Toggle) */}
+                            {/* 4. MOBILE CONTROLS (Chat + Cart + Hamburger Menu Toggle) */}
                             <div className="flex md:hidden items-center gap-1">
+                                {isAuthenticated && (
+                                    <Link
+                                        href="/chat"
+                                        className="relative p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full"
+                                        aria-label={language === 'vi' ? 'Tin nhắn' : 'Messages'}
+                                    >
+                                        <MessageCircle className="w-5 h-5" />
+                                        {totalUnread > 0 && (
+                                            <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#A67B56] rounded-full">
+                                                {totalUnread > 99 ? '99+' : totalUnread}
+                                            </span>
+                                        )}
+                                    </Link>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -613,9 +663,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 <Link
                                     href="/admin"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-amber-500 text-slate-950 text-center font-bold text-sm flex items-center justify-center gap-2"
+                                    className="w-full py-2.5 px-4 rounded-xl bg-[#FAF5EE] hover:bg-[#EFE3D3] text-[#3B2A1E] border border-[#DBC6AE] text-center font-bold text-sm flex items-center justify-center gap-2"
                                 >
-                                    <Shield className="w-4 h-4" />
+                                    <Shield className="w-4 h-4 text-[#855A3C]" />
                                     <span>{t.navbar.adminPortal}</span>
                                 </Link>
                             )}
@@ -627,18 +677,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         setIsMobileMenuOpen(false);
                                         onPostAdClick();
                                     }}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
+                                    className="w-full py-2.5 px-4 rounded-xl bg-[#E4D1B8] hover:bg-[#D7C0A2] text-[#2A211B] border border-[#CEB495] text-center font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer"
                                 >
-                                    <TrendingUp className="w-4 h-4" />
+                                    <TrendingUp className="w-4 h-4 text-[#6B482C]" />
                                     <span>{t.navbar.postAd}</span>
                                 </button>
                             ) : (
                                 <Link
                                     href="/post-item"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center font-semibold text-sm flex items-center justify-center gap-2"
+                                    className="w-full py-2.5 px-4 rounded-xl bg-[#E4D1B8] hover:bg-[#D7C0A2] text-[#2A211B] border border-[#CEB495] text-center font-semibold text-sm flex items-center justify-center gap-2"
                                 >
-                                    <TrendingUp className="w-4 h-4" />
+                                    <TrendingUp className="w-4 h-4 text-[#6B482C]" />
                                     <span>{t.navbar.postListingMobile}</span>
                                 </Link>
                             )}
