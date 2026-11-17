@@ -1,13 +1,13 @@
 # Chính sách Đổi trả, Hoàn tiền & Giải quyết Tranh chấp
 
-Cập nhật lần cuối: 24 tháng 10, 2026
+Có hiệu lực: 24 tháng 10, 2026
 
 ## 1. Phạm vi & Tính chất Giao dịch
 Student Flea Market là nền tảng kết nối trực tiếp giữa sinh viên (P2P) để trao đổi, mua và bán đồ dùng cũ hoặc học liệu. Vì phần lớn sản phẩm là đồ đã qua sử dụng do cá nhân sinh viên đăng bán, quy trình kiểm tra và đổi trả áp dụng theo hình thức giao dịch:
-- **Giao dịch gặp mặt trực tiếp trong khuôn viên trường / KTX**.
+- **Giao dịch gặp mặt trực tiếp trong khuôn viên trường / KTX / Địa điểm 2 bên thống nhất với nhau**.
 - **Giao dịch vận chuyển / giao hàng**.
 
-## 2. Giao dịch Gặp mặt Trực tiếp (Bàn giao tại Trường / KTX)
+## 2. Giao dịch Gặp mặt Trực tiếp (Bàn giao tại Trường / KTX/ Địa điểm tùy chọn)
 Để đảm bảo an toàn và minh bạch, Nền tảng khuyến khích giao dịch gặp mặt trực tiếp tại khuôn viên trường hoặc khu vực công cộng.
 - **Trách nhiệm kiểm tra**: Người mua có quyền và trách nhiệm kiểm tra kỹ hiện trạng sản phẩm (chức năng, ngoại hình, phụ kiện đi kèm) trước khi xác nhận bàn giao và thanh toán.
 - **Nguyên tắc "Nguyên trạng" (As-Is)**: Sau khi hai bên hoàn tất bàn giao trực tiếp và thanh toán, giao dịch được xem là chấp thuận theo đúng hiện trạng thực tế. Các khiếu nại sau đó về lỗi vốn có thể nhìn thấy khi kiểm tra trực tiếp sẽ không được chấp nhận trừ khi hai bên có thỏa thuận văn bản trước đó.
