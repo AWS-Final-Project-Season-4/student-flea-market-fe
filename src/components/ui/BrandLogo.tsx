@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
 interface BrandLogoProps {
   variant?: 'full' | 'compact' | 'icon';

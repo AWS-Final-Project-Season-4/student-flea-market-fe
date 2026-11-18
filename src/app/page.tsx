@@ -85,6 +85,7 @@ function HomeContent() {
   // Fetch real items from Backend API
   useEffect(() => {
     let isCancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoadingItems(true);
 
     const query: ItemSearchQuery = {
