@@ -200,14 +200,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden lg:flex w-72 flex-col bg-[#F2EAE0] text-[#3B2E24] border-r border-[#E4D6C4] shrink-0 select-none">
         {/* Brand Header */}
         <div className="h-20 flex items-center px-6 border-b border-[#E4D6C4] gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#C7A480] to-[#B08A64] flex items-center justify-center shadow-md shadow-[#B08A64]/20 text-white font-bold">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] flex items-center justify-center shadow-md shadow-[#E89650]/25 text-white font-bold">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-[#2A211B] text-base tracking-tight leading-none">
               SFM Portal
             </span>
-            <span className="text-[11px] text-[#856243] font-semibold tracking-wide uppercase mt-1">
+            <span className="text-[11px] text-[#C46A28] font-semibold tracking-wide uppercase mt-1">
               {isVi ? `Điều hành ${staffRoleLabel}` : `${staffRoleLabel} Control`}
             </span>
           </div>
@@ -320,8 +320,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           />
           <aside className="relative w-72 max-w-[80vw] bg-[#F2EAE0] text-[#3B2E24] flex flex-col z-10 border-r border-[#E4D6C4]">
             <div className="h-16 flex items-center justify-between px-5 border-b border-[#E4D6C4]">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-6 h-6 text-[#8C6645]" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] flex items-center justify-center text-white shadow-xs">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
                 <span className="font-bold text-[#2A211B] text-base">SFM Portal</span>
               </div>
               <button
@@ -489,10 +491,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-semibold text-[#2A211B] leading-tight">
                     {staffDisplayName}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#6B482C] bg-[#F5ECE0] px-2 py-0.5 rounded-full border border-[#DFCCB5]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {staffRoleLabel}
                   </span>
                 </div>
                 <div className="text-[11px] text-[#7A6A5D] leading-tight mt-0.5">
