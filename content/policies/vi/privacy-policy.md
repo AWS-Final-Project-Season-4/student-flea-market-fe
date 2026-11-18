@@ -1,11 +1,11 @@
-# Chính sách Bảo mật
+# Chính Sách Bảo Mật
 
-Cập nhật lần cuối: 24 tháng 10, 2026
+Có hiệu lực: 24 tháng 10, 2026
 
 ## 1. Cam kết Bảo vệ Dữ liệu Cá nhân
 Chúng tôi tôn trọng quyền riêng tư của bạn và tuân thủ nghiêm ngặt Nghị định số 13/2023/NĐ-CP về Bảo vệ dữ liệu cá nhân (PDPD) của Việt Nam. Chính sách này nêu rõ cách chúng tôi thu thập, xử lý, lưu trữ và bảo vệ dữ liệu cá nhân của bạn.
 
-## 2. Các loại Dữ liệu Thu thập
+## 2. Các loại Dữ liệu Thu Thập
 - **Dữ liệu cá nhân cơ bản**: Họ và tên, địa chỉ email, số điện thoại, địa chỉ giao nhận, ngày sinh.
 - **Dữ liệu sinh viên**: Tên trường đại học/cao đẳng, mã số sinh viên (MSSV), ký túc xá, tình trạng học tập.
 - **Dữ liệu kỹ thuật & sử dụng**: Địa chỉ IP, thông tin thiết bị, cookie, thời điểm tương tác.

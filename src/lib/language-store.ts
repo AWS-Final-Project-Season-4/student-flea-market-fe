@@ -70,7 +70,7 @@ export const DICTIONARY = {
       emptyTitle: 'Không tìm thấy món đồ phù hợp.',
       emptySubtitle: 'Hãy thử tìm bằng từ khóa hoặc danh mục khác nhé!',
       footerDesc: 'Nền tảng mua bán & trao đổi đồ dùng sinh viên.',
-      termsOfService: 'Điều khoản dịch vụ',
+      termsOfService: 'Điều khoản sử dụng',
       privacyPolicy: 'Chính sách bảo mật',
       refundDispute: 'Hoàn tiền & Khiếu nại',
     },

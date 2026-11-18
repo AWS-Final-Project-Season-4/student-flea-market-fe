@@ -38,28 +38,28 @@ const POLICY_CATALOG: Array<{
     summaryVi: string;
     summaryEn: string;
 }> = [
-    {
-        slug: 'term-of-service',
-        titleVi: 'Điều khoản dịch vụ',
-        titleEn: 'Terms of Service',
-        summaryVi: 'Quy định sử dụng sàn, điều kiện tài khoản sinh viên và danh mục hàng hóa bị cấm.',
-        summaryEn: 'Platform rules, student eligibility, intermediary role, and prohibited listings.',
-    },
-    {
-        slug: 'privacy-policy',
-        titleVi: 'Chính sách bảo mật',
-        titleEn: 'Privacy Policy',
-        summaryVi: 'Cam kết bảo vệ dữ liệu cá nhân sinh viên theo Nghị định 13/2023/NĐ-CP.',
-        summaryEn: 'Personal data protection commitments, storage scope, and user data rights.',
-    },
-    {
-        slug: 'refund-dispute',
-        titleVi: 'Hoàn tiền & Tranh chấp',
-        titleEn: 'Return, Refund & Dispute',
-        summaryVi: 'Quy trình đồng kiểm, hoàn trả trong 48 giờ và hòa giải tranh chấp 3 bước.',
-        summaryEn: 'Campus meetup inspection, 48-hour shipping dispute window, and 3-step mediation.',
-    },
-];
+        {
+            slug: 'term-of-service',
+            titleVi: 'Điều khoản sử dụng',
+            titleEn: 'Terms of Service',
+            summaryVi: 'Quy định sử dụng sàn, điều kiện tài khoản sinh viên và danh mục hàng hóa bị cấm.',
+            summaryEn: 'Platform rules, student eligibility, intermediary role, and prohibited listings.',
+        },
+        {
+            slug: 'privacy-policy',
+            titleVi: 'Chính sách bảo mật',
+            titleEn: 'Privacy Policy',
+            summaryVi: 'Cam kết bảo vệ dữ liệu cá nhân sinh viên theo Nghị định 13/2023/NĐ-CP.',
+            summaryEn: 'Personal data protection commitments, storage scope, and user data rights.',
+        },
+        {
+            slug: 'refund-dispute',
+            titleVi: 'Hoàn tiền & Tranh chấp',
+            titleEn: 'Return, Refund & Dispute',
+            summaryVi: 'Quy trình đồng kiểm, hoàn trả trong 48 giờ và hòa giải tranh chấp 3 bước.',
+            summaryEn: 'Campus meetup inspection, 48-hour shipping dispute window, and 3-step mediation.',
+        },
+    ];
 
 /**
  * Reads and parses a specific policy markdown file by its slug

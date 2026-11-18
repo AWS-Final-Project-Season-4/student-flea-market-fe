@@ -208,32 +208,32 @@ export function SettingsClient({ policies }: SettingsClientProps) {
     subtitle: string;
     badge?: string;
   }> = [
-    {
-      id: 'security',
-      icon: <KeyRound className="w-4 h-4" />,
-      label: isVi ? 'Đổi mật khẩu' : 'Change Password',
-      subtitle: isVi ? 'Bảo mật tài khoản' : 'Account security',
-    },
-    {
-      id: 'appearance',
-      icon: resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />,
-      label: isVi ? 'Hiển thị Sáng / Tối' : 'Appearance',
-      subtitle: isVi ? 'Chế độ Sáng, Tối & Hệ thống' : 'Light, Dark & System mode',
-    },
-    {
-      id: 'reports',
-      icon: <Flag className="w-4 h-4" />,
-      label: isVi ? 'Báo cáo (Report)' : 'Reports',
-      subtitle: isVi ? 'Khiếu nại & vi phạm' : 'Disputes & violations',
-      badge: isVi ? 'Sắp tới' : 'Soon',
-    },
-    {
-      id: 'policies',
-      icon: <ShieldCheck className="w-4 h-4" />,
-      label: isVi ? 'Chính sách & Điều khoản' : 'Policies & Legal',
-      subtitle: isVi ? 'Điều khoản, Bảo mật, Hoàn tiền' : 'Terms, Privacy & Disputes',
-    },
-  ];
+      {
+        id: 'security',
+        icon: <KeyRound className="w-4 h-4" />,
+        label: isVi ? 'Đổi mật khẩu' : 'Change Password',
+        subtitle: isVi ? 'Bảo mật tài khoản' : 'Account security',
+      },
+      {
+        id: 'appearance',
+        icon: resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />,
+        label: isVi ? 'Hiển thị Sáng / Tối' : 'Appearance',
+        subtitle: isVi ? 'Chế độ Sáng, Tối & Hệ thống' : 'Light, Dark & System mode',
+      },
+      {
+        id: 'reports',
+        icon: <Flag className="w-4 h-4" />,
+        label: isVi ? 'Báo cáo (Report)' : 'Reports',
+        subtitle: isVi ? 'Khiếu nại & vi phạm' : 'Disputes & violations',
+        badge: isVi ? 'Sắp tới' : 'Soon',
+      },
+      {
+        id: 'policies',
+        icon: <ShieldCheck className="w-4 h-4" />,
+        label: isVi ? 'Chính sách & Điều khoản' : 'Policies & Legal',
+        subtitle: isVi ? 'Điều khoản, Bảo mật, Hoàn tiền' : 'Terms, Privacy & Disputes',
+      },
+    ];
 
   const themeOptions: Array<{
     mode: ThemeMode;
@@ -243,37 +243,37 @@ export function SettingsClient({ policies }: SettingsClientProps) {
     previewClass: string;
     previewAccentClass: string;
   }> = [
-    {
-      mode: 'light',
-      icon: <Sun className="w-5 h-5 text-amber-500" />,
-      title: isVi ? 'Giao diện Sáng' : 'Light Mode',
-      desc: isVi
-        ? 'Nền kem ấm, độ tương phản dịu mắt phù hợp ban ngày.'
-        : 'Warm cream canvas with soft contrast for daytime browsing.',
-      previewClass: 'bg-[#FAF7F2] border-[#EADBCE]',
-      previewAccentClass: 'bg-white border-[#EADBCE]',
-    },
-    {
-      mode: 'dark',
-      icon: <Moon className="w-5 h-5 text-amber-400" />,
-      title: isVi ? 'Giao diện Tối' : 'Dark Mode',
-      desc: isVi
-        ? 'Nền tối dễ chịu cho mắt khi dùng vào ban đêm.'
-        : 'Comfortable low-glare dark surfaces for night usage.',
-      previewClass: 'bg-stone-950 border-stone-800',
-      previewAccentClass: 'bg-stone-900 border-stone-700',
-    },
-    {
-      mode: 'system',
-      icon: <Monitor className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />,
-      title: isVi ? 'Theo hệ thống' : 'System Default',
-      desc: isVi
-        ? 'Tự động đổi sáng/tối khớp với cài đặt thiết bị của bạn.'
-        : 'Automatically matches your OS appearance preference.',
-      previewClass: 'bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2] to-stone-900 border-[#D8C5B4]',
-      previewAccentClass: 'bg-white/90 border-[#EADBCE]',
-    },
-  ];
+      {
+        mode: 'light',
+        icon: <Sun className="w-5 h-5 text-amber-500" />,
+        title: isVi ? 'Giao diện Sáng' : 'Light Mode',
+        desc: isVi
+          ? 'Nền kem ấm, độ tương phản dịu mắt phù hợp ban ngày.'
+          : 'Warm cream canvas with soft contrast for daytime browsing.',
+        previewClass: 'bg-[#FAF7F2] border-[#EADBCE]',
+        previewAccentClass: 'bg-white border-[#EADBCE]',
+      },
+      {
+        mode: 'dark',
+        icon: <Moon className="w-5 h-5 text-amber-400" />,
+        title: isVi ? 'Giao diện Tối' : 'Dark Mode',
+        desc: isVi
+          ? 'Nền tối dễ chịu cho mắt khi dùng vào ban đêm.'
+          : 'Comfortable low-glare dark surfaces for night usage.',
+        previewClass: 'bg-stone-950 border-stone-800',
+        previewAccentClass: 'bg-stone-900 border-stone-700',
+      },
+      {
+        mode: 'system',
+        icon: <Monitor className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />,
+        title: isVi ? 'Theo hệ thống' : 'System Default',
+        desc: isVi
+          ? 'Tự động đổi sáng/tối khớp với cài đặt thiết bị của bạn.'
+          : 'Automatically matches your OS appearance preference.',
+        previewClass: 'bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2] to-stone-900 border-[#D8C5B4]',
+        previewAccentClass: 'bg-white/90 border-[#EADBCE]',
+      },
+    ];
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-stone-950 text-[#2A211B] dark:text-stone-100 flex flex-col transition-colors duration-200">
@@ -311,19 +311,17 @@ export function SettingsClient({ policies }: SettingsClientProps) {
                   key={item.id}
                   type="button"
                   onClick={() => handleSelectTab(item.id)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-left transition cursor-pointer ${
-                    isActive
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-left transition cursor-pointer ${isActive
                       ? 'bg-[#FAF7F2] dark:bg-stone-800 border border-[#F5A764] text-[#2A211B] dark:text-stone-100 shadow-2xs'
                       : 'border border-transparent text-[#5C5047] dark:text-stone-300 hover:bg-[#FAF7F2]/70 dark:hover:bg-stone-800/60'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${
-                        isActive
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition ${isActive
                           ? 'bg-gradient-to-tr from-[#E89650] to-[#F5A764] text-white'
                           : 'bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700'
-                      }`}
+                        }`}
                     >
                       {item.icon}
                     </div>
@@ -395,170 +393,168 @@ export function SettingsClient({ policies }: SettingsClientProps) {
                   </div>
                 ) : (
                   <form onSubmit={handleChangePassword} className="mt-5 space-y-4">
-                      {passwordError && (
-                        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-3.5 py-2.5 text-xs sm:text-sm text-rose-700 dark:text-rose-300">
-                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                          <span>{passwordError}</span>
-                        </div>
-                      )}
+                    {passwordError && (
+                      <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-3.5 py-2.5 text-xs sm:text-sm text-rose-700 dark:text-rose-300">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{passwordError}</span>
+                      </div>
+                    )}
 
-                      {passwordSuccess && (
-                        <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/50 px-3.5 py-2.5 text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
-                          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-                          <span>{passwordSuccess}</span>
-                        </div>
-                      )}
+                    {passwordSuccess && (
+                      <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/50 px-3.5 py-2.5 text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
+                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{passwordSuccess}</span>
+                      </div>
+                    )}
 
-                      {/* Current Password */}
+                    {/* Current Password */}
+                    <div>
+                      <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
+                        {isVi ? 'Mật khẩu hiện tại' : 'Current Password'}{' '}
+                        <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type={showCurrentPw ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          required
+                          autoComplete="current-password"
+                          placeholder="••••••••"
+                          className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPw((prev) => !prev)}
+                          aria-label={isVi ? 'Hiện hoặc ẩn mật khẩu hiện tại' : 'Toggle current password visibility'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B8E83] hover:text-[#2A211B] dark:hover:text-stone-200 cursor-pointer"
+                        >
+                          {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* New Password */}
                       <div>
                         <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
-                          {isVi ? 'Mật khẩu hiện tại' : 'Current Password'}{' '}
+                          {isVi ? 'Mật khẩu mới' : 'New Password'}{' '}
                           <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                           <Lock className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                           <input
-                            type={showCurrentPw ? 'text' : 'password'}
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            type={showNewPw ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                             required
-                            autoComplete="current-password"
+                            autoComplete="new-password"
                             placeholder="••••••••"
                             className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowCurrentPw((prev) => !prev)}
-                            aria-label={isVi ? 'Hiện hoặc ẩn mật khẩu hiện tại' : 'Toggle current password visibility'}
+                            onClick={() => setShowNewPw((prev) => !prev)}
+                            aria-label={isVi ? 'Hiện hoặc ẩn mật khẩu mới' : 'Toggle new password visibility'}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B8E83] hover:text-[#2A211B] dark:hover:text-stone-200 cursor-pointer"
                           >
-                            {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* New Password */}
-                        <div>
-                          <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
-                            {isVi ? 'Mật khẩu mới' : 'New Password'}{' '}
-                            <span className="text-rose-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <Lock className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            <input
-                              type={showNewPw ? 'text' : 'password'}
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              required
-                              autoComplete="new-password"
-                              placeholder="••••••••"
-                              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPw((prev) => !prev)}
-                              aria-label={isVi ? 'Hiện hoặc ẩn mật khẩu mới' : 'Toggle new password visibility'}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B8E83] hover:text-[#2A211B] dark:hover:text-stone-200 cursor-pointer"
-                            >
-                              {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Confirm New Password */}
-                        <div>
-                          <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
-                            {isVi ? 'Xác nhận mật khẩu mới' : 'Confirm New Password'}{' '}
-                            <span className="text-rose-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <Lock className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            <input
-                              type={showConfirmPw ? 'text' : 'password'}
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              required
-                              autoComplete="new-password"
-                              placeholder="••••••••"
-                              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPw((prev) => !prev)}
-                              aria-label={isVi ? 'Hiện hoặc ẩn xác nhận mật khẩu' : 'Toggle confirm password visibility'}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B8E83] hover:text-[#2A211B] dark:hover:text-stone-200 cursor-pointer"
-                            >
-                              {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
+                      {/* Confirm New Password */}
+                      <div>
+                        <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
+                          {isVi ? 'Xác nhận mật khẩu mới' : 'Confirm New Password'}{' '}
+                          <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type={showConfirmPw ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            autoComplete="new-password"
+                            placeholder="••••••••"
+                            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPw((prev) => !prev)}
+                            aria-label={isVi ? 'Hiện hoặc ẩn xác nhận mật khẩu' : 'Toggle confirm password visibility'}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B8E83] hover:text-[#2A211B] dark:hover:text-stone-200 cursor-pointer"
+                          >
+                            {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Password Strength Checklist */}
-                      <div className="rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/60 border border-[#F0E4D7] dark:border-stone-700 px-4 py-3">
-                        <p className="text-[11px] font-bold text-[#5C5047] dark:text-stone-300 mb-2">
-                          {isVi ? 'Yêu cầu mật khẩu mạnh:' : 'Password strength requirements:'}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-                          {[
-                            {
-                              ok: pwRules.minLength && pwRules.maxLength,
-                              label: isVi ? '8–100 ký tự' : '8–100 characters',
-                            },
-                            {
-                              ok: pwRules.hasUpper,
-                              label: isVi ? 'Ít nhất 1 chữ hoa (A–Z)' : 'At least 1 uppercase letter (A–Z)',
-                            },
-                            {
-                              ok: pwRules.hasLower,
-                              label: isVi ? 'Ít nhất 1 chữ thường (a–z)' : 'At least 1 lowercase letter (a–z)',
-                            },
-                            {
-                              ok: pwRules.hasDigit,
-                              label: isVi ? 'Ít nhất 1 chữ số (0–9)' : 'At least 1 digit (0–9)',
-                            },
-                            {
-                              ok: pwRules.hasSpecial,
-                              label: isVi ? 'Ít nhất 1 ký tự đặc biệt (!@#$...)' : 'At least 1 special character (!@#$...)',
-                            },
-                          ].map((rule) => (
-                            <div
-                              key={rule.label}
-                              className={`flex items-center gap-1.5 font-medium ${
-                                rule.ok
-                                  ? 'text-emerald-700 dark:text-emerald-400'
-                                  : 'text-[#7A6D63] dark:text-stone-400'
+                    {/* Password Strength Checklist */}
+                    <div className="rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/60 border border-[#F0E4D7] dark:border-stone-700 px-4 py-3">
+                      <p className="text-[11px] font-bold text-[#5C5047] dark:text-stone-300 mb-2">
+                        {isVi ? 'Yêu cầu mật khẩu mạnh:' : 'Password strength requirements:'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                        {[
+                          {
+                            ok: pwRules.minLength && pwRules.maxLength,
+                            label: isVi ? '8–100 ký tự' : '8–100 characters',
+                          },
+                          {
+                            ok: pwRules.hasUpper,
+                            label: isVi ? 'Ít nhất 1 chữ hoa (A–Z)' : 'At least 1 uppercase letter (A–Z)',
+                          },
+                          {
+                            ok: pwRules.hasLower,
+                            label: isVi ? 'Ít nhất 1 chữ thường (a–z)' : 'At least 1 lowercase letter (a–z)',
+                          },
+                          {
+                            ok: pwRules.hasDigit,
+                            label: isVi ? 'Ít nhất 1 chữ số (0–9)' : 'At least 1 digit (0–9)',
+                          },
+                          {
+                            ok: pwRules.hasSpecial,
+                            label: isVi ? 'Ít nhất 1 ký tự đặc biệt (!@#$...)' : 'At least 1 special character (!@#$...)',
+                          },
+                        ].map((rule) => (
+                          <div
+                            key={rule.label}
+                            className={`flex items-center gap-1.5 font-medium ${rule.ok
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : 'text-[#7A6D63] dark:text-stone-400'
                               }`}
-                            >
-                              <CheckCircle2
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  rule.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#C8B9AA] dark:text-stone-600'
+                          >
+                            <CheckCircle2
+                              className={`w-3.5 h-3.5 shrink-0 ${rule.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#C8B9AA] dark:text-stone-600'
                                 }`}
-                              />
-                              <span>{rule.label}</span>
-                            </div>
-                          ))}
-                        </div>
+                            />
+                            <span>{rule.label}</span>
+                          </div>
+                        ))}
                       </div>
+                    </div>
 
-                      <div className="pt-2 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={isChangingPassword || Boolean(passwordSuccess)}
-                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <KeyRound className="w-4 h-4" />
-                          {isChangingPassword
-                            ? isVi
-                              ? 'Đang đổi mật khẩu...'
-                              : 'Updating Password...'
-                            : isVi
-                              ? 'Đổi mật khẩu'
-                              : 'Update Password'}
-                        </button>
-                      </div>
-                    </form>
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isChangingPassword || Boolean(passwordSuccess)}
+                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <KeyRound className="w-4 h-4" />
+                        {isChangingPassword
+                          ? isVi
+                            ? 'Đang đổi mật khẩu...'
+                            : 'Updating Password...'
+                          : isVi
+                            ? 'Đổi mật khẩu'
+                            : 'Update Password'}
+                      </button>
+                    </div>
+                  </form>
                 )}
               </div>
             )}
@@ -606,11 +602,10 @@ export function SettingsClient({ policies }: SettingsClientProps) {
                         key={opt.mode}
                         type="button"
                         onClick={() => setTheme(opt.mode)}
-                        className={`group rounded-2xl border p-4 text-left transition cursor-pointer flex flex-col justify-between ${
-                          selected
+                        className={`group rounded-2xl border p-4 text-left transition cursor-pointer flex flex-col justify-between ${selected
                             ? 'border-[#E89650] bg-[#FAF7F2] dark:bg-stone-800 ring-2 ring-[#F5A764]/40'
                             : 'border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-[#F5A764]/70'
-                        }`}
+                          }`}
                       >
                         <div>
                           {/* Mini Theme Preview Box */}
@@ -739,7 +734,7 @@ export function SettingsClient({ policies }: SettingsClientProps) {
                     </h2>
                     <p className="text-xs text-[#7A6D63] dark:text-stone-400 mt-1">
                       {isVi
-                        ? 'Toàn bộ điều khoản dịch vụ, quyền riêng tư và quy trình giải quyết tranh chấp của sàn.'
+                        ? 'Toàn bộ điều khoản sử dụng, quyền riêng tư và quy trình giải quyết tranh chấp của sàn.'
                         : 'Read full Terms of Service, Privacy Policy, and Return & Dispute guidelines.'}
                     </p>
                   </div>
@@ -763,19 +758,17 @@ export function SettingsClient({ policies }: SettingsClientProps) {
                         key={pol.slug}
                         type="button"
                         onClick={() => setSelectedPolicySlug(pol.slug)}
-                        className={`rounded-2xl border p-3.5 text-left transition cursor-pointer ${
-                          isSelected
+                        className={`rounded-2xl border p-3.5 text-left transition cursor-pointer ${isSelected
                             ? 'border-[#E89650] bg-[#FAF7F2] dark:bg-stone-800 ring-2 ring-[#F5A764]/35'
                             : 'border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-[#F5A764]/70'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2 mb-1.5">
                           <FileText
-                            className={`w-4 h-4 shrink-0 ${
-                              isSelected
+                            className={`w-4 h-4 shrink-0 ${isSelected
                                 ? 'text-[#B8652B] dark:text-[#F5A764]'
                                 : 'text-[#7A6D63] dark:text-stone-400'
-                            }`}
+                              }`}
                           />
                           <span className="text-xs font-bold text-[#2A211B] dark:text-stone-100 line-clamp-1">
                             {isVi ? pol.titleVi : pol.titleEn}

@@ -32,6 +32,11 @@ export const AuthPromptModal: React.FC = () => {
     }
   }, [isAuthenticated, isInitialized]);
 
+  const handleClose = () => {
+    setIsOpen(false);
+    sessionStorage.setItem('sfm_auth_prompt_dismissed', 'true');
+  };
+
   // Handle escape key to dismiss
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,11 +47,6 @@ export const AuthPromptModal: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
-
-  const handleClose = () => {
-    setIsOpen(false);
-    sessionStorage.setItem('sfm_auth_prompt_dismissed', 'true');
-  };
 
   if (!isOpen) return null;
 

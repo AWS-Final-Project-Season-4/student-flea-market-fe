@@ -41,7 +41,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
     let title: string = t.authRequired.contactTitle;
     let desc: string = t.authRequired.contactDesc;
     let icon = <ShieldAlert className="w-6 h-6 text-[#C46A28]" />;
-    let iconBg = 'bg-amber-50 border-amber-200';
+    const iconBg = 'bg-amber-50 border-amber-200';
 
     if (reason === 'post_item') {
         title = t.authRequired.postItemTitle;
