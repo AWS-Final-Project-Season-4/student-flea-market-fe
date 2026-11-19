@@ -15,6 +15,7 @@ import {
     User,
     Settings,
     MessageCircle,
+    Handshake,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
@@ -478,6 +479,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                         <span>{language === 'vi' ? 'Hồ sơ cá nhân' : 'Profile'}</span>
                                                     </Link>
 
+                                                    {/* Transactions & Orders */}
+                                                    <Link
+                                                        href="/transactions"
+                                                        role="menuitem"
+                                                        onClick={() => setIsProfileMenuOpen(false)}
+                                                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-[#2A211B] dark:text-stone-200 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition"
+                                                    >
+                                                        <Handshake className="w-4 h-4 text-[#B8652B] dark:text-[#F5A764]" />
+                                                        <span>{language === 'vi' ? 'Đơn hàng & Đổi đồ' : 'Orders & Trades'}</span>
+                                                    </Link>
+
                                                     {/* Settings */}
                                                     <Link
                                                         href="/settings"
@@ -697,19 +709,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     <div className="text-xs font-semibold text-slate-700 dark:text-stone-300 px-1">
                                         {t.navbar.signedInAs} {user.fullName || user.email}
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                         <Link
                                             href="/profile"
                                             onClick={() => setIsMobileMenuOpen(false)}
-                                            className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
+                                            className="w-full py-2 px-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
                                         >
                                             <User className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
                                             <span>{language === 'vi' ? 'Hồ sơ' : 'Profile'}</span>
                                         </Link>
                                         <Link
+                                            href="/transactions"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="w-full py-2 px-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
+                                        >
+                                            <Handshake className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
+                                            <span>{language === 'vi' ? 'Đơn hàng' : 'Orders'}</span>
+                                        </Link>
+                                        <Link
                                             href="/settings"
                                             onClick={() => setIsMobileMenuOpen(false)}
-                                            className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
+                                            className="w-full py-2 px-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 text-center font-semibold text-xs flex items-center justify-center gap-1 hover:bg-[#F3E7DA] dark:hover:bg-stone-800 transition"
                                         >
                                             <Settings className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
                                             <span>{language === 'vi' ? 'Cài đặt' : 'Settings'}</span>

@@ -202,8 +202,8 @@ function ProfileContent() {
     if (trimmedName.length < 2) {
       setProfileError(
         isVi
-          ? 'Họ và tên phải có ít nhất 2 ký tự.'
-          : 'Full name must be at least 2 characters.'
+          ? 'Họ và tên bắt buộc và phải có ít nhất 2 ký tự.'
+          : 'Full name is required and must be at least 2 characters.'
       );
       return;
     }
@@ -217,11 +217,20 @@ function ProfileContent() {
       return;
     }
 
-    if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
+    if (!trimmedPhone || !PHONE_REGEX.test(trimmedPhone)) {
       setProfileError(
         isVi
-          ? 'Số điện thoại không hợp lệ (cần 9–15 chữ số, có thể bắt đầu bằng dấu +).'
-          : 'Invalid phone number format (9–15 digits, optional leading +).'
+          ? 'Số điện thoại Zalo là bắt buộc để đối soát (9–15 chữ số, có thể bắt đầu bằng +).'
+          : 'Zalo phone number is required for verification (9–15 digits, optional leading +).'
+      );
+      return;
+    }
+
+    if (!trimmedSchool || trimmedSchool.length < 2) {
+      setProfileError(
+        isVi
+          ? 'Tên trường đại học / cao đẳng là bắt buộc để xác định mạng lưới sinh viên.'
+          : 'University / College name is required for campus student verification.'
       );
       return;
     }
@@ -231,6 +240,15 @@ function ProfileContent() {
         isVi
           ? 'Trường, Ký túc xá và Khu vực giao dịch tối đa 200 ký tự.'
           : 'School, dormitory, and meetup area must not exceed 200 characters.'
+      );
+      return;
+    }
+
+    if (!trimmedStudentCode || trimmedStudentCode.length < 2) {
+      setProfileError(
+        isVi
+          ? 'Mã số sinh viên (MSSV) là bắt buộc để định danh sinh viên.'
+          : 'Student ID (MSSV) is required for student identification.'
       );
       return;
     }
@@ -471,12 +489,12 @@ function ProfileContent() {
                   <div>
                     <h2 className="text-lg font-bold text-[#2A211B] dark:text-stone-100 flex items-center gap-2">
                       <UserIcon className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />
-                      {isVi ? 'Thông tin cá nhân' : 'Personal Information'}
+                      {isVi ? 'Định danh Sinh viên (KYC)' : 'Student Verification (KYC)'}
                     </h2>
                     <p className="text-xs text-[#7A6D63] dark:text-stone-400 mt-1">
                       {isVi
-                        ? 'Các trường Trường, MSSV, KTX và Khu vực là tùy chọn — điền giúp người mua/bán dễ hẹn giao dịch hơn.'
-                        : 'School, Student ID, Dormitory, and Meetup Area are optional — filling them helps coordinate campus meetups.'}
+                        ? 'Mạng lưới độc quyền sinh viên: Họ tên, SĐT Zalo, Trường và MSSV là thông tin bắt buộc để định danh và bảo vệ giao dịch P2P an toàn.'
+                        : 'Exclusive campus network: Full Name, Zalo Phone, University, and Student ID are mandatory for student verification and safe P2P transactions.'}
                     </p>
                   </div>
                 </div>
@@ -517,13 +535,11 @@ function ProfileContent() {
                       </div>
                     </div>
 
-                    {/* Phone Number (Optional for updates / Google users) */}
+                    {/* Phone Number (Required with Zalo) */}
                     <div>
                       <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
-                        {isVi ? 'Số điện thoại' : 'Phone Number'}{' '}
-                        <span className="text-[#9B8E83] font-normal">
-                          ({isVi ? 'tùy chọn' : 'optional'})
-                        </span>
+                        {isVi ? 'Số điện thoại (có Zalo)' : 'Phone Number (with Zalo)'}{' '}
+                        <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <Phone className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -532,19 +548,18 @@ function ProfileContent() {
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
                           maxLength={16}
-                          placeholder={isVi ? '0901234567 hoặc +84901234567' : '0901234567 or +84901234567'}
+                          required
+                          placeholder={isVi ? '0901234567 (số có đăng ký Zalo)' : '0901234567 (with Zalo)'}
                           className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                         />
                       </div>
                     </div>
 
-                    {/* School Name (Optional) */}
+                    {/* School Name (Required) */}
                     <div>
                       <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
                         {isVi ? 'Trường đại học / Cao đẳng' : 'School / University'}{' '}
-                        <span className="text-[#9B8E83] font-normal">
-                          ({isVi ? 'tùy chọn' : 'optional'})
-                        </span>
+                        <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <GraduationCap className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -553,19 +568,18 @@ function ProfileContent() {
                           value={schoolName}
                           onChange={(e) => setSchoolName(e.target.value)}
                           maxLength={200}
-                          placeholder={isVi ? 'VD: ĐH Bách Khoa, ĐH FPT...' : 'e.g., FPT University, HCMUT...'}
+                          required
+                          placeholder={isVi ? 'VD: ĐH Bách Khoa, ĐH Kinh Tế, ĐH FPT...' : 'e.g., FPT University, HCMUT...'}
                           className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                         />
                       </div>
                     </div>
 
-                    {/* Student Code (Optional) */}
+                    {/* Student Code (Required) */}
                     <div>
                       <label className="block text-xs font-bold text-[#2A211B] dark:text-stone-200 mb-1.5">
-                        {isVi ? 'Mã số sinh viên (MSSV)' : 'Student ID'}{' '}
-                        <span className="text-[#9B8E83] font-normal">
-                          ({isVi ? 'tùy chọn' : 'optional'})
-                        </span>
+                        {isVi ? 'Mã số sinh viên (MSSV)' : 'Student ID (MSSV)'}{' '}
+                        <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <IdCard className="w-4 h-4 text-[#9B8E83] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -574,7 +588,8 @@ function ProfileContent() {
                           value={studentCode}
                           onChange={(e) => setStudentCode(e.target.value)}
                           maxLength={50}
-                          placeholder={isVi ? 'VD: SE180123' : 'e.g., SE180123'}
+                          required
+                          placeholder={isVi ? 'VD: SE180123, 21127000...' : 'e.g., SE180123, 21127000...'}
                           className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800/80 text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                         />
                       </div>

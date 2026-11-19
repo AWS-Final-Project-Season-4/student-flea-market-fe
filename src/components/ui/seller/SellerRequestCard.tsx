@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
-  Phone,
   RefreshCw,
   Send,
   ShieldCheck,
@@ -154,6 +153,15 @@ export function SellerRequestCard({
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    if (!isKycComplete) {
+      setErrorMsg(
+        isVi
+          ? 'Bạn cần hoàn tất đầy đủ 4 thông tin sinh viên (Họ tên, SĐT Zalo, Trường, MSSV) trước khi gửi yêu cầu bán hàng.'
+          : 'You must complete all 4 student KYC fields (Full Name, Zalo Phone, University, Student ID) before requesting seller permission.'
+      );
+      return;
+    }
+
     if (!agreedToPolicy) {
       setErrorMsg(
         isVi
@@ -250,7 +258,11 @@ export function SellerRequestCard({
   };
 
   const badge = getBadgeMeta();
-  const hasPhone = Boolean(user?.phoneNumber && user.phoneNumber.trim().length > 0);
+  const hasFullName = Boolean(user?.fullName && user.fullName.trim().length >= 2);
+  const hasPhone = Boolean(user?.phoneNumber && user.phoneNumber.trim().length >= 9);
+  const hasSchool = Boolean(user?.schoolName && user.schoolName.trim().length >= 2);
+  const hasStudentCode = Boolean(user?.studentCode && user.studentCode.trim().length >= 2);
+  const isKycComplete = hasFullName && hasPhone && hasSchool && hasStudentCode;
   const currentStep = sellerStatus === 2 ? 3 : sellerStatus === 1 ? 2 : 1;
 
   const wrapperClass =
@@ -479,58 +491,113 @@ export function SellerRequestCard({
             </div>
           )}
 
-          {/* Open Verification Checklist (No MSSV / No KTX required) */}
-          <div className="rounded-2xl border border-[#EADBCE] dark:border-stone-800 bg-[#FAF7F2]/70 dark:bg-stone-800/50 p-3.5 space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A6D63] dark:text-stone-400">
-              {isVi ? 'Kiểm tra nhanh tài khoản' : 'Quick Account Check'}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          {/* Mandatory Student KYC Checklist */}
+          <div className="rounded-2xl border border-[#EADBCE] dark:border-stone-800 bg-[#FAF7F2]/70 dark:bg-stone-800/50 p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A6D63] dark:text-stone-400">
+                {isVi ? 'Yêu cầu Định danh Sinh viên (Bắt buộc)' : 'Mandatory Student KYC Requirements'}
+              </p>
+              <span
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                  isKycComplete
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                }`}
+              >
+                {isKycComplete
+                  ? isVi
+                    ? 'Đủ điều kiện KYC'
+                    : 'KYC Complete'
+                  : isVi
+                    ? 'Chưa đủ thông tin'
+                    : 'Incomplete'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              {/* 1. Full Name */}
               <div className="flex items-center gap-2 text-[#2A211B] dark:text-stone-200">
                 <CheckCircle2
                   className={`w-4 h-4 shrink-0 ${
-                    user?.isEmailVerified ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'
+                    hasFullName ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-stone-600'
                   }`}
                 />
-                <span>
-                  {user?.isEmailVerified
-                    ? isVi
-                      ? 'Email tài khoản đã xác thực'
-                      : 'Account email verified'
+                <span className="truncate">
+                  {hasFullName
+                    ? `${isVi ? 'Họ tên:' : 'Name:'} ${user?.fullName}`
                     : isVi
-                      ? 'Email chưa xác thực'
-                      : 'Email not verified'}
+                      ? 'Thiếu Họ và tên'
+                      : 'Missing Full Name'}
                 </span>
               </div>
 
+              {/* 2. Zalo Phone */}
               <div className="flex items-center gap-2 text-[#2A211B] dark:text-stone-200">
-                {hasPhone ? (
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <Phone className="w-4 h-4 shrink-0 text-amber-500" />
-                )}
+                <CheckCircle2
+                  className={`w-4 h-4 shrink-0 ${
+                    hasPhone ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-stone-600'
+                  }`}
+                />
                 <span className="truncate">
-                  {hasPhone ? (
-                    `${isVi ? 'SĐT liên hệ:' : 'Phone:'} ${user?.phoneNumber}`
-                  ) : variant === 'modal' ? (
-                    <Link
-                      href="/profile"
-                      onClick={onNavigateProfile}
-                      className="text-[#B8652B] dark:text-[#F5A764] hover:underline font-medium"
-                    >
-                      {isVi
-                        ? 'Khuyên thêm SĐT ở Hồ sơ (tùy chọn)'
-                        : 'Optional: Add phone in Profile'}
-                    </Link>
-                  ) : (
-                    <span className="text-[#7A6D63] dark:text-stone-400">
-                      {isVi
-                        ? 'Khuyên thêm SĐT ở trên (tùy chọn)'
-                        : 'Optional: Add phone above'}
-                    </span>
-                  )}
+                  {hasPhone
+                    ? `${isVi ? 'SĐT Zalo:' : 'Zalo Phone:'} ${user?.phoneNumber}`
+                    : isVi
+                      ? 'Thiếu SĐT Zalo'
+                      : 'Missing Zalo Phone'}
+                </span>
+              </div>
+
+              {/* 3. University */}
+              <div className="flex items-center gap-2 text-[#2A211B] dark:text-stone-200">
+                <CheckCircle2
+                  className={`w-4 h-4 shrink-0 ${
+                    hasSchool ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-stone-600'
+                  }`}
+                />
+                <span className="truncate">
+                  {hasSchool
+                    ? `${isVi ? 'Trường:' : 'School:'} ${user?.schoolName}`
+                    : isVi
+                      ? 'Thiếu Tên trường'
+                      : 'Missing University'}
+                </span>
+              </div>
+
+              {/* 4. Student ID */}
+              <div className="flex items-center gap-2 text-[#2A211B] dark:text-stone-200">
+                <CheckCircle2
+                  className={`w-4 h-4 shrink-0 ${
+                    hasStudentCode ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-300 dark:text-stone-600'
+                  }`}
+                />
+                <span className="truncate">
+                  {hasStudentCode
+                    ? `${isVi ? 'MSSV:' : 'Student ID:'} ${user?.studentCode}`
+                    : isVi
+                      ? 'Thiếu MSSV'
+                      : 'Missing Student ID'}
                 </span>
               </div>
             </div>
+
+            {!isKycComplete && (
+              <div className="pt-1 border-t border-[#EADBCE]/80 dark:border-stone-800 text-[11px] text-amber-700 dark:text-amber-400 flex items-center justify-between gap-2">
+                <span>
+                  {isVi
+                    ? 'Bạn cần cập nhật đủ 4 thông tin sinh viên ở mục trên trước khi gửi đơn.'
+                    : 'Please complete all 4 student fields in your profile above first.'}
+                </span>
+                {variant === 'modal' && (
+                  <Link
+                    href="/profile"
+                    onClick={onNavigateProfile}
+                    className="font-bold text-[#B8652B] dark:text-[#F5A764] hover:underline shrink-0"
+                  >
+                    {isVi ? 'Tới Hồ sơ →' : 'Go to Profile →'}
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Optional Note */}
@@ -599,11 +666,23 @@ export function SellerRequestCard({
           </label>
 
           {/* Submit */}
-          <div className="pt-1 flex justify-end">
+          <div className="pt-1 flex items-center justify-between gap-3">
+            {!isKycComplete && (
+              <span className="text-xs text-rose-500 font-medium">
+                {isVi ? '⚠️ Cần hoàn tất KYC để mở khóa gửi yêu cầu' : '⚠️ Complete KYC to enable submit'}
+              </span>
+            )}
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting || !isKycComplete}
+              title={
+                !isKycComplete
+                  ? isVi
+                    ? 'Bạn cần cập nhật đủ 4 trường Sinh viên trước'
+                    : 'Complete all 4 Student KYC fields first'
+                  : undefined
+              }
+              className="ml-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
