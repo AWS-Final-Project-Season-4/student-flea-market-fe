@@ -12,6 +12,7 @@ import {
   Repeat,
   ShieldAlert,
   ArrowRight,
+  ImagePlus,
   User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -23,6 +24,18 @@ import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
 import { CategoryDto, CreateItemRequestDto, ItemDetailDto } from '@/types/item';
 import { detectCategoryFromTitle, CategoryDetectorResult } from '@/lib/category-detector';
 import { formatItemCodeDisplay } from '@/data/mock-items';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGES_PER_ITEM,
+  MAX_ITEM_IMAGE_BYTES,
+  uploadItemImages,
+  validateImageFile,
+} from '@/lib/media-api';
+
+interface PickedImage {
+  file: File;
+  previewUrl: string;
+}
 
 interface PostItemModalProps {
   isOpen: boolean;
@@ -64,6 +77,9 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [location, setLocation] = useState('KTX Khu A - Sảnh chính');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState(PRESET_IMAGES[0].url);
+  // Photos picked from the device: uploaded to S3 after the item is created.
+  const [pickedImages, setPickedImages] = useState<PickedImage[]>([]);
+  const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
   // Submission & validation states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,10 +136,49 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     setLocation('KTX Khu A - Sảnh chính');
     setDescription('');
     setImageUrl(PRESET_IMAGES[0].url);
+    pickedImages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+    setPickedImages([]);
+    setUploadWarning(null);
     setErrorMessage(null);
     setCreatedItem(null);
     setIsSubmitting(false);
     onClose();
+  };
+
+  const handleFilesPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (!files.length) return;
+    setErrorMessage(null);
+
+    const room = MAX_IMAGES_PER_ITEM - pickedImages.length;
+    const accepted: PickedImage[] = [];
+    for (const file of files.slice(0, Math.max(room, 0))) {
+      if (validateImageFile(file, MAX_ITEM_IMAGE_BYTES)) {
+        setErrorMessage(
+          language === 'vi'
+            ? `Ảnh "${file.name}" không hợp lệ: chỉ nhận JPG, PNG, WebP tối đa 10 MB.`
+            : `"${file.name}" is not allowed: JPG, PNG or WebP up to 10 MB only.`
+        );
+        continue;
+      }
+      accepted.push({ file, previewUrl: URL.createObjectURL(file) });
+    }
+    if (files.length > room) {
+      setErrorMessage(
+        language === 'vi'
+          ? `Tối đa ${MAX_IMAGES_PER_ITEM} ảnh cho mỗi tin.`
+          : `Up to ${MAX_IMAGES_PER_ITEM} photos per listing.`
+      );
+    }
+    setPickedImages((prev) => [...prev, ...accepted]);
+  };
+
+  const removePickedImage = (index: number) => {
+    setPickedImages((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleTitleChange = (val: string) => {
@@ -190,13 +245,46 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
       condition,
       isExchangeEnabled,
       location: location.trim(),
-      imageUrls: imageUrl.trim() ? [imageUrl.trim()] : undefined,
+      // Device photos go to S3 after the item exists; the URL/preset is only used when none are picked.
+      imageUrls: pickedImages.length === 0 && imageUrl.trim() ? [imageUrl.trim()] : undefined,
     };
 
     setIsSubmitting(true);
+    setUploadWarning(null);
 
     try {
-      const newItem = await itemsApi.createItem(payload);
+      let newItem = await itemsApi.createItem(payload);
+
+      if (pickedImages.length > 0) {
+        try {
+          const images = await uploadItemImages(
+            newItem.id,
+            pickedImages.map((p) => p.file)
+          );
+          // Primary first: the storefront card uses images[0].
+          const ordered = [...images].sort(
+            (a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.order - b.order
+          );
+          newItem = {
+            ...newItem,
+            images: ordered.map((img) => ({
+              id: img.id,
+              imageUrl: img.imageUrl,
+              isPrimary: img.isPrimary,
+              order: img.order,
+            })),
+          };
+        } catch (uploadErr) {
+          // The item is already published; only the photos failed.
+          console.warn('Image upload failed:', uploadErr);
+          setUploadWarning(
+            language === 'vi'
+              ? 'Tin đã được đăng nhưng tải ảnh lên thất bại. Bạn có thể thử lại sau.'
+              : 'The listing was posted but uploading photos failed. Please try again later.'
+          );
+        }
+      }
+
       setCreatedItem(newItem);
       setIsSubmitting(false);
 
@@ -344,6 +432,13 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 ? 'Món đồ của bạn đã được đưa lên sàn và sẵn sàng để mọi người trao đổi.'
                 : 'Your listing is now live on Student Flea Market with a unique Smart ItemCode.'}
             </p>
+
+            {uploadWarning && (
+              <p className="w-full max-w-sm mb-4 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-1.5 text-left">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+                {uploadWarning}
+              </p>
+            )}
 
             {/* Smart ItemCode Card */}
             <div className="w-full max-w-sm p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-stone-800 dark:via-stone-800 dark:to-stone-900 border border-amber-200 dark:border-stone-700 mb-6 shadow-xs">
@@ -547,10 +642,54 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1 flex items-center justify-between">
                   <span>{language === 'vi' ? 'Hình ảnh sản phẩm' : 'Product Photo'}</span>
                   <span className="text-[11px] text-slate-400">
-                    {language === 'vi' ? 'Chọn ảnh mẫu hoặc nhập URL' : 'Choose preset or enter URL'}
+                    {language === 'vi'
+                      ? `Tải ảnh từ máy (tối đa ${MAX_IMAGES_PER_ITEM}) hoặc dùng URL`
+                      : `Upload photos (max ${MAX_IMAGES_PER_ITEM}) or use a URL`}
                   </span>
                 </label>
 
+                {/* Device photos -> Amazon S3 */}
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  {pickedImages.map((p, idx) => (
+                    <div key={p.previewUrl} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={p.previewUrl}
+                        alt={p.file.name}
+                        className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-stone-700"
+                      />
+                      {idx === 0 && (
+                        <span className="absolute bottom-0 inset-x-0 text-[9px] text-center font-bold bg-amber-500/90 text-white rounded-b-lg">
+                          {language === 'vi' ? 'Ảnh chính' : 'Cover'}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePickedImage(idx)}
+                        aria-label={language === 'vi' ? 'Bỏ ảnh' : 'Remove photo'}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white dark:bg-stone-800 border border-slate-200 dark:border-stone-700 text-slate-500 hover:text-red-600 flex items-center justify-center shadow-xs cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {pickedImages.length < MAX_IMAGES_PER_ITEM && (
+                    <label className="w-14 h-14 rounded-lg border border-dashed border-amber-400 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 flex flex-col items-center justify-center text-[10px] font-semibold cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/60">
+                      <ImagePlus className="w-4 h-4" />
+                      {language === 'vi' ? 'Thêm ảnh' : 'Add'}
+                      <input
+                        type="file"
+                        accept={ALLOWED_IMAGE_TYPES.join(',')}
+                        multiple
+                        className="hidden"
+                        onChange={handleFilesPicked}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {pickedImages.length === 0 && (
+                <>
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="url"
@@ -586,6 +725,8 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                     </button>
                   ))}
                 </div>
+                </>
+                )}
               </div>
 
               {/* 7. Description */}
