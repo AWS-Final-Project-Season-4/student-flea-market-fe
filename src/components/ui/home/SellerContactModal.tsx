@@ -286,18 +286,6 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                             : 'Real-time in-app messaging — keeps your personal phone private.'}
                     </p>
                 </div>
-
-                {/* Safety Tips Footer */}
-                <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900 text-[11px] text-amber-900 dark:text-amber-300 flex items-start gap-2 leading-relaxed">
-                    <span className="text-[#C46A28] dark:text-[#F5A764] font-bold shrink-0">
-                        💡 {language === 'vi' ? 'Mẹo an toàn:' : 'Safety Tip:'}
-                    </span>
-                    <span>
-                        {language === 'vi'
-                            ? 'Luôn trao đổi rõ tình trạng đồ trong khung chat và gặp trực tiếp tại nơi công cộng để kiểm tra món đồ trước khi thanh toán.'
-                            : 'Discuss item details in chat and meet in public areas to inspect the item before payment.'}
-                    </span>
-                </div>
             </div>
         </div>
     );

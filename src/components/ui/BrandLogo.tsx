@@ -8,6 +8,7 @@ interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
   href?: string | null;
   className?: string;
+  collapsed?: boolean;
 }
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
@@ -15,12 +16,13 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   size = 'md',
   href = '/',
   className = '',
+  collapsed = false,
 }) => {
   // Dimensions based on size
   const iconSizes = {
     sm: 'w-8 h-8 rounded-xl',
-    md: 'w-10 h-10 rounded-2xl',
-    lg: 'w-12 h-12 rounded-2xl',
+    md: collapsed ? 'w-9 h-9 rounded-full' : 'w-10 h-10 rounded-2xl',
+    lg: collapsed ? 'w-10 h-10 rounded-full' : 'w-12 h-12 rounded-2xl',
   };
 
   const titleSizes = {
@@ -43,10 +45,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   };
 
   const content = (
-    <div className={`inline-flex items-center gap-3 shrink-0 group cursor-pointer ${className}`}>
+    <div className={`inline-flex items-center shrink-0 group cursor-pointer ${className}`}>
       {/* Clean, Sharp, Professional Logo Container */}
       <div
-        className={`${iconSizes[size]} bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] shadow-md shadow-[#E89650]/20 flex items-center justify-center transform group-hover:scale-105 transition-all duration-200 border border-[#F5A764]/40 overflow-hidden shrink-0`}
+        className={`${iconSizes[size]} bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] shadow-md shadow-[#E89650]/20 flex items-center justify-center transform group-hover:scale-105 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] border border-[#F5A764]/40 overflow-hidden shrink-0`}
       >
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full p-1.5 drop-shadow-xs">
           <defs>
@@ -96,7 +98,14 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
       {/* Typography */}
       {variant !== 'icon' && (
-        <div className="flex flex-col shrink-0">
+        <div
+          aria-hidden={collapsed}
+          className={`flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            collapsed
+              ? 'max-w-0 opacity-0 ml-0 pointer-events-none'
+              : 'max-w-[280px] opacity-100 ml-3'
+          }`}
+        >
           <span
             className={`font-bold ${titleSizes[size]} tracking-tight whitespace-nowrap leading-tight`}
           >

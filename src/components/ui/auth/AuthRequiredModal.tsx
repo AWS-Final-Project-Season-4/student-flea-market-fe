@@ -2,11 +2,11 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { X, LogIn, UserPlus, ShieldAlert, MapPin, PlusCircle, TrendingUp, ShoppingCart } from 'lucide-react';
+import { X, LogIn, UserPlus, ShieldAlert, MapPin, PlusCircle, TrendingUp, ShoppingCart, MessageCircle } from 'lucide-react';
 import { ProductItem } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 
-export type AuthRequiredReason = 'contact' | 'post_item' | 'post_ad' | 'cart';
+export type AuthRequiredReason = 'contact' | 'post_item' | 'post_ad' | 'cart' | 'chat';
 
 interface AuthRequiredModalProps {
     isOpen: boolean;
@@ -55,6 +55,10 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
         title = t.authRequired.cartTitle;
         desc = t.authRequired.cartDesc;
         icon = <ShoppingCart className="w-6 h-6 text-[#C46A28]" />;
+    } else if (reason === 'chat') {
+        title = t.authRequired.chatTitle;
+        desc = t.authRequired.chatDesc;
+        icon = <MessageCircle className="w-6 h-6 text-[#C46A28]" />;
     }
 
     return (
