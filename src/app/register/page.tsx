@@ -742,13 +742,6 @@ export default function RegisterPage() {
                 {/* Ambient Top Gradient */}
                 <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#FAF7F2]/90 via-[#FAF7F2]/60 to-transparent pointer-events-none" />
 
-                {/* Top Brand Identity */}
-                <div className="relative z-10 text-center px-4 sm:px-6 pt-8 sm:pt-12 w-full max-w-none mx-auto">
-                    <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-serif font-bold text-[#2A211B] tracking-wide leading-tight whitespace-nowrap drop-shadow-xs">
-                        Student Flea Market
-                    </h1>
-                </div>
-
                 <div className="relative z-10 pointer-events-none" />
             </section>
 
