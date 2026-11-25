@@ -32,7 +32,7 @@ export function PolicyDetailClient({ contentEn, contentVi }: PolicyDetailClientP
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-stone-950 font-sans text-[#2A211B] dark:text-stone-100 pb-16 transition-colors">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-[#EADBCE] dark:border-stone-800">
+      <header className="sticky top-0 z-30 surface-translucent bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-[#EADBCE] dark:border-stone-800">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link
             href="/settings?tab=policies"
@@ -80,7 +80,7 @@ export function PolicyDetailClient({ contentEn, contentVi }: PolicyDetailClientP
       </header>
 
       {/* Main Policy Content Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
         <article className="bg-white dark:bg-stone-900 p-6 sm:p-12 rounded-3xl shadow-xs border border-[#EADBCE] dark:border-stone-800">
           <ReactMarkdown
             components={{

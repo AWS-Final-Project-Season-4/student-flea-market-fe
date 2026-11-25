@@ -296,7 +296,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
 
     return (
         <>
-            <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-gray-100 dark:border-stone-800 shadow-xs transition-colors">
+            <header className="sticky top-0 z-40 w-full surface-translucent bg-white/95 dark:bg-stone-950/95 backdrop-blur-md border-b border-gray-100 dark:border-stone-800 shadow-xs transition-colors">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20 gap-4">
 
@@ -313,9 +313,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 onClick={() => setIsSearchOpen(true)}
                                 aria-label={t.navbar.searchAria}
                                 title={t.navbar.searchAria}
-                                className="sm:hidden p-2 text-slate-700 dark:text-stone-300 hover:text-blue-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-stone-800 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
+                                className="sm:hidden min-w-[44px] min-h-[44px] text-slate-700 dark:text-stone-300 hover:text-blue-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-stone-800 active:scale-95 rounded-full transition-all cursor-pointer flex items-center justify-center group"
                             >
-                                <Search className="w-5 h-5 text-slate-600 dark:text-stone-300 group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors" />
+                                <Search aria-hidden="true" className="w-5 h-5 text-slate-600 dark:text-stone-300 group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors" />
                             </button>
 
                             {/* Desktop Search Bar with Dim Placeholder */}
@@ -324,10 +324,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 onClick={() => setIsSearchOpen(true)}
                                 aria-label={t.navbar.searchAria}
                                 title={t.navbar.searchAria}
-                                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-100/90 dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 border border-slate-200/80 dark:border-stone-700 text-slate-400 dark:text-stone-400 hover:text-slate-600 dark:hover:text-stone-200 transition-all cursor-pointer w-36 md:w-48 lg:w-60 xl:w-72 group shadow-2xs"
+                                className="hidden sm:flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-full bg-slate-100/90 dark:bg-stone-900 hover:bg-slate-100 dark:hover:bg-stone-800 border border-slate-200/80 dark:border-stone-700 text-[#6D5D52] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100 transition-all cursor-pointer w-36 md:w-48 lg:w-60 xl:w-72 group shadow-2xs"
                             >
-                                <Search className="w-4 h-4 text-slate-400 dark:text-stone-400 group-hover:text-slate-600 dark:group-hover:text-stone-200 shrink-0 transition-colors" />
-                                <span className="text-xs sm:text-sm text-slate-400 dark:text-stone-400 group-hover:text-slate-500 dark:group-hover:text-stone-300 truncate">
+                                <Search aria-hidden="true" className="w-4 h-4 text-[#6D5D52] dark:text-stone-400 group-hover:text-[#2A211B] dark:group-hover:text-stone-100 shrink-0 transition-colors" />
+                                <span className="text-xs sm:text-sm text-[#6D5D52] dark:text-stone-300 group-hover:text-[#2A211B] dark:group-hover:text-stone-100 truncate">
                                     {t.navbar.searchPlaceholder}
                                 </span>
                             </button>
@@ -337,12 +337,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 <button
                                     type="button"
                                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                                    aria-expanded={isLanguageOpen}
+                                    aria-haspopup="menu"
                                     title={t.navbar.langToggle}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-stone-700 hover:border-slate-300 dark:hover:border-stone-600 bg-white dark:bg-stone-900 hover:bg-slate-50 dark:hover:bg-stone-800 text-slate-800 dark:text-stone-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                    className="flex items-center gap-2 px-3 py-1.5 min-h-[40px] rounded-full border border-slate-200 dark:border-stone-700 hover:border-slate-300 dark:hover:border-stone-600 bg-white dark:bg-stone-900 hover:bg-slate-50 dark:hover:bg-stone-800 text-slate-800 dark:text-stone-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
                                 >
                                     {language === 'vi' ? <VietnamFlag /> : <UKFlag />}
                                     <span className="tracking-wider font-semibold">{language === 'vi' ? 'VIE' : 'ENG'}</span>
-                                    <ChevronDown className="w-3 h-3 text-slate-400 dark:text-stone-400" />
+                                    <ChevronDown aria-hidden="true" className="w-3 h-3 text-[#6D5D52] dark:text-stone-400" />
                                 </button>
 
                                 {isLanguageOpen && (
@@ -625,12 +627,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 {isAuthenticated && (
                                     <Link
                                         href="/chat"
-                                        className="relative p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full"
+                                        className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full"
                                         aria-label={language === 'vi' ? 'Tin nhắn' : 'Messages'}
                                     >
-                                        <MessageCircle className="w-5 h-5" />
+                                        <MessageCircle aria-hidden="true" className="w-5 h-5" />
                                         {totalUnread > 0 && (
-                                            <span className="absolute top-0 right-0 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold text-white bg-[#A67B56] rounded-full">
+                                            <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold tabular-nums text-white bg-[#A67B56] rounded-full">
                                                 {totalUnread > 99 ? '99+' : totalUnread}
                                             </span>
                                         )}
@@ -646,21 +648,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             router.push('/cart');
                                         }
                                     }}
-                                    className="relative p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full cursor-pointer"
+                                    className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full cursor-pointer"
                                     aria-label={t.navbar.cartAria}
                                 >
-                                    <ShoppingCart className="w-5 h-5" />
-                                    <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full">
+                                    <ShoppingCart aria-hidden="true" className="w-5 h-5" />
+                                    <span className="absolute top-0.5 right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold tabular-nums text-white bg-rose-600 rounded-full">
                                         0
                                     </span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                    className="p-2 text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg cursor-pointer"
-                                    aria-label="Toggle menu"
+                                    aria-expanded={isMobileMenuOpen}
+                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 dark:text-stone-200 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg cursor-pointer"
+                                    aria-label={language === 'vi' ? (isMobileMenuOpen ? 'Đóng menu' : 'Mở menu') : (isMobileMenuOpen ? 'Close menu' : 'Open menu')}
                                 >
-                                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                                    {isMobileMenuOpen ? <X aria-hidden="true" className="w-6 h-6" /> : <Menu aria-hidden="true" className="w-6 h-6" />}
                                 </button>
                             </div>
 
@@ -774,7 +777,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
             {/* TOPZONE-STYLE EXPANDABLE SEARCH OVERLAY (NỀN TRẮNG ĐỒNG BỘ) */}
             {/* ========================================================= */}
             {isSearchOpen && (
-                <div className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200">
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={language === 'vi' ? 'Tìm kiếm sản phẩm' : 'Search marketplace'}
+                    className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200"
+                >
 
                     {/* 1. White Top Search Bar Header (Đồng bộ nền trắng sáng với website) */}
                     <div ref={searchContainerRef} className="w-full bg-white dark:bg-stone-950 border-b border-slate-200 dark:border-stone-800 shadow-xl relative z-20">
@@ -785,11 +793,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                 onSubmit={handleSearchSubmit}
                                 className="flex-1 flex items-center gap-3 bg-transparent"
                             >
+                                <label htmlFor="navbar-global-search" className="sr-only">
+                                    {t.navbar.searchPlaceholder}
+                                </label>
                                 {/* Magnifying Glass Icon (Slate Outline) */}
-                                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500 dark:text-stone-400 shrink-0" />
+                                <Search aria-hidden="true" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 dark:text-stone-400 shrink-0" />
 
                                 {/* Input Field */}
                                 <input
+                                    id="navbar-global-search"
                                     ref={searchInputRef}
                                     type="text"
                                     value={searchQuery}
@@ -801,7 +813,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         }
                                     }}
                                     placeholder={t.navbar.searchPlaceholder}
-                                    className="w-full bg-transparent text-slate-900 dark:text-stone-100 placeholder-slate-400 dark:placeholder-stone-500 text-sm sm:text-base md:text-lg outline-none font-normal caret-blue-600"
+                                    className="w-full bg-transparent text-slate-900 dark:text-stone-100 placeholder-[#6D5D52] dark:placeholder-stone-400 text-sm sm:text-base md:text-lg outline-none font-normal caret-[#C46A28] dark:caret-[#F5A764]"
                                 />
 
                                 {/* Clear Input button if query is not empty */}
@@ -809,10 +821,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     <button
                                         type="button"
                                         onClick={handleClearSearch}
-                                        className="text-slate-400 hover:text-slate-700 dark:hover:text-stone-200 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
-                                        title="Clear text"
+                                        aria-label={language === 'vi' ? 'Xóa từ khóa tìm kiếm' : 'Clear search text'}
+                                        className="min-w-[40px] min-h-[40px] flex items-center justify-center text-slate-600 dark:text-stone-300 hover:text-slate-900 dark:hover:text-stone-100 rounded-full hover:bg-slate-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                                        title={language === 'vi' ? 'Xóa nội dung' : 'Clear text'}
                                     >
-                                        <X className="w-4 h-4" />
+                                        <X aria-hidden="true" className="w-4 h-4" />
                                     </button>
                                 )}
                             </form>

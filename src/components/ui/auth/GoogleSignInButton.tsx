@@ -64,6 +64,19 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     typeof window !== 'undefined' && Boolean(window.google?.accounts?.id)
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+
+  // Watch html.dark changes so Google Sign-In button matches active light/dark mode
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const syncTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Load Google Identity Services script if Client ID is configured
   useEffect(() => {
@@ -138,7 +151,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
       gsi.renderButton(containerRef.current, {
         type: 'standard',
-        theme: 'outline',
+        theme: isDark ? 'filled_black' : 'outline',
         size: 'large',
         text: buttonText,
         shape: 'pill',
@@ -154,7 +167,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     observer.observe(containerRef.current);
 
     return () => observer.disconnect();
-  }, [clientId, isScriptReady, buttonText, language]);
+  }, [clientId, isScriptReady, buttonText, language, isDark]);
 
   // Fallback button when NEXT_PUBLIC_GOOGLE_CLIENT_ID is not yet set
   if (!clientId) {
@@ -169,15 +182,15 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
               : 'Google OAuth is not configured yet: set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local and Google:ClientId on Backend.'
           );
         }}
-        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl border border-[#EADBCE] bg-white hover:bg-[#FAF7F2] active:scale-[0.99] text-[#2A211B] font-medium text-sm shadow-2xs hover:shadow-xs transition cursor-pointer group disabled:opacity-60"
+        className="w-full min-h-[44px] flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-[#FAF7F2] dark:hover:bg-stone-700 active:scale-[0.99] text-[#2A211B] dark:text-stone-100 font-medium text-sm shadow-2xs hover:shadow-xs transition cursor-pointer group disabled:opacity-60"
       >
-        <svg className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24">
           <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z" />
           <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
           <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z" />
           <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
         </svg>
-        <span className="font-semibold text-[#2A211B] group-hover:text-black">
+        <span className="font-semibold text-[#2A211B] dark:text-stone-100 group-hover:text-black dark:group-hover:text-white">
           {language === 'vi' ? 'Tiếp tục với Google' : 'Continue with Google'}
         </span>
       </button>
@@ -193,8 +206,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         }`}
       />
       {isSubmitting && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-[#7A6D63]">
-          <div className="w-3.5 h-3.5 border-2 border-[#F5A764]/40 border-t-[#F5A764] rounded-full animate-spin" />
+        <div role="status" aria-live="polite" className="mt-2 flex items-center gap-2 text-xs text-[#6D5D52] dark:text-stone-300">
+          <div className="w-3.5 h-3.5 border-2 border-[#C46A28]/40 dark:border-[#F5A764]/40 border-t-[#C46A28] dark:border-t-[#F5A764] rounded-full animate-spin" />
           <span>{language === 'vi' ? 'Đang xác thực tài khoản Google...' : 'Authenticating Google account...'}</span>
         </div>
       )}

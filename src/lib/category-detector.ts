@@ -18,8 +18,8 @@ const CATEGORY_RULES: CategoryRule[] = [
     {
         categoryId: 'stationery-study',
         prefix: 'ST',
-        labelVi: 'Dụng cụ học tập',
-        labelEn: 'Stationery & Study',
+        labelVi: 'Dụng cụ & Tài liệu học tập',
+        labelEn: 'Study Tools & Materials',
         keywords: [
             'casio', 'fx-580', 'fx580', 'fx-570', 'fx570', 'vinacal', 'máy tính cầm tay',
             'thước', 'bút', 'vở', 'tập', 'bút dạ', 'compa', 'hộp bút', 'bút bi',
@@ -59,6 +59,16 @@ const CATEGORY_RULES: CategoryRule[] = [
             'quạt', 'ấm đun', 'nồi cơm', 'nồi lẩu', 'ấm siêu tốc', 'ghế', 'bàn gấp',
             'nệm', 'kệ', 'móc áo', 'chăn', 'drap', 'gối', 'rèm', 'thau', 'chậu',
             'gương', 'bình nước', 'bếp từ', 'bếp điện', 'hộp cơm'
+        ],
+    },
+    {
+        categoryId: 'phu-kien-xe',
+        prefix: 'VA',
+        labelVi: 'Phụ kiện xe',
+        labelEn: 'Vehicle Accessories',
+        keywords: [
+            'mũ bảo hiểm', 'nón bảo hiểm', 'giá đỡ điện thoại', 'áo mưa', 'bọc yên',
+            'gương chiếu hậu', 'khóa đĩa', 'khóa chữ u', 'găng tay xe', 'phụ kiện xe'
         ],
     },
     {

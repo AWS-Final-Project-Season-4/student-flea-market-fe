@@ -34,7 +34,12 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col font-sans bg-[#FAF7F2] dark:bg-stone-950 text-[#2A211B] dark:text-stone-100 transition-colors duration-200" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#FAF7F2] dark:bg-stone-950 text-[#2A211B] dark:text-stone-100 transition-colors duration-200" suppressHydrationWarning>
+        <a href="#main-content" className="skip-to-content">
+          Chuyển đến nội dung chính
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

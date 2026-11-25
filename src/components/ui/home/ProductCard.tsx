@@ -50,8 +50,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     <div
                         className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-white shadow-xs ${
                             product.conditionVariant === 'orange'
-                                ? 'bg-[#B48E68]'
-                                : 'bg-emerald-600/90'
+                                ? 'bg-[#855A3C]'
+                                : 'bg-emerald-700/95'
                         }`}
                     >
                         {formatCardCondition(product.condition, language)}
@@ -64,12 +64,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                             e.preventDefault();
                             setIsLiked(!isLiked);
                         }}
-                        aria-label="Save to favorite list"
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/85 backdrop-blur-xs hover:bg-white text-slate-500 hover:text-rose-500 shadow-xs transition-colors cursor-pointer"
+                        aria-pressed={isLiked}
+                        aria-label={
+                            language === 'vi'
+                                ? (isLiked ? 'Bỏ khỏi danh sách yêu thích' : 'Lưu vào danh sách yêu thích')
+                                : (isLiked ? 'Remove from favorites' : 'Save to favorite list')
+                        }
+                        className="absolute top-1.5 right-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-white/90 dark:bg-stone-900/90 backdrop-blur-xs hover:bg-white dark:hover:bg-stone-900 text-slate-600 dark:text-stone-300 hover:text-rose-500 shadow-xs transition-colors cursor-pointer"
                     >
                         <Heart
+                            aria-hidden="true"
                             className={`w-4 h-4 transition-colors ${
-                                isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-400'
+                                isLiked ? 'fill-rose-500 text-rose-500' : 'text-slate-600 dark:text-stone-300'
                             }`}
                         />
                     </button>
@@ -87,13 +93,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
 
                     {/* Price and Item Code Badge */}
                     <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm sm:text-base font-extrabold text-[#7D5435] dark:text-[#E5C9A8]">
+                        <div className="text-sm sm:text-base font-extrabold tabular-nums text-[#7D5435] dark:text-[#E5C9A8]">
                             {product.price}
                         </div>
                         {product.itemCode && (
                             <span
                                 title={`${language === 'vi' ? 'Mã món đồ' : 'Item Code'}: ${formatItemCodeDisplay(product.itemCode)}`}
-                                className="font-mono text-[10px] sm:text-[11px] font-bold text-[#8B6A4F] dark:text-[#E5C9A8] bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
+                                className="font-mono text-[10px] sm:text-[11px] font-bold text-[#7D5435] dark:text-[#E5C9A8] bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 px-1.5 py-0.5 rounded-md tracking-wider shrink-0"
                             >
                                 {formatItemCodeDisplay(product.itemCode)}
                             </span>
@@ -101,8 +107,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                     </div>
 
                     {/* Campus Location */}
-                    <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 dark:text-stone-400 pb-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-stone-500 shrink-0" />
+                    <div className="flex items-center gap-1 text-[11px] sm:text-xs text-[#6D5D52] dark:text-stone-400 pb-1">
+                        <MapPin aria-hidden="true" className="w-3.5 h-3.5 text-[#6D5D52] dark:text-stone-400 shrink-0" />
                         <span className="truncate">{formatCardLocation(product.location, language)}</span>
                     </div>
                 </div>
@@ -116,7 +122,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onContact }) 
                         e.preventDefault();
                         onContact?.(product);
                     }}
-                    className="w-full py-2 px-2 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-98 text-[#3D2B1F] dark:text-stone-100 border border-[#DEC9B0] dark:border-stone-600 font-semibold text-xs sm:text-sm shadow-2xs transition-all text-center cursor-pointer"
+                    className="w-full min-h-[40px] py-2 px-2 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-98 text-[#3D2B1F] dark:text-stone-100 border border-[#DEC9B0] dark:border-stone-600 font-semibold text-xs sm:text-sm shadow-2xs transition-all text-center cursor-pointer"
                 >
                     {t.productCard.contactBtn}
                 </button>

@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore } from '@/lib/language-store';
+import { useThemeStore } from '@/lib/theme-store';
 import { VietnamFlag, UKFlag } from '@/components/ui/layout/Navbar';
 import { GoogleSignInButton } from '@/components/ui/auth/GoogleSignInButton';
 import { AuthResultDto } from '@/types/auth';
@@ -105,6 +106,7 @@ function LoginForm() {
 
     const { login, isLoading, error: storeError, clearError, initAuth } = useAuthStore();
     const { language, setLanguage } = useLanguageStore();
+    const { initTheme } = useThemeStore();
 
     const [emailOrUsername, setEmailOrUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
@@ -130,7 +132,8 @@ function LoginForm() {
 
     useEffect(() => {
         initAuth();
-    }, [initAuth]);
+        initTheme();
+    }, [initAuth, initTheme]);
 
     const handleAuthSuccessRedirect = (authResult: AuthResultDto) => {
         setSuccessMessage(`Welcome back, ${authResult.user.fullName || authResult.user.email}! Redirecting...`);
@@ -178,25 +181,26 @@ function LoginForm() {
 
     return (
         <>
-            <div className="w-full max-w-[440px] bg-white rounded-[32px] p-8 sm:p-10 shadow-[0_20px_50px_rgba(195,170,140,0.16)] border border-[#EFE8DD] relative z-10">
+            <div className="w-full max-w-[440px] bg-white dark:bg-stone-900 rounded-[32px] p-8 sm:p-10 shadow-[0_20px_50px_rgba(195,170,140,0.16)] dark:shadow-black/40 border border-[#EFE8DD] dark:border-stone-800 relative z-10 transition-colors">
 
                 {/* Card Header */}
                 <div className="mb-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-3xl font-serif font-bold text-[#2A211B] tracking-tight">
+                    <div className="flex items-center justify-between gap-2">
+                        <h1 className="text-3xl font-serif font-bold text-[#2A211B] dark:text-stone-100 tracking-tight">
                             {language === 'vi' ? 'Đăng nhập' : 'Login'}
-                        </h2>
-                                                {/* Horizontal Language Switcher: ENG (left) | VIE (right) */}
-                        <div className="flex items-center p-0.5 rounded-full bg-[#FAF7F2] border border-[#EADBCE] text-[11px] font-semibold shrink-0">
+                        </h1>
+                        {/* Horizontal Language Switcher: ENG (left) | VIE (right) */}
+                        <div className="flex items-center p-0.5 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 text-[11px] font-semibold shrink-0">
                             {/* ENG on Left */}
                             <button
                                 type="button"
                                 onClick={() => setLanguage('en')}
+                                aria-pressed={language === 'en'}
                                 title="Switch to English"
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] rounded-full transition-all cursor-pointer ${
                                     language === 'en'
-                                        ? 'bg-white text-[#2A211B] shadow-2xs font-bold border border-[#EADBCE]'
-                                        : 'text-[#8C7E74] hover:text-[#2A211B]'
+                                        ? 'bg-white dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 shadow-2xs font-bold border border-[#EADBCE] dark:border-stone-700'
+                                        : 'text-[#6D5D52] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100'
                                 }`}
                             >
                                 <UKFlag className="w-4 h-2.5" />
@@ -207,11 +211,12 @@ function LoginForm() {
                             <button
                                 type="button"
                                 onClick={() => setLanguage('vi')}
+                                aria-pressed={language === 'vi'}
                                 title="Chuyển sang Tiếng Việt"
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] rounded-full transition-all cursor-pointer ${
                                     language === 'vi'
-                                        ? 'bg-white text-[#2A211B] shadow-2xs font-bold border border-[#EADBCE]'
-                                        : 'text-[#8C7E74] hover:text-[#2A211B]'
+                                        ? 'bg-white dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 shadow-2xs font-bold border border-[#EADBCE] dark:border-stone-700'
+                                        : 'text-[#6D5D52] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100'
                                 }`}
                             >
                                 <VietnamFlag className="w-4 h-2.5" />
@@ -219,15 +224,19 @@ function LoginForm() {
                             </button>
                         </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-[#7A6D63] mt-2 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#6D5D52] dark:text-stone-300 mt-2 leading-relaxed">
                         {language === 'vi' ? 'Chào mừng bạn quay lại! Vui lòng nhập thông tin để tiếp tục.' : 'Welcome back! Please enter your details to continue.'}
                     </p>
                 </div>
 
                 {/* Error Banner */}
                 {displayError && (
-                    <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 flex items-start gap-2.5 text-xs leading-relaxed animate-in fade-in duration-200">
-                        <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div
+                        role="alert"
+                        aria-live="polite"
+                        className="mb-5 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/70 text-rose-700 dark:text-rose-200 flex items-start gap-2.5 text-xs leading-relaxed animate-in fade-in duration-200"
+                    >
+                        <AlertCircle aria-hidden="true" className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                         <div className="flex-1">{formatAuthMessage(displayError, language)}</div>
                     </div>
                 )}
@@ -237,12 +246,16 @@ function LoginForm() {
 
                     {/* Field 1: Student Email / Identifier */}
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#A39589]">
-                            <Mail className="w-4 h-4" />
+                        <label htmlFor="email" className="sr-only">
+                            {language === 'vi' ? 'Email hoặc Tên đăng nhập' : 'Email or Username'}
+                        </label>
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#75675C] dark:text-stone-400">
+                            <Mail aria-hidden="true" className="w-4 h-4" />
                         </div>
                         <input
                             id="email"
                             type="text"
+                            autoComplete="username"
                             required
                             value={emailOrUsername}
                             onChange={(e) => {
@@ -250,18 +263,22 @@ function LoginForm() {
                                 if (localError) setLocalError(null);
                             }}
                             placeholder={language === 'vi' ? 'Email hoặc Tên đăng nhập (vd: admin)' : 'Email or Username (e.g. admin)'}
-                            className="w-full pl-10 pr-4 py-3.5 bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl text-[#2A211B] placeholder-[#A6998E] text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white transition"
+                            className="w-full pl-10 pr-4 py-3.5 bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 rounded-2xl text-[#2A211B] dark:text-stone-100 placeholder-[#75675C] dark:placeholder-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                         />
                     </div>
 
                     {/* Field 2: Password */}
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#A39589]">
-                            <Lock className="w-4 h-4" />
+                        <label htmlFor="password" className="sr-only">
+                            {language === 'vi' ? 'Mật khẩu' : 'Password'}
+                        </label>
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#75675C] dark:text-stone-400">
+                            <Lock aria-hidden="true" className="w-4 h-4" />
                         </div>
                         <input
                             id="password"
                             type={showPassword ? 'text' : 'password'}
+                            autoComplete="current-password"
                             required
                             value={password}
                             onChange={(e) => {
@@ -269,33 +286,38 @@ function LoginForm() {
                                 if (localError) setLocalError(null);
                             }}
                             placeholder={language === 'vi' ? 'Mật khẩu' : 'Password'}
-                            className="w-full pl-10 pr-10 py-3.5 bg-[#FAF7F2] border border-[#EADBCE] rounded-2xl text-[#2A211B] placeholder-[#A6998E] text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white transition"
+                            className="w-full pl-10 pr-12 py-3.5 bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 rounded-2xl text-[#2A211B] dark:text-stone-100 placeholder-[#75675C] dark:placeholder-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A764]/70 focus:border-[#F5A764] focus:bg-white dark:focus:bg-stone-800 transition"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
-                            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#A39589] hover:text-[#2A211B] transition cursor-pointer"
+                            aria-pressed={showPassword}
+                            aria-label={
+                                language === 'vi'
+                                    ? (showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')
+                                    : (showPassword ? 'Hide password' : 'Show password')
+                            }
+                            className="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-[#6D5D52] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100 transition cursor-pointer rounded-r-2xl"
                         >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPassword ? <EyeOff aria-hidden="true" className="w-4 h-4" /> : <Eye aria-hidden="true" className="w-4 h-4" />}
                         </button>
                     </div>
 
                     {/* Auxiliary Row */}
                     <div className="flex items-center justify-between text-xs pt-0.5">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <label className="flex items-center gap-2 min-h-[36px] cursor-pointer select-none">
                             <input
                                 type="checkbox"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                className="h-4 w-4 rounded border-[#D5C7B8] text-[#F5A764] focus:ring-[#F5A764] accent-[#F5A764] cursor-pointer"
+                                className="h-4 w-4 rounded border-[#D5C7B8] dark:border-stone-600 dark:bg-stone-800 text-[#F5A764] focus:ring-[#F5A764] accent-[#F5A764] cursor-pointer"
                             />
-                            <span className="text-[#6B5E55]">{language === 'vi' ? 'Ghi nhớ đăng nhập' : 'Remember me'}</span>
+                            <span className="text-[#6D5D52] dark:text-stone-300">{language === 'vi' ? 'Ghi nhớ đăng nhập' : 'Remember me'}</span>
                         </label>
 
                         <Link
                             href="/forgot-password"
-                            className="font-normal text-[#A8744F] hover:text-[#885633] hover:underline transition"
+                            className="font-medium text-[#9A5828] hover:text-[#7A441D] dark:text-[#F5A764] dark:hover:text-[#FBD6B0] hover:underline transition py-1"
                         >
                             {language === 'vi' ? 'Quên mật khẩu?' : 'Forgot password?'}
                         </Link>
@@ -305,11 +327,11 @@ function LoginForm() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3.5 px-4 rounded-2xl font-medium text-white bg-[#F5A764] hover:bg-[#E89650] active:scale-[0.99] shadow-[0_8px_20px_rgba(245,167,100,0.3)] hover:shadow-[0_10px_24px_rgba(245,167,100,0.38)] transition-all cursor-pointer disabled:opacity-60 text-sm mt-2 flex items-center justify-center gap-2"
+                        className="w-full min-h-[48px] py-3.5 px-4 rounded-2xl font-semibold text-[#2A211B] dark:text-stone-950 bg-[#F5A764] hover:bg-[#E89650] active:scale-[0.99] shadow-[0_8px_20px_rgba(245,167,100,0.3)] hover:shadow-[0_10px_24px_rgba(245,167,100,0.38)] transition-all cursor-pointer disabled:opacity-60 text-sm mt-2 flex items-center justify-center gap-2"
                     >
                         {isLoading ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="w-4 h-4 border-2 border-[#2A211B]/25 border-t-[#2A211B] rounded-full animate-spin" />
                                 <span>{language === 'vi' ? 'Đang xác thực với máy chủ...' : 'Authenticating with server...'}</span>
                             </>
                         ) : (
@@ -321,9 +343,9 @@ function LoginForm() {
                 {/* Divider */}
                 <div className="relative my-6 text-center">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-[#EFE8DD]" />
+                        <div className="w-full border-t border-[#EFE8DD] dark:border-stone-800" />
                     </div>
-                    <span className="relative bg-white px-3 text-[11px] text-[#A6998E] font-normal tracking-wide">
+                    <span className="relative bg-white dark:bg-stone-900 px-3 text-[11px] text-[#6D5D52] dark:text-stone-400 font-medium tracking-wide">
                         {language === 'vi' ? 'Hoặc tiếp tục với' : 'Or continue with'}
                     </span>
                 </div>
@@ -336,33 +358,37 @@ function LoginForm() {
                         onSuccess={handleAuthSuccessRedirect}
                         onError={(msg) => setLocalError(msg)}
                     />
-                    <p className="text-[11px] text-center text-[#A6998E] mt-1.5">
+                    <p className="text-[11px] text-center text-[#6D5D52] dark:text-stone-400 mt-1.5">
                         {language === 'vi' ? 'Chấp nhận tài khoản @gmail.com hoặc email trường' : 'Personal @gmail.com or campus accounts accepted'}
                     </p>
                 </div>
 
                 {/* Footer Sign-up Prompt */}
-                <p className="mt-7 text-center text-xs text-[#7A6D63]">
+                <p className="mt-7 text-center text-xs text-[#6D5D52] dark:text-stone-300">
                     {language === 'vi' ? 'Chưa có tài khoản?' : "Don't have any account?"}{' '}
                     <Link
                         href="/register"
-                        className="font-semibold text-[#B87333] hover:text-[#995922] hover:underline transition"
+                        className="font-semibold text-[#9A5828] hover:text-[#7A441D] dark:text-[#F5A764] dark:hover:text-[#FBD6B0] hover:underline transition"
                     >
                         {language === 'vi' ? 'Đăng ký ngay' : 'Register now'}
                     </Link>
                 </p>
 
                 {/* Copyright */}
-                <p className="mt-3 text-center text-[11px] text-[#A6998E]">
+                <p className="mt-3 text-center text-[11px] text-[#75675C] dark:text-stone-400">
                     {language === 'vi' ? 'Bản quyền © 2026 - Student Flea Market. Mọi quyền được bảo lưu.' : 'Copyright © 2026 - Student Flea Market. All rights reserved.'}
                 </p>
             </div>
 
             {/* Bottom-Right Light Green Toast Notification Bar */}
             {successMessage && (
-                <div className="fixed bottom-6 right-4 sm:right-8 z-50 flex items-center gap-3 px-4.5 py-3.5 rounded-2xl bg-[#ECFDF5] text-emerald-900 shadow-[0_12px_32px_rgba(16,185,129,0.18)] border border-emerald-200/90 max-w-sm w-auto animate-in fade-in slide-in-from-bottom-5 duration-300">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-200/80 flex items-center justify-center text-emerald-600 shrink-0">
-                        <CheckCircle2 className="w-4.5 h-4.5" />
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="fixed bottom-6 right-4 sm:right-8 z-50 flex items-center gap-3 px-4.5 py-3.5 rounded-2xl bg-[#ECFDF5] dark:bg-emerald-950/95 text-emerald-900 dark:text-emerald-100 shadow-[0_12px_32px_rgba(16,185,129,0.18)] border border-emerald-200/90 dark:border-emerald-800 max-w-sm w-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
+                >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900 border border-emerald-200/80 dark:border-emerald-700 flex items-center justify-center text-emerald-700 dark:text-emerald-300 shrink-0">
+                        <CheckCircle2 aria-hidden="true" className="w-4.5 h-4.5" />
                     </div>
                     <div className="flex-1 pr-1">
                         <p className="text-xs sm:text-sm font-medium leading-snug">
@@ -377,12 +403,12 @@ function LoginForm() {
 
 export default function LoginPage() {
     return (
-        <main className="min-h-screen w-full bg-[#FAF7F2] flex flex-col lg:flex-row font-sans selection:bg-[#F5A764]/30 selection:text-stone-900 overflow-x-hidden">
+        <main id="main-content" className="min-h-[100dvh] w-full bg-[#FAF7F2] dark:bg-stone-950 flex flex-col lg:flex-row font-sans selection:bg-[#F5A764]/30 selection:text-stone-900 dark:selection:text-stone-100 overflow-x-hidden transition-colors">
 
             {/* ========================================================= */}
             {/* LEFT SECTION (Illustration & Brand Intro)                 */}
             {/* ========================================================= */}
-            <section className="w-full lg:w-[56%] xl:w-[58%] min-h-[420px] lg:min-h-screen relative flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-[#EFE8DD]">
+            <section className="w-full lg:w-[56%] xl:w-[58%] min-h-[420px] lg:min-h-[100dvh] relative flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-[#EFE8DD] dark:border-stone-800">
 
                 <Image
                     src="/Campus%20Flea%20Market%20Day.webp"
@@ -395,13 +421,7 @@ export default function LoginPage() {
                 />
 
                 {/* Ambient Top Gradient */}
-                <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#FAF7F2]/90 via-[#FAF7F2]/60 to-transparent pointer-events-none" />
-
-                {/* Top Brand Identity */}
-                <div className="relative z-10 text-center px-4 sm:px-6 pt-8 sm:pt-12 w-full max-w-none mx-auto">
-                    <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-serif font-bold text-[#2A211B] tracking-wide leading-tight whitespace-nowrap drop-shadow-xs">
-                    </h1>
-                </div>
+                <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#FAF7F2]/90 via-[#FAF7F2]/60 dark:from-stone-950/90 dark:via-stone-950/60 to-transparent pointer-events-none" />
 
                 <div className="relative z-10 pointer-events-none" />
             </section>
@@ -409,9 +429,9 @@ export default function LoginPage() {
             {/* ========================================================= */}
             {/* RIGHT SECTION: Floating Card Stage                       */}
             {/* ========================================================= */}
-            <section className="w-full lg:w-[44%] xl:w-[42%] min-h-screen flex items-center justify-center p-4 sm:p-8 lg:p-12 relative bg-[#FAF7F2]">
+            <section className="w-full lg:w-[44%] xl:w-[42%] min-h-[calc(100dvh-420px)] lg:min-h-[100dvh] flex items-center justify-center p-4 sm:p-8 lg:p-12 relative bg-[#FAF7F2] dark:bg-stone-950">
                 <Suspense fallback={
-                    <div className="p-8 text-center text-sm text-[#7A6D63]">
+                    <div className="p-8 text-center text-sm text-[#6D5D52] dark:text-stone-300">
                         Loading interface...
                     </div>
                 }>

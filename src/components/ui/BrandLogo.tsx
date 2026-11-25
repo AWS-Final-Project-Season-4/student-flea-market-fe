@@ -100,10 +100,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           <span
             className={`font-bold ${titleSizes[size]} tracking-tight whitespace-nowrap leading-tight`}
           >
-            <span className="text-[#C46A28] group-hover:text-[#A8744F] transition-colors">Student Flea Market</span>
+            <span className="text-[#C46A28] dark:text-[#F5A764] group-hover:text-[#A8744F] dark:group-hover:text-[#FBD6B0] transition-colors">Student Flea Market</span>
           </span>
           {variant === 'full' && (
-            <span className="text-[11px] font-medium text-slate-500 hidden xl:block whitespace-nowrap">
+            <span className="text-[11px] font-medium text-[#6D5D52] dark:text-stone-400 hidden xl:block whitespace-nowrap">
               Buying & Selling • Exchanging • Connecting Students
             </span>
           )}

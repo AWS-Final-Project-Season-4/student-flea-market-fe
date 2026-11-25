@@ -199,30 +199,30 @@ export default function AdminReportsPage() {
   const getStatusBadge = (rpt: ModerationReportDto) => {
     if (rpt.status === 1) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-          <Clock className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70">
+          <Clock aria-hidden="true" className="w-3 h-3" />
           {isVi ? 'Chờ xử lý' : 'Pending'}
         </span>
       );
     }
     if (rpt.status === 2) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-          <Eye className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/70">
+          <Eye aria-hidden="true" className="w-3 h-3" />
           {isVi ? 'Đang xem xét' : 'Reviewing'}
         </span>
       );
     }
     if (rpt.status === 3) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70">
+          <CheckCircle aria-hidden="true" className="w-3 h-3" />
           {isVi ? 'Đã xử lý' : 'Resolved'}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F5EFE7] text-[#6E5E52]">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F5EFE7] dark:bg-stone-800 text-[#6D5D52] dark:text-stone-300">
         {isVi ? 'Đã bác bỏ' : 'Dismissed'}
       </span>
     );
@@ -232,48 +232,66 @@ export default function AdminReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#2A211B]">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#2A211B] dark:text-stone-100">
             {isVi ? 'Báo cáo & Xử lý vi phạm' : 'Reports & Moderation Violations'}
           </h2>
-          <p className="text-xs sm:text-sm text-[#7A6A5D] mt-1">
+          <p className="text-xs sm:text-sm text-[#6D5D52] dark:text-stone-400 mt-1">
             {isVi
               ? 'Xem xét báo cáo vi phạm từ người dùng, kiểm tra bằng chứng và áp dụng biện pháp xử lý.'
               : 'Review real user violation reports, investigate evidence, and apply moderation actions.'}
           </p>
         </div>
 
-        <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#EFE4D5] text-[#5E452F] border border-[#DECCB5] self-start sm:self-auto">
+        <span className="text-xs font-semibold tabular-nums px-3 py-1.5 rounded-xl bg-[#EFE4D5] dark:bg-stone-800 text-[#5E452F] dark:text-[#F5A764] border border-[#DECCB5] dark:border-stone-700 self-start sm:self-auto">
           {isVi ? `Tổng cộng: ${totalCount} báo cáo` : `Total: ${totalCount} reports`}
         </span>
       </div>
 
       {/* Feedback */}
       {errorMsg && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-medium flex items-center justify-between">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/70 text-rose-800 dark:text-rose-200 text-xs sm:text-sm font-medium flex items-center justify-between gap-3"
+        >
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <AlertCircle aria-hidden="true" className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
-          <button type="button" onClick={() => setErrorMsg(null)} className="cursor-pointer">
-            <X className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            aria-label={isVi ? 'Đóng thông báo lỗi' : 'Dismiss error'}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/50 cursor-pointer"
+          >
+            <X aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {noticeMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium flex items-center justify-between">
+        <div
+          role="status"
+          aria-live="polite"
+          className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm font-medium flex items-center justify-between gap-3"
+        >
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle aria-hidden="true" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{noticeMsg}</span>
           </div>
-          <button type="button" onClick={() => setNoticeMsg(null)} className="cursor-pointer">
-            <X className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={() => setNoticeMsg(null)}
+            aria-label={isVi ? 'Đóng thông báo' : 'Dismiss notification'}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer"
+          >
+            <X aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Filter Pills */}
-      <div className="bg-white p-4 rounded-2xl border border-[#E7DAC9] shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-[#E7DAC9] dark:border-stone-800 shadow-xs dark:shadow-none flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {(
             [
@@ -287,14 +305,15 @@ export default function AdminReportsPage() {
             <button
               key={String(pill.id)}
               type="button"
+              aria-pressed={statusFilter === pill.id}
               onClick={() => {
                 setIsLoading(true);
                 setStatusFilter(pill.id);
               }}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              className={`px-3 py-2 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                 statusFilter === pill.id
-                  ? 'bg-[#DFCBB2] text-[#2A211B] border border-[#CBB192] shadow-2xs'
-                  : 'bg-[#F5EFE7] text-[#5E4E42] hover:bg-[#EAE0D2]'
+                  ? 'bg-[#DFCBB2] dark:bg-[#F5A764] text-[#2A211B] dark:text-stone-950 border border-[#CBB192] dark:border-[#F5A764] shadow-2xs'
+                  : 'bg-[#F5EFE7] dark:bg-stone-800 text-[#5E4E42] dark:text-stone-300 hover:bg-[#EAE0D2] dark:hover:bg-stone-700'
               }`}
             >
               {pill.label}
@@ -305,26 +324,26 @@ export default function AdminReportsPage() {
         <button
           type="button"
           onClick={() => void reloadReports()}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#DFCEBA] text-xs font-semibold text-[#4E3F33] hover:bg-[#FAF6F0] cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-[#DFCEBA] dark:border-stone-700 text-xs font-semibold text-[#4E3F33] dark:text-stone-200 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw aria-hidden="true" className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>{isVi ? 'Làm mới' : 'Refresh'}</span>
         </button>
       </div>
 
       {/* Reports List */}
       {isLoading ? (
-        <div className="bg-white rounded-2xl p-12 border border-[#E7DAC9] text-center text-xs text-[#8B796B]">
-          <Loader2 className="w-5 h-5 animate-spin inline mr-2 text-[#B5916B]" />
+        <div className="bg-white dark:bg-stone-900 rounded-2xl p-12 border border-[#E7DAC9] dark:border-stone-800 text-center text-xs text-[#6D5D52] dark:text-stone-400">
+          <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin inline mr-2 text-[#B5916B] dark:text-[#F5A764]" />
           {isVi ? 'Đang tải danh sách báo cáo...' : 'Loading moderation reports...'}
         </div>
       ) : reports.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 border border-dashed border-[#DFCEBA] text-center space-y-2">
-          <Flag className="w-8 h-8 text-[#C9B7A2] mx-auto" />
-          <p className="text-sm font-semibold text-[#3B2E24]">
+        <div className="bg-white dark:bg-stone-900 rounded-2xl p-12 border border-dashed border-[#DFCEBA] dark:border-stone-700 text-center space-y-2">
+          <Flag aria-hidden="true" className="w-8 h-8 text-[#C9B7A2] dark:text-stone-500 mx-auto" />
+          <p className="text-sm font-semibold text-[#3B2E24] dark:text-stone-200">
             {isVi ? 'Chưa có báo cáo vi phạm nào' : 'No moderation reports found'}
           </p>
-          <p className="text-xs text-[#7A6A5D]">
+          <p className="text-xs text-[#6D5D52] dark:text-stone-400">
             {isVi
               ? 'Các báo cáo do người dùng gửi về món đồ hoặc tài khoản vi phạm sẽ tự động xuất hiện tại đây.'
               : 'Submitted user reports will appear here automatically once users report a listing, user, or transaction.'}
@@ -338,20 +357,20 @@ export default function AdminReportsPage() {
             return (
               <div
                 key={rpt.id}
-                className="bg-white rounded-2xl p-5 border border-[#E7DAC9] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+                className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-[#E7DAC9] dark:border-stone-800 shadow-xs dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">
                       {rpt.reasonName}
                     </span>
                     {getStatusBadge(rpt)}
-                    <span className="text-xs text-[#8B796B]">
+                    <span className="text-xs text-[#6D5D52] dark:text-stone-400 tabular-nums">
                       • {new Date(rpt.createdAt).toLocaleString()}
                     </span>
                   </div>
 
-                  <h4 className="font-bold text-[#2A211B] text-sm">
+                  <h4 className="font-bold text-[#2A211B] dark:text-stone-100 text-sm">
                     {rpt.itemTitle
                       ? `${isVi ? 'Món đồ:' : 'Item:'} ${rpt.itemTitle}${rpt.itemCode ? ` (${rpt.itemCode})` : ''}`
                       : rpt.reportedUserName
@@ -359,32 +378,32 @@ export default function AdminReportsPage() {
                         : `${isVi ? 'Báo cáo' : 'Report'} #${rpt.id.slice(0, 8)}`}
                   </h4>
 
-                  <p className="text-xs text-[#4E3F33] bg-[#FAF6F0] p-2.5 rounded-xl border border-[#EDE2D4]">
-                    <strong className="text-[#2A211B]">{isVi ? 'Chi tiết:' : 'Details:'}</strong>{' '}
+                  <p className="text-xs text-[#4E3F33] dark:text-stone-200 bg-[#FAF6F0] dark:bg-stone-800 p-2.5 rounded-xl border border-[#EDE2D4] dark:border-stone-700">
+                    <strong className="text-[#2A211B] dark:text-stone-100">{isVi ? 'Chi tiết:' : 'Details:'}</strong>{' '}
                     {rpt.description}
                   </p>
 
-                  <div className="flex flex-wrap gap-4 text-[11px] text-[#7A6A5D]">
+                  <div className="flex flex-wrap gap-4 text-[11px] text-[#6D5D52] dark:text-stone-400">
                     <span>
                       {isVi ? 'Người báo cáo:' : 'Reporter:'}{' '}
-                      <strong className="text-[#3B2E24]">{rpt.reporterName}</strong>
+                      <strong className="text-[#3B2E24] dark:text-stone-200">{rpt.reporterName}</strong>
                     </span>
                     {rpt.reportedUserName && (
                       <span>
                         {isVi ? 'Người bị báo cáo:' : 'Reported User:'}{' '}
-                        <strong className="text-[#3B2E24]">{rpt.reportedUserName}</strong>
+                        <strong className="text-[#3B2E24] dark:text-stone-200">{rpt.reportedUserName}</strong>
                       </span>
                     )}
                     {rpt.resolvedByName && (
                       <span>
                         {isVi ? 'Người xử lý:' : 'Handled by:'}{' '}
-                        <strong className="text-[#3B2E24]">{rpt.resolvedByName}</strong>
+                        <strong className="text-[#3B2E24] dark:text-stone-200">{rpt.resolvedByName}</strong>
                       </span>
                     )}
                   </div>
 
                   {rpt.adminNote && (
-                    <p className="text-[11px] text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <p className="text-[11px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800/70">
                       <strong>{isVi ? 'Ghi chú xử lý:' : 'Staff Note:'}</strong> {rpt.adminNote}
                     </p>
                   )}
@@ -397,7 +416,7 @@ export default function AdminReportsPage() {
                         type="button"
                         disabled={isBusy}
                         onClick={() => void handleMarkReviewing(rpt)}
-                        className="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                        className="px-3 py-2 min-h-[38px] rounded-xl border border-blue-200 dark:border-blue-800/70 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                       >
                         {isVi ? 'Đang xem xét' : 'Mark Reviewing'}
                       </button>
@@ -410,9 +429,9 @@ export default function AdminReportsPage() {
                         setSelectedActions(['none']);
                         setAdminNote('');
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#DFCBB2] hover:bg-[#D2BA9B] text-[#2A211B] border border-[#C9AE8B] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1 px-3 py-2 min-h-[38px] rounded-xl bg-[#DFCBB2] dark:bg-[#F5A764] hover:bg-[#D2BA9B] dark:hover:bg-[#E89650] text-[#2A211B] dark:text-stone-950 border border-[#C9AE8B] dark:border-[#F5A764] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                     >
-                      <ShieldAlert className="w-3.5 h-3.5 text-[#4A3525]" />
+                      <ShieldAlert aria-hidden="true" className="w-3.5 h-3.5 text-[#4A3525] dark:text-stone-950" />
                       <span>{isVi ? 'Xử lý' : 'Resolve'}</span>
                     </button>
                   </div>
@@ -425,26 +444,32 @@ export default function AdminReportsPage() {
 
       {/* Resolve Report Modal */}
       {resolveTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2A211B]/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-2xl border border-[#E4D6C4] space-y-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="resolve-report-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2A211B]/40 dark:bg-black/70 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-lg bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-2xl border border-[#E4D6C4] dark:border-stone-800 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#2A211B]">
+              <h3 id="resolve-report-modal-title" className="text-base font-bold text-[#2A211B] dark:text-stone-100">
                 {isVi ? 'Xử lý báo cáo vi phạm' : 'Resolve Moderation Report'}
               </h3>
               <button
                 type="button"
                 onClick={() => setResolveTarget(null)}
-                className="text-[#8B796B] hover:text-[#3B2E24] cursor-pointer"
+                aria-label={isVi ? 'Đóng hộp thoại' : 'Close dialog'}
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-[#6D5D52] dark:text-stone-400 hover:text-[#3B2E24] dark:hover:text-stone-100 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmResolve} className="space-y-4">
               <div className="space-y-2">
-                <label className="block text-xs font-semibold text-[#3B2E24]">
+                <div className="block text-xs font-semibold text-[#3B2E24] dark:text-stone-200">
                   {isVi ? 'Chọn biện pháp xử lý' : 'Select Action(s)'}
-                </label>
+                </div>
                 {RESOLVE_ACTIONS.map((act) => {
                   const checked = selectedActions.includes(act.id);
                   return (
@@ -452,21 +477,21 @@ export default function AdminReportsPage() {
                       key={act.id}
                       className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition ${
                         checked
-                          ? 'border-[#C5A27D] bg-[#FAF4EB]'
-                          : 'border-[#DFCEBA] hover:bg-[#FCF9F4]'
+                          ? 'border-[#C5A27D] dark:border-[#F5A764] bg-[#FAF4EB] dark:bg-stone-800'
+                          : 'border-[#DFCEBA] dark:border-stone-700 hover:bg-[#FCF9F4] dark:hover:bg-stone-800/60'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleAction(act.id)}
-                        className="mt-0.5 rounded accent-[#A8825D]"
+                        className="mt-0.5 rounded accent-[#A8825D] dark:accent-[#F5A764]"
                       />
                       <div>
-                        <div className="font-semibold text-[#2A211B]">
+                        <div className="font-semibold text-[#2A211B] dark:text-stone-100">
                           {isVi ? act.labelVi : act.labelEn}
                         </div>
-                        <div className="text-[11px] text-[#7A6A5D]">
+                        <div className="text-[11px] text-[#6D5D52] dark:text-stone-400">
                           {isVi ? act.descVi : act.descEn}
                         </div>
                       </div>
@@ -476,10 +501,11 @@ export default function AdminReportsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#3B2E24] mb-1">
+                <label htmlFor="report-admin-note" className="block text-xs font-semibold text-[#3B2E24] dark:text-stone-200 mb-1">
                   {isVi ? 'Ghi chú của Admin (tùy chọn)' : 'Admin Note (optional)'}
                 </label>
                 <textarea
+                  id="report-admin-note"
                   rows={2}
                   maxLength={1000}
                   value={adminNote}
@@ -489,7 +515,7 @@ export default function AdminReportsPage() {
                       ? 'Ghi chú tóm tắt hiển thị cho người báo cáo...'
                       : 'Summary note shown to reporter...'
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] bg-[#FCF9F4] text-xs text-[#2A211B] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40"
+                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] dark:border-stone-700 bg-[#FCF9F4] dark:bg-stone-800 text-xs text-[#2A211B] dark:text-stone-100 placeholder-[#75675C] dark:placeholder-stone-400 focus:bg-white dark:focus:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40 dark:focus:ring-[#F5A764]/40"
                 />
               </div>
 
@@ -497,14 +523,14 @@ export default function AdminReportsPage() {
                 <button
                   type="button"
                   onClick={() => setResolveTarget(null)}
-                  className="px-4 py-2 rounded-xl border border-[#DFCEBA] text-xs font-semibold text-[#4E3F33] hover:bg-[#FAF6F0] cursor-pointer"
+                  className="px-4 py-2 min-h-[40px] rounded-xl border border-[#DFCEBA] dark:border-stone-700 text-xs font-semibold text-[#4E3F33] dark:text-stone-200 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
                 >
                   {isVi ? 'Hủy' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   disabled={busyId === resolveTarget.id}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 min-h-[40px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
                 >
                   {isVi ? 'Xác nhận xử lý' : 'Submit Resolution'}
                 </button>

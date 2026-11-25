@@ -180,51 +180,73 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#2A211B]">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#2A211B] dark:text-stone-100">
             {isVi ? 'Quản lý Người dùng & Phân quyền' : 'User & Role Management'}
           </h2>
-          <p className="text-xs sm:text-sm text-[#7A6A5D] mt-1">
+          <p className="text-xs sm:text-sm text-[#6D5D52] dark:text-stone-400 mt-1">
             {isVi
               ? 'Danh sách tài khoản đã đăng ký, quyền bán hàng, khóa tài khoản và phân quyền Moderator.'
               : 'Live directory of registered accounts, seller status, ban controls, and Moderator role management.'}
           </p>
         </div>
 
-        <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#EFE4D5] text-[#5E452F] border border-[#DECCB5] self-start sm:self-auto">
+        <span className="text-xs font-semibold tabular-nums px-3 py-1.5 rounded-xl bg-[#EFE4D5] dark:bg-stone-800 text-[#5E452F] dark:text-[#F5A764] border border-[#DECCB5] dark:border-stone-700 self-start sm:self-auto">
           {isVi ? `Tổng trong hệ thống: ${totalCount} tài khoản` : `Total in DB: ${totalCount} accounts`}
         </span>
       </div>
 
       {/* Feedback Alerts */}
       {errorMsg && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-medium flex items-center justify-between">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/70 text-rose-800 dark:text-rose-200 text-xs sm:text-sm font-medium flex items-center justify-between gap-3"
+        >
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <AlertCircle aria-hidden="true" className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
-          <button type="button" onClick={() => setErrorMsg(null)} className="cursor-pointer">
-            <X className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            aria-label={isVi ? 'Đóng thông báo lỗi' : 'Dismiss error'}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/50 cursor-pointer"
+          >
+            <X aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {noticeMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium flex items-center justify-between">
+        <div
+          role="status"
+          aria-live="polite"
+          className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm font-medium flex items-center justify-between gap-3"
+        >
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle aria-hidden="true" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{noticeMsg}</span>
           </div>
-          <button type="button" onClick={() => setNoticeMsg(null)} className="cursor-pointer">
-            <X className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={() => setNoticeMsg(null)}
+            aria-label={isVi ? 'Đóng thông báo' : 'Dismiss notification'}
+            className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer"
+          >
+            <X aria-hidden="true" className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#E7DAC9] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-[#E7DAC9] dark:border-stone-800 shadow-xs dark:shadow-none flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#8B796B] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <label htmlFor="admin-users-search" className="sr-only">
+            {isVi ? 'Tìm kiếm người dùng theo tên, email, SĐT' : 'Search users'}
+          </label>
+          <Search aria-hidden="true" className="w-4 h-4 text-[#6D5D52] dark:text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            id="admin-users-search"
             type="text"
             placeholder={
               isVi
@@ -233,7 +255,7 @@ export default function AdminUsersPage() {
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#DFCEBA] bg-[#FCF9F4] text-xs text-[#2A211B] focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40 focus:bg-white"
+            className="w-full pl-10 pr-4 py-2.5 min-h-[40px] rounded-xl border border-[#DFCEBA] dark:border-stone-700 bg-[#FCF9F4] dark:bg-stone-800 text-xs text-[#2A211B] dark:text-stone-100 placeholder-[#75675C] dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40 dark:focus:ring-[#F5A764]/40 focus:bg-white dark:focus:bg-stone-800"
           />
         </div>
 
@@ -249,14 +271,15 @@ export default function AdminUsersPage() {
             <button
               key={String(pill.id)}
               type="button"
+              aria-pressed={statusFilter === pill.id}
               onClick={() => {
                 setIsLoading(true);
                 setStatusFilter(pill.id);
               }}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              className={`px-3 py-2 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                 statusFilter === pill.id
-                  ? 'bg-[#DFCBB2] text-[#2A211B] border border-[#CBB192] shadow-2xs'
-                  : 'bg-[#F5EFE7] text-[#5E4E42] hover:bg-[#EAE0D2]'
+                  ? 'bg-[#DFCBB2] dark:bg-[#F5A764] text-[#2A211B] dark:text-stone-950 border border-[#CBB192] dark:border-[#F5A764] shadow-2xs'
+                  : 'bg-[#F5EFE7] dark:bg-stone-800 text-[#5E4E42] dark:text-stone-300 hover:bg-[#EAE0D2] dark:hover:bg-stone-700'
               }`}
             >
               {pill.label}
@@ -266,18 +289,19 @@ export default function AdminUsersPage() {
             type="button"
             onClick={() => void reloadUsers()}
             title={isVi ? 'Làm mới' : 'Refresh'}
-            className="p-2 rounded-xl border border-[#DFCEBA] text-[#4E3F33] hover:bg-[#FAF6F0] cursor-pointer"
+            aria-label={isVi ? 'Làm mới danh sách người dùng' : 'Refresh user list'}
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl border border-[#DFCEBA] dark:border-stone-700 text-[#4E3F33] dark:text-stone-200 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw aria-hidden="true" className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-2xl border border-[#E7DAC9] shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-[#E7DAC9] dark:border-stone-800 shadow-xs dark:shadow-none overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#3B2E24]">
-            <thead className="bg-[#FAF6F0] text-[11px] font-semibold text-[#6E5E52] uppercase tracking-wider border-b border-[#EDE2D4]">
+          <table className="w-full text-left text-xs text-[#3B2E24] dark:text-stone-200">
+            <thead className="bg-[#FAF6F0] dark:bg-stone-800/80 text-[11px] font-semibold text-[#6D5D52] dark:text-stone-300 uppercase tracking-wider border-b border-[#EDE2D4] dark:border-stone-800">
               <tr>
                 <th className="py-3 px-4 sm:px-6">{isVi ? 'Tài khoản' : 'Account'}</th>
                 <th className="py-3 px-4">{isVi ? 'Liên hệ / Trường' : 'Contact / School'}</th>
@@ -287,17 +311,17 @@ export default function AdminUsersPage() {
                 <th className="py-3 px-4 sm:px-6 text-right">{isVi ? 'Thao tác' : 'Actions'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#F2E9DD]">
+            <tbody className="divide-y divide-[#F2E9DD] dark:divide-stone-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[#8B796B]">
-                    <Loader2 className="w-5 h-5 animate-spin inline mr-2 text-[#B5916B]" />
+                  <td colSpan={6} className="py-10 text-center text-[#6D5D52] dark:text-stone-400">
+                    <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin inline mr-2 text-[#B5916B] dark:text-[#F5A764]" />
                     {isVi ? 'Đang tải danh sách người dùng...' : 'Loading users...'}
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-[#8B796B]">
+                  <td colSpan={6} className="py-10 text-center text-[#6D5D52] dark:text-stone-400">
                     {isVi ? 'Không tìm thấy tài khoản phù hợp.' : 'No matching user accounts found.'}
                   </td>
                 </tr>
@@ -311,16 +335,16 @@ export default function AdminUsersPage() {
                   const canManageModRole = isCurrentAdmin && !isAdminRow && !isAiRow && !u.isBanned;
 
                   return (
-                    <tr key={u.id} className="hover:bg-[#FCF9F4] transition">
+                    <tr key={u.id} className="hover:bg-[#FCF9F4] dark:hover:bg-stone-800/50 transition">
                       <td className="py-3.5 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#EFE4D5] border border-[#DECCB5] text-[#5E452F] font-bold flex items-center justify-center text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-[#EFE4D5] dark:bg-stone-800 border border-[#DECCB5] dark:border-stone-700 text-[#5E452F] dark:text-[#F5A764] font-bold flex items-center justify-center text-xs shrink-0">
                             {u.fullName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold text-[#2A211B]">{u.fullName}</div>
-                            <div className="text-[11px] text-[#8B796B] flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
+                            <div className="font-semibold text-[#2A211B] dark:text-stone-100">{u.fullName}</div>
+                            <div className="text-[11px] text-[#6D5D52] dark:text-stone-400 flex items-center gap-1">
+                              <Mail aria-hidden="true" className="w-3 h-3" />
                               <span>{u.email}</span>
                             </div>
                           </div>
@@ -328,15 +352,15 @@ export default function AdminUsersPage() {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="font-medium text-[#3B2E24]">
+                        <div className="font-medium text-[#3B2E24] dark:text-stone-200 tabular-nums">
                           {u.phoneNumber || (
-                            <span className="text-[#A39284]">
+                            <span className="text-[#75675C] dark:text-stone-400">
                               {isVi ? 'Chưa có SĐT' : 'No phone'}
                             </span>
                           )}
                         </div>
                         {(u.schoolName || u.studentCode) && (
-                          <div className="text-[11px] text-[#8B796B]">
+                          <div className="text-[11px] text-[#6D5D52] dark:text-stone-400">
                             {[u.schoolName, u.studentCode].filter(Boolean).join(' • ')}
                           </div>
                         )}
@@ -345,22 +369,22 @@ export default function AdminUsersPage() {
                       <td className="py-3.5 px-4 whitespace-nowrap space-y-1">
                         <div>
                           {isAdminRow ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EFE2D0] text-[#5E412B] border border-[#DAC3A6] font-semibold text-[11px]">
-                              <ShieldCheck className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EFE2D0] dark:bg-amber-950/60 text-[#5E412B] dark:text-amber-300 border border-[#DAC3A6] dark:border-amber-800/60 font-semibold text-[11px]">
+                              <ShieldCheck aria-hidden="true" className="w-3 h-3" />
                               Admin
                             </span>
                           ) : isModRow ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EDF3F6] text-[#35637D] border border-[#CBDCE5] font-semibold text-[11px]">
-                              <ShieldCheck className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EDF3F6] dark:bg-sky-950/60 text-[#35637D] dark:text-sky-300 border border-[#CBDCE5] dark:border-sky-800/60 font-semibold text-[11px]">
+                              <ShieldCheck aria-hidden="true" className="w-3 h-3" />
                               Moderator
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F5EFE7] text-[#5E4E42] font-medium text-[11px]">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#F5EFE7] dark:bg-stone-800 text-[#5E4E42] dark:text-stone-300 font-medium text-[11px]">
                               {u.roleName}
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-[#7A6A5D]">
+                        <div className="text-[11px] text-[#6D5D52] dark:text-stone-400">
                           {isVi ? 'Bán hàng:' : 'Seller:'}{' '}
                           {u.canSell
                             ? isVi
@@ -370,20 +394,20 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap font-semibold text-[#3B2E24]">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-semibold text-[#3B2E24] dark:text-stone-200 tabular-nums">
                         {u.itemCount} {isVi ? 'món' : 'items'}
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {u.isBanned ? (
                           <div>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-medium text-[11px]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70 font-medium text-[11px]">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               {isVi ? 'Đã khóa' : 'Banned'}
                             </span>
                             {u.banReason && (
                               <p
-                                className="text-[10px] text-rose-600 max-w-[160px] truncate mt-1"
+                                className="text-[10px] text-rose-600 dark:text-rose-400 max-w-[160px] truncate mt-1"
                                 title={u.banReason}
                               >
                                 {u.banReason}
@@ -391,12 +415,12 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                         ) : u.status === 1 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[11px]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70 font-medium text-[11px]">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             {isVi ? 'Hoạt động' : 'Active'}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium text-[11px]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70 font-medium text-[11px]">
                             {isVi ? 'Tạm ngưng' : 'Inactive'}
                           </span>
                         )}
@@ -409,16 +433,16 @@ export default function AdminUsersPage() {
                               type="button"
                               disabled={isBusy}
                               onClick={() => void handleToggleModerator(u)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#DECCB5] bg-[#F5ECE0] hover:bg-[#EADBC8] text-[#5E412B] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] rounded-lg border border-[#DECCB5] dark:border-stone-700 bg-[#F5ECE0] dark:bg-stone-800 hover:bg-[#EADBC8] dark:hover:bg-stone-700 text-[#5E412B] dark:text-[#F5A764] text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                             >
                               {isModRow ? (
                                 <>
-                                  <UserMinus className="w-3 h-3" />
+                                  <UserMinus aria-hidden="true" className="w-3 h-3" />
                                   <span>{isVi ? 'Gỡ Mod' : 'Revoke Mod'}</span>
                                 </>
                               ) : (
                                 <>
-                                  <ShieldPlus className="w-3 h-3" />
+                                  <ShieldPlus aria-hidden="true" className="w-3 h-3" />
                                   <span>{isVi ? 'Cấp Mod' : 'Make Mod'}</span>
                                 </>
                               )}
@@ -430,9 +454,9 @@ export default function AdminUsersPage() {
                                 type="button"
                                 disabled={isBusy}
                                 onClick={() => void handleUnban(u)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800/70 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                               >
-                                <Unlock className="w-3 h-3" />
+                                <Unlock aria-hidden="true" className="w-3 h-3" />
                                 <span>{isVi ? 'Mở khóa' : 'Unban'}</span>
                               </button>
                             ) : (
@@ -443,9 +467,9 @@ export default function AdminUsersPage() {
                                   setBanTarget(u);
                                   setBanReason(STANDARD_BAN_REASONS[0].value);
                                 }}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 min-h-[36px] rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/70 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                               >
-                                <Lock className="w-3 h-3" />
+                                <Lock aria-hidden="true" className="w-3 h-3" />
                                 <span>{isVi ? 'Khóa' : 'Ban'}</span>
                               </button>
                             ))}
@@ -462,22 +486,28 @@ export default function AdminUsersPage() {
 
       {/* Ban Account Modal */}
       {banTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2A211B]/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-2xl border border-[#E4D6C4] space-y-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ban-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2A211B]/40 dark:bg-black/70 backdrop-blur-xs"
+        >
+          <div className="w-full max-w-lg bg-white dark:bg-stone-900 rounded-2xl p-6 shadow-2xl border border-[#E4D6C4] dark:border-stone-800 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#2A211B]">
+              <h3 id="ban-modal-title" className="text-base font-bold text-[#2A211B] dark:text-stone-100">
                 {isVi ? 'Khóa tài khoản người dùng' : 'Ban User Account'}
               </h3>
               <button
                 type="button"
                 onClick={() => setBanTarget(null)}
-                className="text-[#8B796B] hover:text-[#3B2E24] cursor-pointer"
+                aria-label={isVi ? 'Đóng hộp thoại' : 'Close dialog'}
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-[#6D5D52] dark:text-stone-400 hover:text-[#3B2E24] dark:hover:text-stone-100 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-[#6E5E52]">
-              {isVi ? 'Tài khoản:' : 'Account:'} <strong>{banTarget.fullName}</strong> (
+            <p className="text-xs text-[#6D5D52] dark:text-stone-300">
+              {isVi ? 'Tài khoản:' : 'Account:'} <strong className="text-[#2A211B] dark:text-stone-100">{banTarget.fullName}</strong> (
               {banTarget.email}).{' '}
               {isVi
                 ? 'Khóa tài khoản sẽ thu hồi phiên đăng nhập và quyền bán ngay lập tức.'
@@ -485,15 +515,16 @@ export default function AdminUsersPage() {
             </p>
             <form onSubmit={handleConfirmBan} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#3B2E24] mb-1">
+                <label htmlFor="ban-preset-select" className="block text-xs font-semibold text-[#3B2E24] dark:text-stone-200 mb-1">
                   {isVi ? 'Mẫu lý do vi phạm có sẵn' : 'Standard Violation Preset'}
                 </label>
                 <select
+                  id="ban-preset-select"
                   onChange={(e) => {
                     if (e.target.value) setBanReason(e.target.value);
                   }}
                   defaultValue={STANDARD_BAN_REASONS[0].value}
-                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] text-xs text-[#2A211B] bg-[#FCF9F4] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40"
+                  className="w-full px-3 py-2 min-h-[40px] rounded-xl border border-[#DFCEBA] dark:border-stone-700 text-xs text-[#2A211B] dark:text-stone-100 bg-[#FCF9F4] dark:bg-stone-800 focus:bg-white dark:focus:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-[#C5A27D]/40 dark:focus:ring-[#F5A764]/40"
                 >
                   {STANDARD_BAN_REASONS.map((preset) => (
                     <option key={preset.label} value={preset.value}>
@@ -503,31 +534,32 @@ export default function AdminUsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-[#3B2E24] mb-1">
+                <label htmlFor="ban-reason-textarea" className="block text-xs font-semibold text-[#3B2E24] dark:text-stone-200 mb-1">
                   {isVi ? 'Lý do khóa (10–500 ký tự) *' : 'Ban Reason (10–500 characters) *'}
                 </label>
                 <textarea
+                  id="ban-reason-textarea"
                   rows={3}
                   required
                   minLength={10}
                   maxLength={500}
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] bg-[#FCF9F4] text-xs text-[#2A211B] focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+                  className="w-full px-3 py-2 rounded-xl border border-[#DFCEBA] dark:border-stone-700 bg-[#FCF9F4] dark:bg-stone-800 text-xs text-[#2A211B] dark:text-stone-100 focus:bg-white dark:focus:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-rose-500/40"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setBanTarget(null)}
-                  className="px-4 py-2 rounded-xl border border-[#DFCEBA] text-xs font-semibold text-[#4E3F33] hover:bg-[#FAF6F0] cursor-pointer"
+                  className="px-4 py-2 min-h-[40px] rounded-xl border border-[#DFCEBA] dark:border-stone-700 text-xs font-semibold text-[#4E3F33] dark:text-stone-200 hover:bg-[#FAF6F0] dark:hover:bg-stone-800 cursor-pointer"
                 >
                   {isVi ? 'Hủy' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
                   disabled={busyUserId === banTarget.id}
-                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 min-h-[40px] rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer disabled:opacity-50"
                 >
                   {isVi ? 'Xác nhận khóa' : 'Confirm Ban'}
                 </button>

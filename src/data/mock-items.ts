@@ -1,7 +1,7 @@
 export interface CategoryItem {
     id: string;
     name: string;
-    iconName: 'LayoutGrid' | 'BookOpen' | 'Laptop' | 'Home' | 'Shirt' | 'Lipstick' | 'Clover' | 'PenTool' | 'Utensils';
+    iconName: 'LayoutGrid' | 'BookOpen' | 'Laptop' | 'Home' | 'Shirt' | 'Lipstick' | 'Clover' | 'PenTool' | 'Utensils' | 'Wrench' | 'Dumbbell' | 'Music';
 }
 
 export interface ProductItem {

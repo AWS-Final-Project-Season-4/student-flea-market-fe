@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore } from '@/lib/language-store';
+import { useThemeStore } from '@/lib/theme-store';
 import { adminApi } from '@/lib/admin-api';
 import { UKFlag, VietnamFlag } from '@/components/ui/layout/Navbar';
 
@@ -42,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, isAuthenticated, isInitialized, initAuth, logout, syncProfile } = useAuthStore();
   const { language, setLanguage } = useLanguageStore();
+  const { initTheme } = useThemeStore();
   const isVi = language === 'vi';
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -65,7 +67,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     initAuth();
-  }, [initAuth]);
+    initTheme();
+  }, [initAuth, initTheme]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -124,12 +127,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#FAF7F2] flex flex-col items-center justify-center text-[#2A211B] font-sans p-4">
-        <div className="w-12 h-12 border-4 border-[#C5A27D] border-t-transparent rounded-full animate-spin mb-4" />
-        <h2 className="text-lg font-semibold tracking-wide">
+      <div className="min-h-[100dvh] bg-[#FAF7F2] dark:bg-stone-950 flex flex-col items-center justify-center text-[#2A211B] dark:text-stone-100 font-sans p-4 transition-colors">
+        <div className="w-12 h-12 border-4 border-[#C5A27D] dark:border-[#F5A764] border-t-transparent rounded-full animate-spin mb-4" />
+        <h1 className="text-lg font-semibold tracking-wide">
           {isVi ? 'Đang xác thực quyền Quản trị...' : 'Verifying Staff Access...'}
-        </h2>
-        <p className="text-xs text-[#7A6A5D] mt-1">
+        </h1>
+        <p className="text-xs text-[#6D5D52] dark:text-stone-400 mt-1">
           {isVi
             ? 'Đang kiểm tra phân quyền truy cập (Admin / Moderator)'
             : 'Checking role-based access control (Admin / Moderator)'}
@@ -149,7 +152,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: '/admin/users',
       icon: Users,
       badge: totalUsersCount > 0 ? String(totalUsersCount) : undefined,
-      badgeColor: 'bg-[#EDE3D5] text-[#5E452F]',
+      badgeColor: 'bg-[#EDE3D5] dark:bg-stone-800 text-[#5E452F] dark:text-stone-300',
     },
     {
       name: isVi ? 'Duyệt Seller & Tin đăng' : 'Sellers & Listings',
@@ -161,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ? `${pendingSellersCount} chờ duyệt`
             : `${pendingSellersCount} pending`
           : undefined,
-      badgeColor: 'bg-amber-100 text-amber-800',
+      badgeColor: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300',
     },
     {
       name: isVi ? 'Báo cáo & Vi phạm' : 'Reports & Violations',
@@ -173,7 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             ? `${openReportsCount} đang mở`
             : `${openReportsCount} open`
           : undefined,
-      badgeColor: 'bg-rose-100 text-rose-700',
+      badgeColor: 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300',
     },
     {
       name: isVi ? 'Quản lý danh mục' : 'Category Management',
@@ -195,19 +198,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       : 'Administrator';
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] flex font-sans text-[#2A211B]">
-      {/* SIDEBAR (Desktop) - Soft Warm Beige Theme */}
-      <aside className="hidden lg:flex w-72 flex-col bg-[#F2EAE0] text-[#3B2E24] border-r border-[#E4D6C4] shrink-0 select-none">
+    <div className="min-h-[100dvh] bg-[#FAF7F2] dark:bg-stone-950 flex font-sans text-[#2A211B] dark:text-stone-100 transition-colors">
+      {/* SIDEBAR (Desktop) - Soft Warm Beige / Dark Stone Theme */}
+      <aside className="hidden lg:flex w-72 flex-col bg-[#F2EAE0] dark:bg-stone-900 text-[#3B2E24] dark:text-stone-200 border-r border-[#E4D6C4] dark:border-stone-800 shrink-0 select-none transition-colors">
         {/* Brand Header */}
-        <div className="h-20 flex items-center px-6 border-b border-[#E4D6C4] gap-3">
+        <div className="h-20 flex items-center px-6 border-b border-[#E4D6C4] dark:border-stone-800 gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] flex items-center justify-center shadow-md shadow-[#E89650]/25 text-white font-bold">
-            <ShieldCheck className="w-6 h-6" />
+            <ShieldCheck aria-hidden="true" className="w-6 h-6" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-[#2A211B] text-base tracking-tight leading-none">
+            <span className="font-bold text-[#2A211B] dark:text-stone-100 text-base tracking-tight leading-none">
               SFM Portal
             </span>
-            <span className="text-[11px] text-[#C46A28] font-semibold tracking-wide uppercase mt-1">
+            <span className="text-[11px] text-[#9A5828] dark:text-[#F5A764] font-semibold tracking-wide uppercase mt-1">
               {isVi ? `Điều hành ${staffRoleLabel}` : `${staffRoleLabel} Control`}
             </span>
           </div>
@@ -217,21 +220,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="px-4 pt-4 pb-2">
           <Link
             href="/"
-            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/80 hover:bg-white text-xs text-[#3B2E24] hover:text-[#2A211B] border border-[#E0D0BC] shadow-2xs transition group"
+            className="flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white/80 dark:bg-stone-800 hover:bg-white dark:hover:bg-stone-700 text-xs text-[#3B2E24] dark:text-stone-100 hover:text-[#2A211B] border border-[#E0D0BC] dark:border-stone-700 shadow-2xs transition group"
           >
             <div className="flex items-center gap-2">
-              <Store className="w-4 h-4 text-[#8C6645] group-hover:scale-110 transition-transform" />
+              <Store aria-hidden="true" className="w-4 h-4 text-[#8C6645] dark:text-[#F5A764] group-hover:scale-110 transition-transform" />
               <span className="font-semibold">
                 {isVi ? 'Về trang bán hàng' : 'View Marketplace'}
               </span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-[#8B796B]" />
+            <ExternalLink aria-hidden="true" className="w-3.5 h-3.5 text-[#6D5D52] dark:text-stone-400" />
           </Link>
         </div>
 
         {/* Navigation Section */}
-        <div className="px-4 py-3 flex-1 space-y-1.5 overflow-y-auto">
-          <div className="px-3 pb-2 text-[11px] font-semibold text-[#8B796B] uppercase tracking-wider">
+        <nav aria-label={isVi ? 'Điều hướng quản trị' : 'Admin navigation'} className="px-4 py-3 flex-1 space-y-1.5 overflow-y-auto">
+          <div className="px-3 pb-2 text-[11px] font-semibold text-[#6D5D52] dark:text-stone-400 uppercase tracking-wider">
             {isVi ? 'Quản trị hệ thống' : 'Administration'}
           </div>
 
@@ -244,26 +247,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all group ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs sm:text-sm font-medium transition-all group ${
                   isActive
-                    ? 'bg-[#DFCBB2] text-[#2A211B] font-semibold border border-[#CCB395] shadow-2xs'
-                    : 'text-[#4E3F33] hover:text-[#2A211B] hover:bg-[#E7DDD0]'
+                    ? 'bg-[#DFCBB2] dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 font-semibold border border-[#CCB395] dark:border-stone-700 shadow-2xs'
+                    : 'text-[#4E3F33] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100 hover:bg-[#E7DDD0] dark:hover:bg-stone-800/70'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
+                    aria-hidden="true"
                     className={`w-4 h-4 ${
-                      isActive ? 'text-[#4A3525]' : 'text-[#8B796B] group-hover:text-[#6B482C]'
+                      isActive
+                        ? 'text-[#4A3525] dark:text-[#F5A764]'
+                        : 'text-[#6D5D52] dark:text-stone-400 group-hover:text-[#6B482C] dark:group-hover:text-stone-200'
                     } transition-colors`}
                   />
                   <span>{item.name}</span>
                 </div>
                 {item.badge && (
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold tabular-nums ${
                       isActive
-                        ? 'bg-white/65 text-[#2A211B]'
-                        : item.badgeColor || 'bg-[#E5D7C6] text-[#4E3F33]'
+                        ? 'bg-white/65 dark:bg-stone-700 text-[#2A211B] dark:text-stone-100'
+                        : item.badgeColor || 'bg-[#E5D7C6] dark:bg-stone-800 text-[#4E3F33] dark:text-stone-300'
                     }`}
                   >
                     {item.badge}
@@ -272,29 +279,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         {/* Staff Footer Profile Card */}
-        <div className="p-4 border-t border-[#E4D6C4] bg-[#EAE0D3]/80">
-          <div className="flex items-center justify-between">
+        <div className="p-4 border-t border-[#E4D6C4] dark:border-stone-800 bg-[#EAE0D3]/80 dark:bg-stone-900/90">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3 min-w-0">
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-[#DFCBB2] border border-[#C9AF91] text-[#3B2A1E] flex items-center justify-center shrink-0 font-bold text-sm">
+                <div className="w-9 h-9 rounded-full bg-[#DFCBB2] dark:bg-stone-800 border border-[#C9AF91] dark:border-stone-700 text-[#3B2A1E] dark:text-stone-100 flex items-center justify-center shrink-0 font-bold text-sm">
                   {staffInitial}
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#F2EAE0]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#F2EAE0] dark:ring-stone-900" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-[#2A211B] truncate">
+                <div className="text-xs font-semibold text-[#2A211B] dark:text-stone-100 truncate">
                   {staffDisplayName}
                 </div>
-                <div className="text-[11px] text-[#6E5E52] truncate flex items-center gap-1.5 mt-0.5">
+                <div className="text-[11px] text-[#6D5D52] dark:text-stone-400 truncate flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-medium text-emerald-700">
+                  <span className="font-medium text-emerald-700 dark:text-emerald-400">
                     {isVi ? 'Trực tuyến' : 'Online'}
                   </span>
-                  <span className="text-[#A39284]">•</span>
-                  <span className="text-[#7A6A5D]">{staffRoleLabel}</span>
+                  <span className="text-[#8C7A6B] dark:text-stone-500">•</span>
+                  <span className="text-[#6D5D52] dark:text-stone-300">{staffRoleLabel}</span>
                 </div>
               </div>
             </div>
@@ -303,9 +310,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               type="button"
               onClick={handleLogout}
               title={isVi ? 'Đăng xuất' : 'Sign out'}
-              className="p-2 rounded-lg text-[#7A6A5D] hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              aria-label={isVi ? 'Đăng xuất' : 'Sign out'}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#6D5D52] dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut aria-hidden="true" className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -313,25 +321,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MOBILE DRAWER SIDEBAR */}
       {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={isVi ? 'Menu quản trị' : 'Admin navigation menu'}
+          className="fixed inset-0 z-50 lg:hidden flex"
+        >
           <div
-            className="fixed inset-0 bg-[#2A211B]/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-[#2A211B]/40 dark:bg-black/70 backdrop-blur-xs transition-opacity"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          <aside className="relative w-72 max-w-[80vw] bg-[#F2EAE0] text-[#3B2E24] flex flex-col z-10 border-r border-[#E4D6C4]">
-            <div className="h-16 flex items-center justify-between px-5 border-b border-[#E4D6C4]">
+          <aside className="relative w-72 max-w-[80vw] bg-[#F2EAE0] dark:bg-stone-900 text-[#3B2E24] dark:text-stone-200 flex flex-col z-10 border-r border-[#E4D6C4] dark:border-stone-800">
+            <div className="h-16 flex items-center justify-between px-5 border-b border-[#E4D6C4] dark:border-stone-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#E89650] via-[#F5A764] to-[#FBD6B0] flex items-center justify-center text-white shadow-xs">
-                  <ShieldCheck className="w-5 h-5" />
+                  <ShieldCheck aria-hidden="true" className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-[#2A211B] text-base">SFM Portal</span>
+                <span className="font-bold text-[#2A211B] dark:text-stone-100 text-base">SFM Portal</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="p-1.5 text-[#7A6A5D] hover:text-[#2A211B] cursor-pointer"
+                aria-label={isVi ? 'Đóng menu điều hướng' : 'Close navigation menu'}
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#6D5D52] dark:text-stone-300 hover:text-[#2A211B] dark:hover:text-stone-100 hover:bg-[#E7DDD0] dark:hover:bg-stone-800 cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X aria-hidden="true" className="w-5 h-5" />
               </button>
             </div>
 
@@ -339,39 +353,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 href="/"
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-xs text-[#3B2E24] border border-[#E0D0BC]"
+                className="flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl bg-white/80 dark:bg-stone-800 hover:bg-white dark:hover:bg-stone-700 text-xs text-[#3B2E24] dark:text-stone-100 border border-[#E0D0BC] dark:border-stone-700"
               >
                 <span className="flex items-center gap-2 font-semibold">
-                  <Store className="w-4 h-4 text-[#8C6645]" />
+                  <Store aria-hidden="true" className="w-4 h-4 text-[#8C6645] dark:text-[#F5A764]" />
                   {isVi ? 'Về trang bán hàng' : 'View Marketplace'}
                 </span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#8B796B]" />
+                <ExternalLink aria-hidden="true" className="w-3.5 h-3.5 text-[#6D5D52] dark:text-stone-400" />
               </Link>
             </div>
 
-            <div className="p-4 flex-1 space-y-1.5 overflow-y-auto">
+            <nav aria-label={isVi ? 'Điều hướng di động' : 'Mobile navigation'} className="p-4 flex-1 space-y-1.5 overflow-y-auto">
               {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={isActive ? 'page' : undefined}
                     onClick={() => setIsMobileSidebarOpen(false)}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium ${
+                    className={`flex items-center justify-between px-3.5 py-2.5 min-h-[44px] rounded-xl text-xs font-medium ${
                       isActive
-                        ? 'bg-[#DFCBB2] text-[#2A211B] font-semibold border border-[#CCB395]'
-                        : 'text-[#4E3F33] hover:bg-[#E7DDD0]'
+                        ? 'bg-[#DFCBB2] dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 font-semibold border border-[#CCB395] dark:border-stone-700'
+                        : 'text-[#4E3F33] dark:text-stone-300 hover:bg-[#E7DDD0] dark:hover:bg-stone-800/70'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4" />
+                      <Icon aria-hidden="true" className="w-4 h-4" />
                       <span>{item.name}</span>
                     </div>
                     {item.badge && (
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                          isActive ? 'bg-white/65 text-[#2A211B]' : 'bg-[#E5D7C6] text-[#4E3F33]'
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-semibold tabular-nums ${
+                          isActive
+                            ? 'bg-white/65 dark:bg-stone-700 text-[#2A211B] dark:text-stone-100'
+                            : item.badgeColor || 'bg-[#E5D7C6] dark:bg-stone-800 text-[#4E3F33] dark:text-stone-300'
                         }`}
                       >
                         {item.badge}
@@ -380,16 +398,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </Link>
                 );
               })}
-            </div>
+            </nav>
 
-            <div className="p-4 border-t border-[#E4D6C4] bg-[#EAE0D3]/80 flex items-center justify-between">
-              <div className="text-xs text-[#2A211B] truncate font-medium">{staffDisplayName}</div>
+            <div className="p-4 border-t border-[#E4D6C4] dark:border-stone-800 bg-[#EAE0D3]/80 dark:bg-stone-900/90 flex items-center justify-between gap-2">
+              <div className="text-xs text-[#2A211B] dark:text-stone-100 truncate font-medium">{staffDisplayName}</div>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="text-xs text-rose-600 flex items-center gap-1 font-semibold cursor-pointer"
+                className="min-h-[40px] px-2 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold cursor-pointer rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut aria-hidden="true" className="w-3.5 h-3.5" />
                 {isVi ? 'Đăng xuất' : 'Sign out'}
               </button>
             </div>
@@ -399,24 +417,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MAIN CONTENT STAGE */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="sticky top-0 z-30 h-16 sm:h-20 bg-white/85 backdrop-blur-md border-b border-[#E7DAC9] px-4 sm:px-8 flex items-center justify-between">
+        <header className="sticky top-0 z-30 h-16 sm:h-20 surface-translucent bg-white/85 dark:bg-stone-950/90 backdrop-blur-md border-b border-[#E7DAC9] dark:border-stone-800 px-4 sm:px-8 flex items-center justify-between transition-colors">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-[#3B2E24] hover:bg-[#F3ECE2] cursor-pointer"
+              aria-label={isVi ? 'Mở menu quản trị' : 'Open admin navigation menu'}
+              aria-expanded={isMobileSidebarOpen}
+              className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#3B2E24] dark:text-stone-200 hover:bg-[#F3ECE2] dark:hover:bg-stone-800 cursor-pointer"
             >
-              <Menu className="w-5 h-5" />
+              <Menu aria-hidden="true" className="w-5 h-5" />
             </button>
             <div>
-              <div className="flex items-center gap-1.5 text-xs text-[#7A6A5D]">
+              <div className="flex items-center gap-1.5 text-xs text-[#6D5D52] dark:text-stone-400">
                 <span>{isVi ? 'Quản trị Hệ thống' : `System ${staffRoleLabel}`}</span>
-                <ChevronRight className="w-3 h-3 text-[#A39284]" />
-                <span className="font-semibold text-[#4A3525]">
+                <ChevronRight aria-hidden="true" className="w-3 h-3 text-[#8C7A6B] dark:text-stone-500" />
+                <span className="font-semibold text-[#4A3525] dark:text-stone-200">
                   {activeNav?.name || (isVi ? 'Tổng quan' : 'Dashboard')}
                 </span>
               </div>
-              <h1 className="text-base sm:text-xl font-bold text-[#2A211B] tracking-tight">
+              <h1 className="text-base sm:text-xl font-bold text-[#2A211B] dark:text-stone-100 tracking-tight">
                 {activeNav?.name || (isVi ? 'Tổng quan & Thống kê' : 'Dashboard & Analytics')}
               </h1>
             </div>
@@ -428,72 +448,79 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="button"
                 onClick={() => setIsLanguageOpen((prev) => !prev)}
+                aria-expanded={isLanguageOpen}
+                aria-haspopup="menu"
                 title={isVi ? 'Đổi ngôn ngữ' : 'Switch language'}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#DFCEBA] hover:border-[#C9AE8B] bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#3B2E24] text-xs font-semibold shadow-2xs transition cursor-pointer"
+                className="flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-full border border-[#DFCEBA] dark:border-stone-700 hover:border-[#C9AE8B] dark:hover:border-stone-600 bg-[#FAF6F0] dark:bg-stone-900 hover:bg-[#F3ECE2] dark:hover:bg-stone-800 text-[#3B2E24] dark:text-stone-100 text-xs font-semibold shadow-2xs transition cursor-pointer"
               >
                 {language === 'vi' ? <VietnamFlag /> : <UKFlag />}
                 <span className="tracking-wider font-semibold">
                   {language === 'vi' ? 'VIE' : 'ENG'}
                 </span>
-                <ChevronDown className="w-3 h-3 text-[#8B796B]" />
+                <ChevronDown aria-hidden="true" className="w-3 h-3 text-[#6D5D52] dark:text-stone-400" />
               </button>
 
               {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-[#E7DAC9] py-1.5 z-50">
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-40 bg-white dark:bg-stone-900 rounded-2xl shadow-xl dark:shadow-black/50 border border-[#E7DAC9] dark:border-stone-800 py-1.5 z-50"
+                >
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       setLanguage('vi');
                       setIsLanguageOpen(false);
                     }}
-                    className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-[#FAF6F0] transition cursor-pointer ${
+                    className={`w-full px-3.5 py-2.5 min-h-[40px] text-left text-xs flex items-center justify-between hover:bg-[#FAF6F0] dark:hover:bg-stone-800 transition cursor-pointer ${
                       language === 'vi'
-                        ? 'font-bold text-[#7D5435] bg-[#F5ECE0]'
-                        : 'text-[#3B2E24]'
+                        ? 'font-bold text-[#7D5435] dark:text-[#F5A764] bg-[#F5ECE0] dark:bg-stone-800'
+                        : 'text-[#3B2E24] dark:text-stone-200'
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
                       <VietnamFlag />
                       <span>Tiếng Việt</span>
                     </span>
-                    {language === 'vi' && <span className="text-[#7D5435] font-bold">✓</span>}
+                    {language === 'vi' && <span className="text-[#7D5435] dark:text-[#F5A764] font-bold">✓</span>}
                   </button>
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => {
                       setLanguage('en');
                       setIsLanguageOpen(false);
                     }}
-                    className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-[#FAF6F0] transition cursor-pointer ${
+                    className={`w-full px-3.5 py-2.5 min-h-[40px] text-left text-xs flex items-center justify-between hover:bg-[#FAF6F0] dark:hover:bg-stone-800 transition cursor-pointer ${
                       language === 'en'
-                        ? 'font-bold text-[#7D5435] bg-[#F5ECE0]'
-                        : 'text-[#3B2E24]'
+                        ? 'font-bold text-[#7D5435] dark:text-[#F5A764] bg-[#F5ECE0] dark:bg-stone-800'
+                        : 'text-[#3B2E24] dark:text-stone-200'
                     }`}
                   >
                     <span className="flex items-center gap-2.5">
                       <UKFlag />
                       <span>English</span>
                     </span>
-                    {language === 'en' && <span className="text-[#7D5435] font-bold">✓</span>}
+                    {language === 'en' && <span className="text-[#7D5435] dark:text-[#F5A764] font-bold">✓</span>}
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-[#E7DAC9]">
+            <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-[#E7DAC9] dark:border-stone-800">
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-[#DFCBB2] border border-[#CCB395] text-[#2A211B] font-bold flex items-center justify-center text-xs shadow-2xs">
+                <div className="w-9 h-9 rounded-full bg-[#DFCBB2] dark:bg-stone-800 border border-[#CCB395] dark:border-stone-700 text-[#2A211B] dark:text-stone-100 font-bold flex items-center justify-center text-xs shadow-2xs">
                   {staffInitial}
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-stone-950" />
               </div>
               <div className="hidden md:block text-left">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-[#2A211B] leading-tight">
+                  <span className="text-xs font-semibold text-[#2A211B] dark:text-stone-100 leading-tight">
                     {staffDisplayName}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#7A6A5D] leading-tight mt-0.5">
+                <div className="text-[11px] text-[#6D5D52] dark:text-stone-400 leading-tight mt-0.5">
                   {user?.email}
                 </div>
               </div>
@@ -501,7 +528,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
           {children}
         </main>
       </div>

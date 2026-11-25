@@ -108,13 +108,15 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
         console.warn('Could not fetch backend categories, using defaults:', err);
         if (!isMounted) return;
         setCategories([
-          { id: 1, name: 'Sách & Giáo trình', slug: 'books', order: 1, itemCount: 0 },
-          { id: 2, name: 'Dụng cụ học tập', slug: 'stationery-study', order: 2, itemCount: 0 },
-          { id: 3, name: 'Thời trang', slug: 'fashion', order: 3, itemCount: 0 },
-          { id: 4, name: 'Đồ KTX & Đời sống', slug: 'dorm-living', order: 4, itemCount: 0 },
-          { id: 5, name: 'Đồ điện tử', slug: 'electronics', order: 5, itemCount: 0 },
-          { id: 6, name: 'Sức khỏe & Sắc đẹp', slug: 'beauty-health', order: 6, itemCount: 0 },
-          { id: 9, name: 'Khác / Ăn uống', slug: 'food-drinks', order: 9, itemCount: 0 },
+          { id: 1, name: 'Sách', slug: 'sach', order: 1, itemCount: 0 },
+          { id: 2, name: 'Dụng cụ & Tài liệu học tập', slug: 'dung-cu-tai-lieu-hoc-tap', order: 2, itemCount: 0 },
+          { id: 3, name: 'Thời trang', slug: 'thoi-trang', order: 3, itemCount: 0 },
+          { id: 4, name: 'Đồ gia dụng', slug: 'do-gia-dung', order: 4, itemCount: 0 },
+          { id: 5, name: 'Điện tử', slug: 'dien-tu', order: 5, itemCount: 0 },
+          { id: 6, name: 'Thể thao & Sức khỏe', slug: 'the-thao-suc-khoe', order: 6, itemCount: 0 },
+          { id: 7, name: 'Phụ kiện xe', slug: 'phu-kien-xe', order: 7, itemCount: 0 },
+          { id: 8, name: 'Nhạc cụ', slug: 'nhac-cu', order: 8, itemCount: 0 },
+          { id: 9, name: 'Khác', slug: 'khac', order: 9, itemCount: 0 },
         ]);
       });
 
@@ -193,10 +195,11 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
           (c) =>
             c.slug.toLowerCase() === detected.categoryId.toLowerCase() ||
             (detected.categoryId === 'books' && c.slug.includes('sach')) ||
-            (detected.categoryId === 'stationery-study' && (c.slug.includes('giao-duc') || c.slug.includes('tai-lieu'))) ||
+            (detected.categoryId === 'stationery-study' && (c.slug.includes('dung-cu') || c.slug.includes('giao-duc') || c.slug.includes('tai-lieu'))) ||
             (detected.categoryId === 'electronics' && c.slug.includes('dien-tu')) ||
             (detected.categoryId === 'dorm-living' && c.slug.includes('gia-dung')) ||
-            (detected.categoryId === 'fashion' && c.slug.includes('thoi-trang'))
+            (detected.categoryId === 'fashion' && c.slug.includes('thoi-trang')) ||
+            (detected.categoryId === 'phu-kien-xe' && c.slug.includes('phu-kien-xe'))
         );
         if (matched) {
           setSelectedCategoryId(matched.id);
@@ -538,7 +541,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 >
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                      {t.categories[cat.slug as keyof typeof t.categories] || cat.name}
                     </option>
                   ))}
                 </select>

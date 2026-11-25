@@ -94,13 +94,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                     <div className="w-full lg:max-w-md flex flex-col items-center justify-center relative">
 
                         {/* Top-Right Badge: Frosted Glassmorphism Pill */}
-                        <div className="self-end z-20 mb-[-12px] mr-2 bg-white/90 backdrop-blur-md text-[#2A211B] text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md border border-[#EADBCE]">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <div className="self-end z-20 mb-[-12px] mr-2 surface-translucent bg-white/90 dark:bg-stone-900/90 backdrop-blur-md text-[#2A211B] dark:text-stone-100 text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md border border-[#EADBCE] dark:border-stone-700">
+                            <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             <span>{t.hero.trustBadge1}</span>
                         </div>
 
                         {/* Grounded Real Campus Image in Framed Card */}
-                        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden border-2 border-white shadow-xl shadow-[#2A211B]/10 bg-[#FAF7F2]">
+                        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden border-2 border-white dark:border-stone-800 shadow-xl shadow-[#2A211B]/10 dark:shadow-black/50 bg-[#FAF7F2] dark:bg-stone-900">
                             <img
                                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=80"
                                 alt="Student Flea Market"
@@ -111,8 +111,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onPostItemClick }) => {
                         </div>
 
                         {/* Bottom-Right Badge: Frosted Glassmorphism Pill */}
-                        <div className="self-start z-20 mt-[-12px] ml-2 bg-white/90 backdrop-blur-md text-[#2A211B] text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md border border-[#EADBCE]">
-                            <MapPin className="w-3.5 h-3.5 text-[#855A3C] shrink-0" />
+                        <div className="self-start z-20 mt-[-12px] ml-2 surface-translucent bg-white/90 dark:bg-stone-900/90 backdrop-blur-md text-[#2A211B] dark:text-stone-100 text-[11px] sm:text-xs font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md border border-[#EADBCE] dark:border-stone-700">
+                            <MapPin aria-hidden="true" className="w-3.5 h-3.5 text-[#855A3C] dark:text-[#F5A764] shrink-0" />
                             <span>{t.hero.trustBadge2}</span>
                         </div>
 

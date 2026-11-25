@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
     LayoutGrid,
     BookOpen,
@@ -10,12 +10,17 @@ import {
     Clover,
     PenTool,
     Utensils,
-    ChevronLeft,
-    ChevronRight,
+    Wrench,
+    Dumbbell,
+    Music,
+    ChevronDown,
+    Check,
 } from 'lucide-react';
 import { CATEGORIES, CategoryItem } from '@/data/mock-items';
 import { itemsApi } from '@/lib/items-api';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
+
+const MAX_INLINE_CHIPS = 7; // 'All' + top 6 primary categories; rest go into 'More' dropdown
 
 // Custom Lucide-styled Lipstick Icon for Beauty & Health
 function LipstickIcon({ className = 'w-4 h-4' }: { className?: string }) {
@@ -43,9 +48,12 @@ function resolveCategoryIconBySlug(slug: string): CategoryItem['iconName'] {
     if (s.includes('elec') || s.includes('dien-tu') || s.includes('tech')) return 'Laptop';
     if (s.includes('dorm') || s.includes('home') || s.includes('gia-dung')) return 'Home';
     if (s.includes('fashion') || s.includes('thoi-trang')) return 'Shirt';
+    if (s.includes('the-thao') || s.includes('sport') || s.includes('suc-khoe')) return 'Dumbbell';
     if (s.includes('beauty') || s.includes('health') || s.includes('sac-dep')) return 'Lipstick';
-    if (s.includes('stationery') || s.includes('study') || s.includes('tai-lieu') || s.includes('giao-duc')) return 'PenTool';
+    if (s.includes('stationery') || s.includes('study') || s.includes('dung-cu') || s.includes('tai-lieu') || s.includes('giao-duc')) return 'PenTool';
     if (s.includes('food') || s.includes('drink') || s.includes('an-uong')) return 'Utensils';
+    if (s.includes('phu-kien-xe') || s.includes('phu-kien') || s.includes('xe-co') || s.includes('vehicle')) return 'Wrench';
+    if (s.includes('nhac-cu') || s.includes('music')) return 'Music';
     return 'Clover';
 }
 
@@ -60,9 +68,8 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
 }) => {
     const { language } = useLanguageStore();
     const t = DICTIONARY[language];
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const [canScrollLeft, setCanScrollLeft] = useState(false);
-    const [canScrollRight, setCanScrollRight] = useState(false);
+    const moreDropdownRef = useRef<HTMLDivElement>(null);
+    const [isMoreOpen, setIsMoreOpen] = useState(false);
     const [chipList, setChipList] = useState<CategoryItem[]>(() => [CATEGORIES[0]]);
 
     useEffect(() => {
@@ -88,91 +95,87 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
         };
     }, []);
 
-    const checkScrollability = useCallback(() => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        const { scrollLeft, scrollWidth, clientWidth } = el;
-        setCanScrollLeft(scrollLeft > 6);
-        setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
-    }, []);
-
     useEffect(() => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
+        if (!isMoreOpen) return;
 
-        checkScrollability();
+        const handleClickOutside = (e: MouseEvent) => {
+            if (moreDropdownRef.current && !moreDropdownRef.current.contains(e.target as Node)) {
+                setIsMoreOpen(false);
+            }
+        };
 
-        const resizeObserver = new ResizeObserver(() => checkScrollability());
-        resizeObserver.observe(el);
-        return () => resizeObserver.disconnect();
-    }, [checkScrollability, language, chipList]);
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsMoreOpen(false);
+            }
+        };
 
-    const handleScroll = (direction: 'left' | 'right') => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        const scrollAmount = direction === 'left' ? -260 : 260;
-        el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isMoreOpen]);
+
+    const getLocalizedName = (category: CategoryItem) =>
+        t.categories[category.id as keyof typeof t.categories] || category.name;
 
     // Render corresponding icon dynamically
     const renderCategoryIcon = (iconName: string, isActive: boolean) => {
         const iconClass = `w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-[#4A3525] dark:text-stone-100' : 'text-[#7A6D63] dark:text-stone-400'}`;
         switch (iconName) {
             case 'BookOpen':
-                return <BookOpen className={iconClass} />;
+                return <BookOpen aria-hidden="true" className={iconClass} />;
             case 'Laptop':
-                return <Laptop className={iconClass} />;
+                return <Laptop aria-hidden="true" className={iconClass} />;
             case 'Home':
-                return <Home className={iconClass} />;
+                return <Home aria-hidden="true" className={iconClass} />;
             case 'Shirt':
-                return <Shirt className={iconClass} />;
+                return <Shirt aria-hidden="true" className={iconClass} />;
             case 'Lipstick':
                 return <LipstickIcon className={iconClass} />;
             case 'Clover':
-                return <Clover className={iconClass} />;
+                return <Clover aria-hidden="true" className={iconClass} />;
             case 'PenTool':
-                return <PenTool className={iconClass} />;
+                return <PenTool aria-hidden="true" className={iconClass} />;
             case 'Utensils':
-                return <Utensils className={iconClass} />;
+                return <Utensils aria-hidden="true" className={iconClass} />;
+            case 'Wrench':
+                return <Wrench aria-hidden="true" className={iconClass} />;
+            case 'Dumbbell':
+                return <Dumbbell aria-hidden="true" className={iconClass} />;
+            case 'Music':
+                return <Music aria-hidden="true" className={iconClass} />;
             case 'LayoutGrid':
             default:
-                return <LayoutGrid className={iconClass} />;
+                return <LayoutGrid aria-hidden="true" className={iconClass} />;
         }
     };
 
-    return (
-        <div className="relative w-full py-2 group">
-            {/* Left Scroll Navigation Button */}
-            {canScrollLeft && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 flex items-center pr-2 bg-gradient-to-r from-white dark:from-stone-950 via-white/90 dark:via-stone-950/90 to-transparent h-full">
-                    <button
-                        type="button"
-                        onClick={() => handleScroll('left')}
-                        className="w-8 h-8 rounded-full bg-white dark:bg-stone-900 shadow-md border border-[#EADBCE] dark:border-stone-700 text-[#5C4E43] dark:text-stone-200 hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                        aria-label="Scroll left"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
+    const inlineChips = chipList.slice(0, MAX_INLINE_CHIPS);
+    const overflowChips = chipList.slice(MAX_INLINE_CHIPS);
+    const activeOverflowChip = overflowChips.find((c) => c.id === activeCategory);
+    const isMoreActive = Boolean(activeOverflowChip);
 
-            {/* Scrollable Chips Container */}
-            <div
-                ref={scrollContainerRef}
-                onScroll={checkScrollability}
-                className="w-full flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar scroll-smooth"
-            >
-                {chipList.map((category) => {
+    return (
+        <div className="relative w-full py-2 flex items-center gap-1.5 sm:gap-2">
+            {/* Primary Inline Chips (Horizontally scrollable on narrow screens, single balanced row on desktop) */}
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2 overflow-x-auto xl:overflow-visible py-0.5 scrollbar-none no-scrollbar scroll-smooth">
+                {inlineChips.map((category) => {
                     const isActive = activeCategory === category.id;
-                    const localizedName =
-                        t.categories[category.id as keyof typeof t.categories] || category.name;
+                    const localizedName = getLocalizedName(category);
 
                     return (
                         <button
                             key={category.id}
                             type="button"
-                            onClick={() => onSelectCategory(category.id)}
-                            className={`flex-1 min-w-fit flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 xl:px-3.5 py-2 sm:py-2.5 rounded-full text-xs sm:text-[12.5px] xl:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-2xs ${
+                            aria-pressed={isActive}
+                            onClick={() => {
+                                setIsMoreOpen(false);
+                                onSelectCategory(category.id);
+                            }}
+                            className={`xl:flex-1 min-w-fit min-h-[40px] flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-full text-xs sm:text-[12.5px] xl:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-2xs shrink-0 ${
                                 isActive
                                     ? 'bg-[#E8D7C3] dark:bg-stone-700 text-[#2A211B] dark:text-stone-100 shadow-xs border border-[#CBB092] dark:border-stone-500 scale-[1.01]'
                                     : 'bg-white dark:bg-stone-900 text-[#5C4E43] dark:text-stone-200 border border-[#EADBCE] dark:border-stone-800 hover:border-[#D4BDA4] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 hover:text-[#2A211B] dark:hover:text-stone-100'
@@ -185,17 +188,75 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
                 })}
             </div>
 
-            {/* Right Scroll Navigation Button */}
-            {canScrollRight && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex items-center pl-2 bg-gradient-to-l from-white dark:from-stone-950 via-white/90 dark:via-stone-950/90 to-transparent h-full">
+            {/* Overflow Categories Dropdown ('Xem thêm' / 'More') positioned OUTSIDE scroll container */}
+            {overflowChips.length > 0 && (
+                <div ref={moreDropdownRef} className="relative shrink-0">
                     <button
                         type="button"
-                        onClick={() => handleScroll('right')}
-                        className="w-8 h-8 rounded-full bg-white dark:bg-stone-900 shadow-md border border-[#EADBCE] dark:border-stone-700 text-[#5C4E43] dark:text-stone-200 hover:text-[#A8744F] hover:border-[#F5A764]/60 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                        aria-label="Scroll right"
+                        onClick={() => setIsMoreOpen((prev) => !prev)}
+                        aria-expanded={isMoreOpen}
+                        aria-haspopup="menu"
+                        aria-label={language === 'vi' ? 'Danh mục khác' : 'More categories'}
+                        className={`min-h-[40px] flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full text-xs sm:text-[12.5px] xl:text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-2xs ${
+                            isMoreActive
+                                ? 'bg-[#E8D7C3] dark:bg-stone-700 text-[#2A211B] dark:text-stone-100 shadow-xs border border-[#CBB092] dark:border-stone-500'
+                                : 'bg-white dark:bg-stone-900 text-[#5C4E43] dark:text-stone-200 border border-[#EADBCE] dark:border-stone-800 hover:border-[#D4BDA4] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 hover:text-[#2A211B] dark:hover:text-stone-100'
+                        }`}
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        {activeOverflowChip ? (
+                            <>
+                                {renderCategoryIcon(activeOverflowChip.iconName, true)}
+                                <span>{getLocalizedName(activeOverflowChip)}</span>
+                            </>
+                        ) : (
+                            <span>{language === 'vi' ? 'Xem thêm' : 'More'}</span>
+                        )}
+                        <ChevronDown
+                            aria-hidden="true"
+                            className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                                isMoreOpen ? 'rotate-180' : ''
+                            }`}
+                        />
                     </button>
+
+                    {isMoreOpen && (
+                        <div
+                            role="menu"
+                            aria-label={language === 'vi' ? 'Các danh mục còn lại' : 'Additional categories'}
+                            className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-700 shadow-xl dark:shadow-black/50 p-1.5 z-40 animate-in fade-in zoom-in-95 duration-150"
+                        >
+                            {overflowChips.map((category) => {
+                                const isActive = activeCategory === category.id;
+                                const localizedName = getLocalizedName(category);
+
+                                return (
+                                    <button
+                                        key={category.id}
+                                        type="button"
+                                        role="menuitemradio"
+                                        aria-checked={isActive}
+                                        onClick={() => {
+                                            onSelectCategory(category.id);
+                                            setIsMoreOpen(false);
+                                        }}
+                                        className={`w-full min-h-[42px] px-3 py-2 rounded-xl text-left text-xs sm:text-[13px] flex items-center justify-between gap-2.5 transition cursor-pointer ${
+                                            isActive
+                                                ? 'bg-[#F5ECE0] dark:bg-stone-800 text-[#2A211B] dark:text-[#F5A764] font-bold'
+                                                : 'text-[#4E3F33] dark:text-stone-200 hover:bg-[#FAF7F2] dark:hover:bg-stone-800/70 font-medium'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2.5 min-w-0">
+                                            {renderCategoryIcon(category.iconName, isActive)}
+                                            <span className="truncate">{localizedName}</span>
+                                        </span>
+                                        {isActive && (
+                                            <Check aria-hidden="true" className="w-4 h-4 text-[#9A5828] dark:text-[#F5A764] shrink-0" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -179,7 +179,7 @@ function HomeContent() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         {/* 2. Hero Banner */}
         <HeroBanner onPostItemClick={() => setIsPostItemOpen(true)} />
@@ -305,7 +305,7 @@ function HomeContent() {
             <span className="hidden sm:inline text-slate-300 dark:text-stone-700">|</span>
             <p>© 2026 Student Flea Market. {t.home.footerDesc}</p>
           </div>
-          <p className="text-[11px] text-slate-400 dark:text-stone-500">
+          <p className="text-[11px] text-[#6D5D52] dark:text-stone-400">
             {language === 'vi'
               ? 'Điều khoản & Chính sách được quản lý tại mục Cài đặt'
               : 'Terms & Policies are available in Settings'}
@@ -319,7 +319,7 @@ function HomeContent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50/60" />}>
+    <Suspense fallback={<div className="min-h-[100dvh] bg-[#FCF9F4] dark:bg-stone-950" />}>
       <HomeContent />
     </Suspense>
   );
