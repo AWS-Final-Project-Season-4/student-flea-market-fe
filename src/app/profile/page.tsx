@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -31,6 +31,14 @@ import {
 import { Navbar } from '@/components/ui/layout/Navbar';
 import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
 import { useAuthStore } from '@/lib/auth-store';
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_AVATAR_BYTES,
+  removeAvatar,
+  uploadAvatar,
+  validateImageFile,
+  waitForImage,
+} from '@/lib/media-api';
 import { useLanguageStore } from '@/lib/language-store';
 import { profileApi } from '@/lib/profile-api';
 import { UserDto } from '@/types/auth';
@@ -102,6 +110,58 @@ function ProfileContent() {
   const [isFetchingProfile, setIsFetchingProfile] = useState<boolean>(true);
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+
+  // Avatar upload (S3 presigned POST)
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isAvatarBusy, setIsAvatarBusy] = useState<boolean>(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarNotice, setAvatarNotice] = useState<string | null>(null);
+
+  const handleAvatarSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow picking the same file again
+    if (!file) return;
+    setAvatarError(null);
+    setAvatarNotice(null);
+    const invalid = validateImageFile(file, MAX_AVATAR_BYTES);
+    if (invalid) {
+      setAvatarError(isVi ? 'Chỉ nhận ảnh JPG, PNG, WebP tối đa 5 MB.' : invalid);
+      return;
+    }
+    setIsAvatarBusy(true);
+    try {
+      const updated = await uploadAvatar(file);
+      // The Lambda resizes the image a few seconds after upload; wait so the new URL does not 404.
+      setAvatarNotice(isVi ? 'Đang xử lý ảnh...' : 'Processing image...');
+      if (updated.avatarUrl) await waitForImage(updated.avatarUrl);
+      setFailedAvatarUrl(null);
+      setUser(updated);
+      setAvatarNotice(isVi ? 'Đã cập nhật ảnh đại diện.' : 'Avatar updated.');
+    } catch (err) {
+      setAvatarNotice(null);
+      setAvatarError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (err instanceof Error ? err.message : null) ||
+          (isVi ? 'Tải ảnh lên thất bại.' : 'Upload failed.')
+      );
+    } finally {
+      setIsAvatarBusy(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarError(null);
+    setAvatarNotice(null);
+    setIsAvatarBusy(true);
+    try {
+      setUser(await removeAvatar());
+      setAvatarNotice(isVi ? 'Đã gỡ ảnh đại diện.' : 'Avatar removed.');
+    } catch {
+      setAvatarError(isVi ? 'Không gỡ được ảnh đại diện.' : 'Could not remove avatar.');
+    } finally {
+      setIsAvatarBusy(false);
+    }
+  };
 
   // Profile edit form state
   const [fullName, setFullName] = useState<string>('');
@@ -387,12 +447,27 @@ function ProfileContent() {
                         {avatarInitial}
                       </div>
                     )}
-                    <span
-                      title={isVi ? 'Upload ảnh qua AWS S3 sắp ra mắt' : 'AWS S3 upload coming soon'}
-                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 text-[#7A6D63] dark:text-stone-300 flex items-center justify-center shadow-xs"
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={isAvatarBusy}
+                      title={isVi ? 'Đổi ảnh đại diện' : 'Change avatar'}
+                      aria-label={isVi ? 'Đổi ảnh đại diện' : 'Change avatar'}
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 text-[#7A6D63] dark:text-stone-300 hover:text-[#B8652B] flex items-center justify-center shadow-xs cursor-pointer disabled:cursor-wait"
                     >
-                      <Camera className="w-4 h-4" />
-                    </span>
+                      {isAvatarBusy ? (
+                        <span className="w-4 h-4 rounded-full border-2 border-[#EADBCE] border-t-[#E89650] animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </button>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept={ALLOWED_IMAGE_TYPES.join(',')}
+                      className="hidden"
+                      onChange={handleAvatarSelected}
+                    />
                   </div>
 
                   <h2 className="mt-3 text-lg font-bold text-[#2A211B] dark:text-stone-100 break-words max-w-full">
@@ -429,30 +504,51 @@ function ProfileContent() {
                     </div>
                   )}
 
-                  {/* AWS S3 Avatar Placeholder Box */}
+                  {/* Avatar upload (Amazon S3) */}
                   <div className="mt-5 w-full rounded-2xl border border-dashed border-[#D8C5B4] dark:border-stone-700 bg-[#FAF7F2]/80 dark:bg-stone-800/50 p-3.5 text-left">
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className="text-xs font-bold text-[#2A211B] dark:text-stone-100 inline-flex items-center gap-1.5">
                         <CloudUpload className="w-3.5 h-3.5 text-[#B8652B] dark:text-[#F5A764]" />
                         {isVi ? 'Ảnh đại diện' : 'Profile Avatar'}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                        AWS S3 • Soon
-                      </span>
                     </div>
                     <p className="text-[11px] leading-relaxed text-[#7A6D63] dark:text-stone-400">
                       {isVi
-                        ? 'Chức năng tải lên và đổi ảnh đại diện sẽ được tích hợp với Amazon S3 sau khi triển khai hạ tầng AWS.'
-                        : 'Direct avatar upload & update will be connected to Amazon S3 in the upcoming AWS integration phase.'}
+                        ? 'JPG, PNG hoặc WebP, tối đa 5 MB. Ảnh sẽ được cắt vuông tự động.'
+                        : 'JPG, PNG or WebP, up to 5 MB. The image is cropped to a square automatically.'}
                     </p>
-                    <button
-                      type="button"
-                      disabled
-                      className="mt-2.5 w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white/70 dark:bg-stone-900/70 text-[#9B8E83] dark:text-stone-500 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-not-allowed"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      {isVi ? 'Tải ảnh mới (Chờ AWS S3)' : 'Upload Avatar (Pending AWS S3)'}
-                    </button>
+                    <div className="mt-2.5 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => avatarInputRef.current?.click()}
+                        disabled={isAvatarBusy}
+                        className="flex-1 py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 text-[#2A211B] dark:text-stone-100 hover:bg-[#F3EADF] dark:hover:bg-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        {isAvatarBusy
+                          ? isVi ? 'Đang tải lên...' : 'Uploading...'
+                          : isVi ? 'Tải ảnh mới' : 'Upload Avatar'}
+                      </button>
+                      {user?.avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveAvatar}
+                          disabled={isAvatarBusy}
+                          className="py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 text-[#7A6D63] dark:text-stone-400 hover:text-red-600 text-xs font-semibold cursor-pointer disabled:opacity-60"
+                        >
+                          {isVi ? 'Gỡ' : 'Remove'}
+                        </button>
+                      )}
+                    </div>
+                    {avatarError && (
+                      <p className="mt-2 text-[11px] text-red-600 dark:text-red-400 inline-flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        {avatarError}
+                      </p>
+                    )}
+                    {avatarNotice && !avatarError && (
+                      <p className="mt-2 text-[11px] text-emerald-700 dark:text-emerald-400">{avatarNotice}</p>
+                    )}
                   </div>
 
                   {/* Read-only Metadata */}
