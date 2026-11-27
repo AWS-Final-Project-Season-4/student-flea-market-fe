@@ -95,7 +95,53 @@ function translateItemStatus(status: number, fallback: string, isVi: boolean): s
       return fallback;
   }
 }
+function renderMessageContent(content: string, isVi: boolean) {
+  const match = content.match(
+    /^(?:Địa chỉ giao nhận đề xuất:|Proposed handover address:)\s*(.+)\r?\nGoogle Maps:\s*(https:\/\/[^\s]+)$/u
+  );
 
+  if (!match) return content;
+
+  const address = match[1].trim();
+  const mapUrl = match[2];
+
+  try {
+    const url = new URL(mapUrl);
+
+    if (
+      url.origin !== 'https://www.google.com' ||
+      url.pathname !== '/maps/search/' ||
+      !url.searchParams.get('query')
+    ) {
+      return content;
+    }
+  } catch {
+    return content;
+  }
+
+  return (
+    <div className="space-y-2 min-w-0">
+      <div className="flex items-center gap-2 font-bold">
+        <span>📍</span>
+        <span>
+          {isVi ? 'Địa chỉ giao nhận đề xuất' : 'Proposed handover address'}
+        </span>
+      </div>
+
+      <p className="break-words">{address}</p>
+
+      <a
+        href={mapUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 rounded-xl bg-white text-[#A65A24] px-4 py-2 font-semibold text-xs hover:bg-amber-50 transition-colors"
+      >
+        {isVi ? 'Mở Google Maps' : 'Open Google Maps'}
+        <span>↗</span>
+      </a>
+    </div>
+  );
+}
 function ChatContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -587,8 +633,8 @@ function ChatContent() {
                       type="button"
                       onClick={() => handleSelectConversation(conv.id)}
                       className={`w-full p-3.5 text-left transition flex items-start gap-3 cursor-pointer ${isActive
-                          ? 'bg-[#FAF7F2] dark:bg-stone-800 border-l-4 border-l-[#E89650]'
-                          : 'hover:bg-[#FAF7F2]/60 dark:hover:bg-stone-800/50 border-l-4 border-l-transparent'
+                        ? 'bg-[#FAF7F2] dark:bg-stone-800 border-l-4 border-l-[#E89650]'
+                        : 'hover:bg-[#FAF7F2]/60 dark:hover:bg-stone-800/50 border-l-4 border-l-transparent'
                         }`}
                     >
                       {/* Avatar */}
@@ -736,8 +782,8 @@ function ChatContent() {
                         </span>
                         <span
                           className={`px-1.5 py-0.2 rounded font-semibold ${activeConversation.item.status === 1
-                              ? 'text-emerald-700 dark:text-emerald-300'
-                              : 'text-rose-600 dark:text-rose-400'
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : 'text-rose-600 dark:text-rose-400'
                             }`}
                         >
                           {translateItemStatus(
@@ -814,8 +860,8 @@ function ChatContent() {
                         >
                           <div
                             className={`max-w-[78%] sm:max-w-[68%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words shadow-2xs ${isMine
-                                ? 'bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white rounded-br-xs'
-                                : 'bg-white dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 border border-[#EADBCE] dark:border-stone-700 rounded-bl-xs'
+                              ? 'bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white rounded-br-xs'
+                              : 'bg-white dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 border border-[#EADBCE] dark:border-stone-700 rounded-bl-xs'
                               }`}
                           >
                             {msg.isDeleted ? (
@@ -823,7 +869,7 @@ function ChatContent() {
                                 {isVi ? 'Tin nhắn đã bị xóa' : 'Message deleted'}
                               </span>
                             ) : (
-                              msg.content
+                              renderMessageContent(msg.content ?? '', isVi)
                             )}
                           </div>
 
