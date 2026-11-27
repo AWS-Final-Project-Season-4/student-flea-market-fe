@@ -223,7 +223,7 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressPosition ? `${addressPosition.lat},${addressPosition.lng}` : address)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block mt-2 text-xs underline underline-offset-2 break-words text-[#A65A24] dark:text-[#F5A764]"
+                            className="block mt-2 text-xs underline underline-offset-2 break-words text-[#A65A24] hover:text-[#844519] dark:text-[#F5A764] dark:hover:text-[#FBD6B0] transition-colors"
                         >
                             {address}
                         </a>
