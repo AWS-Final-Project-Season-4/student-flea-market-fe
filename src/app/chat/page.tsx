@@ -875,7 +875,7 @@ function ChatContent() {
                   onSubmit={handleSendMessage}
                   className="p-3 sm:p-4 border-t border-[#F0E4D7] dark:border-stone-800 bg-white dark:bg-stone-900 flex items-end gap-2.5"
                 >
-                  <div className="flex-1 relative">
+                  <div className="flex-1 relative flex">
                     <textarea
                       rows={1}
                       maxLength={1000}
@@ -887,12 +887,8 @@ function ChatContent() {
                           void handleSendMessage();
                         }
                       }}
-                      placeholder={
-                        isVi
-                          ? 'Nhập tin nhắn... (Enter để gửi, Shift + Enter xuống dòng)'
-                          : 'Type a message... (Enter to send, Shift+Enter for new line)'
-                      }
-                      className="w-full px-3.5 py-2.5 pr-14 rounded-2xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-800 text-xs sm:text-sm text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] resize-none max-h-28"
+                      placeholder={isVi ? 'Nhập tin nhắn' : 'Type a message'}
+                      className="block w-full min-h-[44px] px-3.5 py-[11px] pr-14 rounded-2xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-800 text-sm leading-5 text-[#2A211B] dark:text-stone-100 placeholder:text-[#9B8E83] focus:outline-none focus:ring-2 focus:ring-[#F5A764] resize-none max-h-28"
                     />
                     {draftText.length > 700 && (
                       <span className="text-[10px] text-[#9B8E83] absolute right-3 bottom-2">
@@ -904,7 +900,7 @@ function ChatContent() {
                   <button
                     type="submit"
                     disabled={isSending || !draftText.trim()}
-                    className="h-10 px-4 rounded-2xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    className="h-[44px] px-4 rounded-2xl bg-gradient-to-r from-[#E89650] to-[#F5A764] hover:from-[#DC833B] hover:to-[#EC954B] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
                     {isSending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

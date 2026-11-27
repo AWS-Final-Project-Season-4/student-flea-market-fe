@@ -43,16 +43,6 @@ interface PostItemModalProps {
   onItemCreated?: (item: ItemDetailDto) => void;
 }
 
-// Preset photos for quick testing when user doesn't have an image URL
-const PRESET_IMAGES = [
-  { label: 'Casio / Máy tính', url: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=500&auto=format&fit=crop&q=80' },
-  { label: 'Giáo trình / Sách', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80' },
-  { label: 'Quạt mini KTX', url: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=500&auto=format&fit=crop&q=80' },
-  { label: 'Tai nghe Bluetooth', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80' },
-  { label: 'Balo sinh viên', url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80' },
-  { label: 'Ấm siêu tốc', url: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=500&auto=format&fit=crop&q=80' },
-];
-
 export const PostItemModal: React.FC<PostItemModalProps> = ({
   isOpen,
   onClose,
@@ -76,7 +66,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [isExchangeEnabled, setIsExchangeEnabled] = useState(true);
   const [location, setLocation] = useState('KTX Khu A - Sảnh chính');
   const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState(PRESET_IMAGES[0].url);
+  const [imageUrl, setImageUrl] = useState('');
   // Photos picked from the device: uploaded to S3 after the item is created.
   const [pickedImages, setPickedImages] = useState<PickedImage[]>([]);
   const [uploadWarning, setUploadWarning] = useState<string | null>(null);
@@ -137,7 +127,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     setIsExchangeEnabled(true);
     setLocation('KTX Khu A - Sảnh chính');
     setDescription('');
-    setImageUrl(PRESET_IMAGES[0].url);
+    setImageUrl('');
     pickedImages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
     setPickedImages([]);
     setUploadWarning(null);
@@ -692,7 +682,6 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 </div>
 
                 {pickedImages.length === 0 && (
-                <>
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="url"
@@ -710,25 +699,6 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                     />
                   )}
                 </div>
-
-                {/* Preset Image Chips */}
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_IMAGES.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setImageUrl(preset.url)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${
-                        imageUrl === preset.url
-                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 font-semibold'
-                          : 'bg-slate-50 dark:bg-stone-800 text-slate-600 dark:text-stone-300 border-slate-200 dark:border-stone-700 hover:bg-slate-100 dark:hover:bg-stone-700'
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-                </>
                 )}
               </div>
 
