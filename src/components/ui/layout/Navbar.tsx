@@ -19,6 +19,7 @@ import {
     Bell,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useCartStore } from '@/lib/cart-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { useThemeStore } from '@/lib/theme-store';
 import { useChatStore } from '@/lib/chat-store';
@@ -330,6 +331,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
         setIsSearchOpen(false);
         router.push(`/?q=${encodeURIComponent(tag)}`);
     };
+
+    const carts = useCartStore((state) => state.carts);
+    const cartItems = isAuthenticated && user ? carts[user.id] ?? [] : [];
+    const cartCount = cartItems.length;
 
     const isAdmin = Boolean(
         user?.isStaff ||
@@ -897,8 +902,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                             }`}
                                         >
                                             <ShoppingCart className="w-5 h-5 text-slate-700 dark:text-stone-200 group-hover/cart:text-[#7D563A] dark:group-hover/cart:text-[#E5C9A8] transition-colors" />
-                                            <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
-                                                0
+                                            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                                                {cartCount > 99 ? '99+' : cartCount}
                                             </span>
                                         </button>
 
@@ -908,37 +913,63 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 {/* Caret / Tooltip Arrow */}
                                                 <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white dark:bg-stone-900 border-t border-l border-[#EADBCE] dark:border-stone-700 rotate-45" />
 
-                                                {/* Cute Kawaii Illustration (Shopee style) */}
-                                                <div className="flex justify-center mb-3">
-                                                    <CuteEmptyCartIllustration className="w-24 h-24 drop-shadow-xs" />
-                                                </div>
+                                                {cartCount === 0 ? (
+                                                    <>
+                                                        {/* Cute Kawaii Illustration (Shopee style) */}
+                                                        <div className="flex justify-center mb-3">
+                                                            <CuteEmptyCartIllustration className="w-24 h-24 drop-shadow-xs" />
+                                                        </div>
 
-                                                {/* No Products Yet Header */}
-                                                <p className="font-serif text-base font-bold text-[#2A211B] dark:text-stone-100 mb-1">
-                                                    {language === 'vi' ? 'Chưa Có Sản Phẩm' : 'No Products Yet'}
-                                                </p>
-                                                <p className="text-xs text-[#7A6D63] dark:text-stone-400 mb-4 leading-relaxed">
-                                                    {language === 'vi'
-                                                        ? 'Giỏ hàng của bạn đang trống. Hãy bắt đầu mua sắm nào!'
-                                                        : 'Your shopping cart is empty. Shopping Now!'}
-                                                </p>
+                                                        {/* No Products Yet Header */}
+                                                        <p className="font-serif text-base font-bold text-[#2A211B] dark:text-stone-100 mb-1">
+                                                            {language === 'vi' ? 'Chưa Có Sản Phẩm' : 'No Products Yet'}
+                                                        </p>
+                                                        <p className="text-xs text-[#7A6D63] dark:text-stone-400 mb-4 leading-relaxed">
+                                                            {language === 'vi'
+                                                                ? 'Giỏ hàng của bạn đang trống. Hãy bắt đầu mua sắm nào!'
+                                                                : 'Your shopping cart is empty. Shopping Now!'}
+                                                        </p>
 
-                                                {/* Action Button */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (!isAuthenticated) {
-                                                            setAuthRequiredReason('cart');
-                                                            setIsAuthRequiredOpen(true);
-                                                        } else {
-                                                            const productSection = document.querySelector('.grid');
-                                                            productSection?.scrollIntoView({ behavior: 'smooth' });
-                                                        }
-                                                    }}
-                                                    className="inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-semibold text-[#2A211B] bg-[#DFC9AE] hover:bg-[#D2B796] border border-[#CEB290] shadow-2xs transition-all active:scale-98 cursor-pointer"
-                                                >
-                                                    {language === 'vi' ? 'Mua sắm ngay' : 'Shop Now'}
-                                                </button>
+                                                        {/* Action Button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (!isAuthenticated) {
+                                                                    setAuthRequiredReason('cart');
+                                                                    setIsAuthRequiredOpen(true);
+                                                                } else {
+                                                                    const productSection = document.querySelector('.grid');
+                                                                    productSection?.scrollIntoView({ behavior: 'smooth' });
+                                                                }
+                                                            }}
+                                                            className="inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-semibold text-[#2A211B] bg-[#DFC9AE] hover:bg-[#D2B796] border border-[#CEB290] shadow-2xs transition-all active:scale-98 cursor-pointer"
+                                                        >
+                                                            {language === 'vi' ? 'Mua sắm ngay' : 'Shop Now'}
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-left">
+                                                        <p className="text-xs font-semibold text-[#7A6D63] dark:text-stone-400 mb-3">
+                                                            {language === 'vi' ? 'Sản phẩm trong giỏ hàng' : 'Products in your cart'} ({cartCount})
+                                                        </p>
+                                                        <div className="max-h-[320px] overflow-y-auto divide-y divide-stone-100 dark:divide-stone-800">
+                                                            {cartItems.map((product) => (
+                                                                <div key={product.id} className="flex items-center gap-3 py-3">
+                                                                    <img src={product.imageUrl} alt={product.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-xs font-semibold text-[#2A211B] dark:text-stone-100 truncate">{product.title}</p>
+                                                                        <p className="text-xs font-bold text-[#855A3C] dark:text-[#E5C9A8] mt-1">{product.price}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div className="flex justify-end pt-3 border-t border-[#EADBCE] dark:border-stone-700">
+                                                            <button type="button" onClick={() => router.push('/cart')} className="px-4 py-2 rounded-xl bg-[#DFC9AE] hover:bg-[#D2B796] text-[#2A211B] text-xs font-semibold cursor-pointer">
+                                                                {language === 'vi' ? 'Xem giỏ hàng' : 'View Cart'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -979,8 +1010,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                         aria-label={t.navbar.cartAria}
                                     >
                                         <ShoppingCart aria-hidden="true" className="w-5 h-5" />
-                                        <span className="absolute top-0.5 right-0.5 flex items-center justify-center w-4 h-4 text-[10px] font-bold tabular-nums text-white bg-rose-600 rounded-full">
-                                            0
+                                        <span className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold tabular-nums text-white bg-rose-600 rounded-full">
+                                                {cartCount > 99 ? '99+' : cartCount}
                                         </span>
                                     </button>
                                     <button

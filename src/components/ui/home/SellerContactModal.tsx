@@ -20,6 +20,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ProductItem, formatItemCodeDisplay } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { chatApi } from '@/lib/chat-api';
+import AddressPicker from './AddressPicker';
+import type { AddressPosition } from './AddressMap';
 
 interface SellerContactModalProps {
     isOpen: boolean;
@@ -33,6 +35,16 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
     product,
 }) => {
     const router = useRouter();
+    const [address, setAddress] = useState('');
+    const [addressPosition, setAddressPosition] = useState<AddressPosition | null>(null);
+    const [editingAddress, setEditingAddress] = useState(false);
+
+    useEffect(() => {
+        setAddress('');
+        setAddressPosition(null);
+        setEditingAddress(false);
+    }, [product?.id, isOpen]);
+
     const [copiedCode, setCopiedCode] = useState(false);
     const [showQr, setShowQr] = useState(false);
     const [isStartingChat, setIsStartingChat] = useState(false);
@@ -43,13 +55,14 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isOpen) {
+                if (editingAddress) { setEditingAddress(false); return; }
                 setChatError(null);
                 onClose();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, editingAddress]);
 
     if (!isOpen || !product) return null;
 
@@ -82,6 +95,39 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
         }
     };
 
+    const handleShareAddress = async () => {
+    if (!address.trim() || isStartingChat) return;
+
+    setChatError(null);
+    setIsStartingChat(true);
+
+    try {
+        const conv = await chatApi.getOrCreateConversation(product.id);
+
+        const query = addressPosition
+            ? `${addressPosition.lat},${addressPosition.lng}`
+            : address;
+
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+        const message = language === 'vi'
+            ? `Địa chỉ giao nhận đề xuất: ${address}\nGoogle Maps: ${mapUrl}`
+            : `Proposed handover address: ${address}\nGoogle Maps: ${mapUrl}`;
+
+        await chatApi.sendMessageRest(conv.id, message);
+
+        handleClose();
+        router.push(`/chat?c=${encodeURIComponent(conv.id)}`);
+    } catch (err: unknown) {
+        setChatError(
+            err instanceof Error
+                ? err.message
+                : 'Unable to share address.'
+        );
+    } finally {
+        setIsStartingChat(false);
+    }
+};
     const handleDownloadQr = () => {
         const svgElement = document.getElementById('seller-modal-qr-svg');
         if (!svgElement) return;
@@ -188,6 +234,65 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
                             <span className="truncate">{product.location}</span>
                         </div>
                     </div>
+                </div>
+
+                {/* Delivery / meetup address */}
+                <div className="mb-3 rounded-2xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2] dark:bg-stone-800/70 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#2A211B] dark:text-stone-100">
+                            <MapPin className="w-4 h-4 text-[#C46A28] dark:text-[#F5A764]" />
+                            {language === 'vi' ? 'Địa chỉ giao nhận' : 'Handover address'}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setEditingAddress(true)}
+                            className="text-xs font-semibold text-[#A65A24] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-600 rounded-lg px-2.5 py-1.5 cursor-pointer"
+                        >
+                            {address
+                                ? (language === 'vi' ? 'Thay đổi' : 'Change')
+                                : (language === 'vi' ? '+ Nhập địa chỉ' : '+ Add address')}
+                        </button>
+                    </div>
+                    {address ? (
+                        <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressPosition ? `${addressPosition.lat},${addressPosition.lng}` : address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block mt-2 text-xs underline underline-offset-2 break-words text-[#A65A24] dark:text-[#F5A764]"
+                        >
+                            {address}
+                        </a>
+                    ) : (
+                        <p className="mt-2 text-[11px] text-[#7A6D63] dark:text-stone-400">
+                            {language === 'vi' ? 'Chưa nhập địa chỉ giao nhận.' : 'No handover address entered.'}
+                        </p>
+                    )}
+                    {address && !editingAddress && (
+    <button
+        type="button"
+        disabled={isStartingChat}
+        onClick={() => void handleShareAddress()}
+        className="mt-3 w-full rounded-xl border border-[#A65A24] px-3 py-2 text-xs font-semibold text-[#A65A24] dark:text-[#F5A764] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+    >
+        <MessageSquare className="w-4 h-4" />
+        {language === 'vi'
+            ? 'Chia sẻ địa chỉ với người bán'
+            : 'Share address with seller'}
+    </button>
+)}
+                    {editingAddress && (
+                        <AddressPicker
+                            initialAddress={address}
+                            initialPosition={addressPosition}
+                            language={language}
+                            onCancel={() => setEditingAddress(false)}
+                            onConfirm={(value) => {
+                                setAddress(value.address);
+                                setAddressPosition(value.position);
+                                setEditingAddress(false);
+                            }}
+                        />
+                    )}
                 </div>
 
                 {/* QR Code Handover Toggle Box */}

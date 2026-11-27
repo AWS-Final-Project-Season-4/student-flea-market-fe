@@ -56,6 +56,8 @@ export interface TransactionDto {
   exchangeRequestId?: string | null;
   amount: number;
   meetingLocation: string;
+  meetingLatitude?: number | null;
+  meetingLongitude?: number | null;
   payment?: PaymentDto | null;
   createdAt: string;
   completedAt?: string | null;
@@ -67,6 +69,8 @@ export interface TransactionDto {
 export interface CreatePurchaseTransactionDto {
   itemCode: string;
   meetingLocation?: string;
+  meetingLatitude?: number | null;
+  meetingLongitude?: number | null;
   paymentMethod: number; // 1 = Cod, 2 = BankTransfer
   amount?: number;
 }
@@ -74,6 +78,8 @@ export interface CreatePurchaseTransactionDto {
 export interface CreateExchangeTransactionDto {
   exchangeRequestId: string;
   meetingLocation?: string;
+  meetingLatitude?: number | null;
+  meetingLongitude?: number | null;
   paymentMethod?: number;
   amount?: number;
 }

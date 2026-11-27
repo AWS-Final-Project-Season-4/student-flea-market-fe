@@ -22,6 +22,7 @@ import { PostItemModal } from '@/components/ui/home/PostItemModal';
 import { AdPromotionModal } from '@/components/ui/home/AdPromotionModal';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useAuthStore } from '@/lib/auth-store';
+import { useCartStore } from '@/lib/cart-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { itemsApi } from '@/lib/items-api';
 import { ItemDetailDto, ItemSearchQuery, ItemSummaryDto } from '@/types/item';
@@ -76,7 +77,8 @@ function HomeContent() {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
 
-  const { isAuthenticated, initAuth } = useAuthStore();
+  const { isAuthenticated, initAuth, user } = useAuthStore();
+  const addToCart = useCartStore((state) => state.addToCart);
 
   useEffect(() => {
     initAuth();
@@ -125,6 +127,34 @@ function HomeContent() {
   const handleItemCreated = (newItem: ItemDetailDto) => {
     const product = mapDetailToProduct(newItem);
     setProducts((prev) => [product, ...prev]);
+  };
+
+  // Handle click on Add to Cart button
+  const handleAddToCart = (product: ProductItem) => {
+    if (!isAuthenticated || !user) {
+      setSelectedProduct(product);
+      setIsAuthRequiredOpen(true);
+      return;
+    }
+
+    const currentCart = useCartStore.getState().carts[user.id] ?? [];
+
+    if (currentCart.some((item) => item.id === product.id)) {
+      alert(
+        language === 'vi'
+          ? 'Sản phẩm đã có trong giỏ hàng!'
+          : 'Product is already in your cart!'
+      );
+      return;
+    }
+
+    addToCart(user.id, product);
+
+    alert(
+      language === 'vi'
+        ? 'Đã thêm sản phẩm vào giỏ hàng!'
+        : 'Product added to cart!'
+    );
   };
 
   // Handle click on Contact / Exchange button
