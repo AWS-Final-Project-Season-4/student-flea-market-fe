@@ -7,6 +7,7 @@ export interface CategoryItem {
 export interface ProductItem {
     id: string;
     itemCode: string;
+    sellerId?: string;
     title: string;
     price: string;
     condition: string;

@@ -70,6 +70,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [location, setLocation] = useState('KTX Khu A - Sảnh chính');
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(-1);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -132,10 +133,12 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
         const labels = await searchPhotonAddresses(trimmed, controller.signal);
         if (!controller.signal.aborted) {
           setLocationSuggestions(labels);
+          setActiveSuggestionIdx(-1);
         }
       } catch {
         if (!controller.signal.aborted) {
           setLocationSuggestions([]);
+          setActiveSuggestionIdx(-1);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -152,6 +155,23 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 
   if (!isOpen) return null;
 
+  const selectLocationSuggestion = (suggestion: string) => {
+    setLocation(suggestion);
+    setLocationQuery('');
+    setLocationSuggestions([]);
+    setActiveSuggestionIdx(-1);
+  };
+
+  // Prevent implicit form submission when the user presses Enter in text/number inputs (e.g. location).
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'Enter') return;
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const tag = target.tagName;
+    if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+    e.preventDefault();
+  };
+
   const handleResetAndClose = () => {
     setTitle('');
     setAutoDetected(null);
@@ -165,6 +185,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     setLocation('KTX Khu A - Sảnh chính');
     setLocationQuery('');
     setLocationSuggestions([]);
+    setActiveSuggestionIdx(-1);
     setIsSearchingLocation(false);
     setDescription('');
     setImageUrl('');
@@ -491,13 +512,22 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleResetAndClose}
-              className="py-2.5 px-8 rounded-xl bg-slate-900 dark:bg-[#F5A764] hover:bg-slate-800 dark:hover:bg-[#E89650] text-white dark:text-stone-950 font-semibold text-sm shadow-md transition cursor-pointer"
-            >
-              {language === 'vi' ? 'Xem tin vừa đăng' : 'View Listings'}
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              <Link
+                href={`/items/${createdItem.id}`}
+                onClick={handleResetAndClose}
+                className="py-2.5 px-6 rounded-xl bg-slate-900 dark:bg-[#F5A764] hover:bg-slate-800 dark:hover:bg-[#E89650] text-white dark:text-stone-950 font-semibold text-sm shadow-md transition"
+              >
+                {language === 'vi' ? 'Xem tin vừa đăng' : 'View Item'}
+              </Link>
+              <button
+                type="button"
+                onClick={handleResetAndClose}
+                className="py-2.5 px-6 rounded-xl border border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-[#2A211B] dark:text-stone-200 font-semibold text-sm transition cursor-pointer"
+              >
+                {language === 'vi' ? 'Đóng' : 'Close'}
+              </button>
+            </div>
           </div>
         ) : (
           /* State 3: Active Post Item Form */
@@ -524,7 +554,7 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="space-y-4">
               {/* 1. Title with Real-time Category Auto-detection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
@@ -715,9 +745,36 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                       const val = e.target.value;
                       setLocation(val);
                       setLocationQuery(val);
+                      setActiveSuggestionIdx(-1);
                       if (val.trim().length < 3) {
                         setLocationSuggestions([]);
                         setIsSearchingLocation(false);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown' && locationSuggestions.length > 0) {
+                        e.preventDefault();
+                        setActiveSuggestionIdx((prev) => (prev + 1) % locationSuggestions.length);
+                      } else if (e.key === 'ArrowUp' && locationSuggestions.length > 0) {
+                        e.preventDefault();
+                        setActiveSuggestionIdx((prev) =>
+                          prev <= 0 ? locationSuggestions.length - 1 : prev - 1
+                        );
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (
+                          activeSuggestionIdx >= 0 &&
+                          locationSuggestions[activeSuggestionIdx]
+                        ) {
+                          selectLocationSuggestion(locationSuggestions[activeSuggestionIdx]);
+                        } else {
+                          setLocationSuggestions([]);
+                          setActiveSuggestionIdx(-1);
+                        }
+                      } else if (e.key === 'Escape') {
+                        setLocationSuggestions([]);
+                        setActiveSuggestionIdx(-1);
                       }
                     }}
                     placeholder={
@@ -734,16 +791,16 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
 
                 {locationSuggestions.length > 0 && (
                   <div className="mt-1.5 max-h-40 overflow-y-auto rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 shadow-md divide-y divide-[#FAF7F2] dark:divide-stone-800">
-                    {locationSuggestions.map((suggestion) => (
+                    {locationSuggestions.map((suggestion, idx) => (
                       <button
                         key={suggestion}
                         type="button"
-                        onClick={() => {
-                          setLocation(suggestion);
-                          setLocationQuery('');
-                          setLocationSuggestions([]);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-[#2A211B] dark:text-stone-100 hover:bg-amber-50 dark:hover:bg-stone-800 flex items-start gap-2 cursor-pointer transition"
+                        onClick={() => selectLocationSuggestion(suggestion)}
+                        className={`w-full px-3 py-2 text-left text-xs text-[#2A211B] dark:text-stone-100 flex items-start gap-2 cursor-pointer transition ${
+                          idx === activeSuggestionIdx
+                            ? 'bg-amber-50 dark:bg-stone-800'
+                            : 'hover:bg-amber-50 dark:hover:bg-stone-800'
+                        }`}
                       >
                         <MapPin className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764] shrink-0 mt-0.5" />
                         <span className="break-words">{suggestion}</span>

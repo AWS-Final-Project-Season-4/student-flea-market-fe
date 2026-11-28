@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Search,
     ChevronDown,
+    ShoppingBag,
     ShoppingCart,
     Menu,
     X,
@@ -994,6 +995,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                         >
                                                             <User className="w-4 h-4 text-[#B8652B] dark:text-[#F5A764]" />
                                                             <span>{language === 'vi' ? 'Hồ sơ cá nhân' : 'Profile'}</span>
+                                                        </Link>
+
+                                                        <Link
+                                                            href="/profile#my-listings"
+                                                            role="menuitem"
+                                                            onClick={() => setIsProfileMenuOpen(false)}
+                                                            className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-[#2A211B] dark:text-stone-200 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition"
+                                                        >
+                                                            <ShoppingBag className="w-4 h-4 text-[#B8652B] dark:text-[#F5A764]" />
+                                                            <span>{language === 'vi' ? 'Tin đăng của tôi' : 'My Listings'}</span>
                                                         </Link>
 
                                                         {/* Transactions & Orders */}

@@ -20,6 +20,7 @@ import { AuthRequiredModal } from '@/components/ui/auth/AuthRequiredModal';
 import { SellerContactModal } from '@/components/ui/home/SellerContactModal';
 import { PostItemModal } from '@/components/ui/home/PostItemModal';
 import { AdPromotionModal } from '@/components/ui/home/AdPromotionModal';
+import { ConfirmDeleteItemModal } from '@/components/ui/items/ConfirmDeleteItemModal';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useAuthStore } from '@/lib/auth-store';
 import { useCartStore } from '@/lib/cart-store';
@@ -32,6 +33,7 @@ function mapItemSummaryToProduct(item: ItemSummaryDto): ProductItem {
   return {
     id: item.id,
     itemCode: item.itemCode,
+    sellerId: item.sellerId,
     title: item.title,
     price: item.price === 0 ? '0 VND (Free)' : `${item.price.toLocaleString('vi-VN')} VND`,
     condition: item.conditionName || (item.condition <= 2 ? 'Like New' : 'Good'),
@@ -52,6 +54,7 @@ function mapDetailToProduct(item: ItemDetailDto): ProductItem {
   return {
     id: item.id,
     itemCode: item.itemCode,
+    sellerId: item.seller.id,
     title: item.title,
     price: item.price === 0 ? '0 VND (Free)' : `${item.price.toLocaleString('vi-VN')} VND`,
     condition: item.conditionName || (item.condition <= 2 ? 'Like New' : 'Good'),
@@ -85,9 +88,20 @@ function HomeContent() {
   // Live Backend items state (No mock data fallback)
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
+  const [itemToDelete, setItemToDelete] = useState<ProductItem | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteNotice, setDeleteNotice] = useState<string | null>(null);
 
   const { isAuthenticated, initAuth, user } = useAuthStore();
   const addToCart = useCartStore((state) => state.addToCart);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+
+  useEffect(() => {
+    if (!deleteNotice) return;
+    const timer = window.setTimeout(() => setDeleteNotice(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [deleteNotice]);
 
   useEffect(() => {
     initAuth();
@@ -183,11 +197,63 @@ function HomeContent() {
     }
   };
 
+  const handleConfirmDeleteItem = async () => {
+    if (!itemToDelete || isDeletingItem) return;
+    setIsDeletingItem(true);
+    setDeleteError(null);
+    try {
+      await itemsApi.deleteItem(itemToDelete.id);
+      setProducts((prev) => prev.filter((p) => p.id !== itemToDelete.id));
+      if (user) {
+        removeFromCart(user.id, itemToDelete.id);
+      }
+      const deletedTitle = itemToDelete.title;
+      setItemToDelete(null);
+      setDeleteNotice(
+        language === 'vi'
+          ? `Đã gỡ tin đăng "${deletedTitle}".`
+          : `Removed listing "${deletedTitle}".`
+      );
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setDeleteError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (language === 'vi' ? 'Không thể gỡ tin đăng. Vui lòng thử lại.' : 'Failed to remove listing.')
+      );
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FCF9F4] dark:bg-stone-950 font-sans flex flex-col selection:bg-[#EFE3D3] selection:text-[#5E412B] transition-colors duration-200">
 
       {/* 1. Global Navigation Bar */}
       <Navbar onPostAdClick={() => setIsPostAdOpen(true)} />
+
+      {deleteNotice && (
+        <div
+          role="status"
+          className="fixed bottom-5 right-5 z-50 rounded-2xl bg-[#2A211B] dark:bg-stone-100 text-white dark:text-stone-950 px-4 py-3 text-xs sm:text-sm font-semibold shadow-xl animate-in fade-in slide-in-from-bottom-3"
+        >
+          {deleteNotice}
+        </div>
+      )}
+
+      {/* Confirm Delete Listing Modal */}
+      <ConfirmDeleteItemModal
+        item={itemToDelete}
+        isDeleting={isDeletingItem}
+        error={deleteError}
+        onCancel={() => {
+          if (!isDeletingItem) {
+            setItemToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmDeleteItem()}
+      />
 
       {/* Welcome Auth Prompt Modal for guests upon first visit */}
       <AuthPromptModal />
@@ -317,6 +383,10 @@ function HomeContent() {
                 product={product}
                 onContact={handleContactExchange}
                 onAddToCart={handleAddToCart}
+                onDelete={(prod) => {
+                  setDeleteError(null);
+                  setItemToDelete(prod);
+                }}
                 onAuthRequired={(prod) => {
                   setSelectedProduct(prod);
                   setIsAuthRequiredOpen(true);

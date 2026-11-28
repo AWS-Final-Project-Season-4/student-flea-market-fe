@@ -21,16 +21,21 @@ import {
   IdCard,
   Mail,
   MapPin,
+  Package,
   Phone,
   RotateCcw,
   Save,
   ShieldCheck,
   Store,
+  Trash2,
   User as UserIcon,
 } from 'lucide-react';
 import { Navbar } from '@/components/ui/layout/Navbar';
 import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
+import { ConfirmDeleteItemModal } from '@/components/ui/items/ConfirmDeleteItemModal';
+import { formatItemCodeDisplay } from '@/data/mock-items';
 import { useAuthStore } from '@/lib/auth-store';
+import { itemsApi } from '@/lib/items-api';
 import {
   ALLOWED_IMAGE_TYPES,
   MAX_AVATAR_BYTES,
@@ -42,6 +47,7 @@ import {
 import { useLanguageStore } from '@/lib/language-store';
 import { profileApi } from '@/lib/profile-api';
 import { UserDto } from '@/types/auth';
+import { ItemSummaryDto } from '@/types/item';
 
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
@@ -175,6 +181,15 @@ function ProfileContent() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
 
+  // Seller's own listings
+  const [myItems, setMyItems] = useState<ItemSummaryDto[]>([]);
+  const [isLoadingMyItems, setIsLoadingMyItems] = useState<boolean>(true);
+  const [myItemsError, setMyItemsError] = useState<string | null>(null);
+  const [myItemsNotice, setMyItemsNotice] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<ItemSummaryDto | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState<boolean>(false);
+  const [deleteItemError, setDeleteItemError] = useState<string | null>(null);
+
   useEffect(() => {
     initAuth();
   }, [initAuth]);
@@ -188,6 +203,23 @@ function ProfileContent() {
   useEffect(() => {
     if (!isInitialized || !isAuthenticated) return;
     let active = true;
+
+    itemsApi
+      .getMyItems({ page: 1, pageSize: 50 })
+      .then((res) => {
+        if (!active) return;
+        setMyItems(Array.isArray(res.items) ? res.items : []);
+        setMyItemsError(null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setMyItemsError(
+          isVi ? 'Không thể tải danh sách tin đăng của bạn.' : 'Unable to load your listings.'
+        );
+      })
+      .finally(() => {
+        if (active) setIsLoadingMyItems(false);
+      });
 
     profileApi
       .getProfile()
@@ -351,6 +383,32 @@ function ProfileContent() {
       setProfileError(translateServerMessage(raw, language));
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleConfirmDeleteMyItem = async () => {
+    if (!itemToDelete || isDeletingItem) return;
+    setIsDeletingItem(true);
+    setDeleteItemError(null);
+    try {
+      await itemsApi.deleteItem(itemToDelete.id);
+      const removedTitle = itemToDelete.title;
+      setMyItems((prev) => prev.filter((it) => it.id !== itemToDelete.id));
+      setItemToDelete(null);
+      setMyItemsNotice(
+        isVi
+          ? `Đã gỡ tin đăng "${removedTitle}" khỏi sàn.`
+          : `Removed listing "${removedTitle}".`
+      );
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setDeleteItemError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (isVi ? 'Không thể gỡ tin đăng. Vui lòng thử lại.' : 'Failed to remove listing.')
+      );
+    } finally {
+      setIsDeletingItem(false);
     }
   };
 
@@ -767,10 +825,206 @@ function ProfileContent() {
 
               {/* CARD 2: Seller Registration & Status */}
               <SellerRequestCard variant="card" />
+
+              {/* CARD 3: Seller's Own Listings (Manage & Remove) */}
+              <section
+                id="my-listings"
+                className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-xs p-6 sm:p-7"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#F0E4D7] dark:border-stone-800">
+                  <div>
+                    <h2 className="text-lg font-bold text-[#2A211B] dark:text-stone-100 flex items-center gap-2">
+                      <Package className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />
+                      {isVi ? 'Tin đăng của tôi' : 'My Listings'}
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 text-[#8C532B] dark:text-[#F5A764] tabular-nums">
+                        {myItems.length}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-[#7A6D63] dark:text-stone-400 mt-1">
+                      {isVi
+                        ? 'Xem lại các món đồ bạn đã đăng hoặc gỡ xuống nếu đăng nhầm / đã giao dịch xong.'
+                        : 'Review items you have posted or remove a listing if posted by mistake.'}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FAF7F2] dark:bg-stone-800 hover:bg-[#EFE8DD] dark:hover:bg-stone-700 border border-[#EADBCE] dark:border-stone-700 text-xs font-semibold text-[#C46A28] dark:text-[#F5A764] transition"
+                  >
+                    <Store className="w-3.5 h-3.5" />
+                    <span>{isVi ? 'Về sàn mua bán' : 'Go to Marketplace'}</span>
+                  </Link>
+                </div>
+
+                {myItemsNotice && (
+                  <div
+                    role="status"
+                    className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/50 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-300"
+                  >
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{myItemsNotice}</span>
+                  </div>
+                )}
+
+                {myItemsError && (
+                  <div
+                    role="alert"
+                    className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-3.5 py-2.5 text-xs text-rose-700 dark:text-rose-300"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{myItemsError}</span>
+                  </div>
+                )}
+
+                {isLoadingMyItems ? (
+                  <div className="mt-4 space-y-3">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-20 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800 animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : myItems.length === 0 ? (
+                  <div className="mt-5 py-8 text-center rounded-2xl bg-[#FAF7F2]/60 dark:bg-stone-800/40 border border-dashed border-[#EADBCE] dark:border-stone-700 px-4">
+                    <p className="text-sm font-semibold text-[#2A211B] dark:text-stone-200">
+                      {isVi ? 'Bạn chưa có tin đăng nào trên sàn.' : 'You have no listings yet.'}
+                    </p>
+                    <p className="text-xs text-[#7A6D63] dark:text-stone-400 mt-1">
+                      {isVi
+                        ? 'Các món đồ bạn đăng bán hoặc tặng miễn phí sẽ xuất hiện tại đây để bạn dễ quản lý và gỡ tin.'
+                        : 'Items you post for sale or giveaway will appear here so you can manage or remove them.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {myItems.map((it) => {
+                      const statusLabel =
+                        it.status === 1
+                          ? isVi
+                            ? 'Đang bán'
+                            : 'Available'
+                          : it.status === 3
+                            ? isVi
+                              ? 'Đang giữ chỗ'
+                              : 'Reserved'
+                            : it.status === 4
+                              ? isVi
+                                ? 'Đã bán'
+                                : 'Sold'
+                              : isVi
+                                ? 'Đã gỡ'
+                                : 'Removed';
+                      const statusClass =
+                        it.status === 1
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                          : it.status === 3
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                            : it.status === 4
+                              ? 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+                              : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+
+                      return (
+                        <div
+                          key={it.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-[#EADBCE] dark:border-stone-800 bg-[#FAF7F2]/50 dark:bg-stone-800/40 hover:bg-[#FAF7F2] dark:hover:bg-stone-800/70 transition"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Link
+                              href={`/items/${it.id}`}
+                              className="w-14 h-14 rounded-xl overflow-hidden bg-stone-200 dark:bg-stone-700 border border-[#EADBCE] dark:border-stone-700 shrink-0"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={
+                                  it.primaryImageUrl ||
+                                  'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80'
+                                }
+                                alt={it.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </Link>
+
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Link
+                                  href={`/items/${it.id}`}
+                                  className="text-sm font-bold text-[#2A211B] dark:text-stone-100 hover:text-[#C46A28] dark:hover:text-[#F5A764] truncate max-w-[260px]"
+                                >
+                                  {it.title}
+                                </Link>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusClass}`}
+                                >
+                                  {statusLabel}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#7A6D63] dark:text-stone-400">
+                                <span className="font-extrabold text-[#C46A28] dark:text-[#F5A764] tabular-nums">
+                                  {it.price === 0
+                                    ? isVi
+                                      ? '0 ₫ (Miễn phí)'
+                                      : 'Free (0 VND)'
+                                    : `${it.price.toLocaleString('vi-VN')} ₫`}
+                                </span>
+                                {it.itemCode && (
+                                  <span className="font-mono text-[11px]">
+                                    {formatItemCodeDisplay(it.itemCode)}
+                                  </span>
+                                )}
+                                <span className="tabular-nums">
+                                  {isVi ? 'SL:' : 'Qty:'} {it.quantity ?? 1}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            <Link
+                              href={`/items/${it.id}`}
+                              className="min-h-[40px] px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 hover:bg-[#EFE8DD] dark:hover:bg-stone-700 text-xs font-semibold text-[#2A211B] dark:text-stone-200 flex items-center"
+                            >
+                              {isVi ? 'Xem chi tiết' : 'View'}
+                            </Link>
+                            {it.status !== 2 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeleteItemError(null);
+                                  setMyItemsNotice(null);
+                                  setItemToDelete(it);
+                                }}
+                                className="min-h-[40px] px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5 cursor-pointer transition"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>{isVi ? 'Gỡ tin' : 'Remove'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             </div>
           </div>
         )}
       </main>
+
+      <ConfirmDeleteItemModal
+        item={itemToDelete}
+        isDeleting={isDeletingItem}
+        error={deleteItemError}
+        onCancel={() => {
+          if (!isDeletingItem) {
+            setItemToDelete(null);
+            setDeleteItemError(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmDeleteMyItem()}
+      />
     </div>
   );
 }

@@ -66,6 +66,20 @@ export const itemsApi = {
   },
 
   /**
+   * Get listings owned by the currently authenticated user (includes active, reserved, sold).
+   */
+  async getMyItems(query?: { page?: number; pageSize?: number; keyword?: string }): Promise<PagedResult<ItemSummaryDto>> {
+    const params = new URLSearchParams();
+    if (query?.keyword?.trim()) params.append('keyword', query.keyword.trim());
+    if (query?.page) params.append('page', query.page.toString());
+    if (query?.pageSize) params.append('pageSize', query.pageSize.toString());
+    const response = await apiClient.get<PagedResult<ItemSummaryDto>>('/Items/sell/mine', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
    * Post a new item for sale / exchange / giveaway.
    * Requires authenticated user with approved seller privileges.
    */

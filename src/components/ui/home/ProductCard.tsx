@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, MapPin, ShoppingCart } from 'lucide-react';
+import { Eye, Heart, MapPin, ShoppingCart, Trash2 } from 'lucide-react';
 import { ProductItem, formatItemCodeDisplay } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { useAuthStore } from '@/lib/auth-store';
@@ -15,6 +15,7 @@ interface ProductCardProps {
     onContact?: (product: ProductItem) => void;
     onAddToCart?: (product: ProductItem) => void;
     onAuthRequired?: (product: ProductItem) => void;
+    onDelete?: (product: ProductItem) => void;
 }
 
 export const formatCardCondition = (cond: string, lang: 'vi' | 'en') => {
@@ -38,14 +39,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onContact,
     onAddToCart,
     onAuthRequired,
+    onDelete,
 }) => {
     const [isTogglingFav, setIsTogglingFav] = useState(false);
     const { language } = useLanguageStore();
     const t = DICTIONARY[language];
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const currentUserId = useAuthStore((s) => s.user?.id);
     const favEntry = useItemInteractionStore((s) => s.favorites[product.id]);
     const setFavorite = useItemInteractionStore((s) => s.setFavorite);
 
+    const isOwner = Boolean(currentUserId && product.sellerId && currentUserId === product.sellerId);
     const isLiked = favEntry ? favEntry.isFavorited : Boolean(product.isFavorited);
     const favCount = favEntry ? favEntry.favoriteCount : (product.favoriteCount ?? 0);
 
@@ -188,45 +192,71 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             {/* Bottom Action Buttons */}
             <div className="mt-2.5 flex items-center gap-2">
+                {isOwner && onDelete ? (
+                    <>
+                        <Link
+                            href={`/items/${product.id}`}
+                            className="flex-1 min-h-[40px] py-2 px-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DD] dark:bg-stone-800 dark:hover:bg-stone-700 text-[#2A211B] dark:text-stone-100 border border-[#EADBCE] dark:border-stone-600 font-semibold text-xs sm:text-sm shadow-2xs transition-all flex items-center justify-center gap-1.5"
+                        >
+                            <Eye aria-hidden="true" className="w-3.5 h-3.5" />
+                            <span>{language === 'vi' ? 'Tin của bạn' : 'Your Listing'}</span>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onDelete(product);
+                            }}
+                            title={language === 'vi' ? 'Gỡ tin đăng' : 'Remove listing'}
+                            aria-label={language === 'vi' ? 'Gỡ tin đăng' : 'Remove listing'}
+                            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 transition-all active:scale-95 cursor-pointer"
+                        >
+                            <Trash2 aria-hidden="true" className="w-4 h-4" />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {/* Contact Button */}
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onContact?.(product);
+                            }}
+                            className="flex-1 min-h-[40px] py-2 px-2 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-98 text-[#3D2B1F] dark:text-stone-100 border border-[#DEC9B0] dark:border-stone-600 font-semibold text-xs sm:text-sm shadow-2xs transition-all text-center cursor-pointer"
+                        >
+                            {t.productCard.contactBtn}
+                        </button>
 
-                {/* Contact Button */}
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        onContact?.(product);
-                    }}
-                    className="flex-1 min-h-[40px] py-2 px-2 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 active:scale-98 text-[#3D2B1F] dark:text-stone-100 border border-[#DEC9B0] dark:border-stone-600 font-semibold text-xs sm:text-sm shadow-2xs transition-all text-center cursor-pointer"
-                >
-                    {t.productCard.contactBtn}
-                </button>
-
-                {/* Add to Cart Button */}
-                {onAddToCart && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onAddToCart(product);
-                        }}
-                        title={
-                            language === 'vi'
-                                ? 'Thêm vào giỏ hàng'
-                                : 'Add to cart'
-                        }
-                        aria-label={
-                            language === 'vi'
-                                ? 'Thêm vào giỏ hàng'
-                                : 'Add to cart'
-                        }
-                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-[#DFC9AE] hover:bg-[#D2B796] dark:bg-stone-800 dark:hover:bg-stone-700 text-[#3D2B1F] dark:text-stone-100 border border-[#CEB290] dark:border-stone-600 transition-all active:scale-95 cursor-pointer"
-                    >
-                        <ShoppingCart
-                            aria-hidden="true"
-                            className="w-4 h-4"
-                        />
-                    </button>
+                        {/* Add to Cart Button */}
+                        {onAddToCart && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onAddToCart(product);
+                                }}
+                                title={
+                                    language === 'vi'
+                                        ? 'Thêm vào giỏ hàng'
+                                        : 'Add to cart'
+                                }
+                                aria-label={
+                                    language === 'vi'
+                                        ? 'Thêm vào giỏ hàng'
+                                        : 'Add to cart'
+                                }
+                                className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-[#DFC9AE] hover:bg-[#D2B796] dark:bg-stone-800 dark:hover:bg-stone-700 text-[#3D2B1F] dark:text-stone-100 border border-[#CEB290] dark:border-stone-600 transition-all active:scale-95 cursor-pointer"
+                            >
+                                <ShoppingCart
+                                    aria-hidden="true"
+                                    className="w-4 h-4"
+                                />
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
         </div>

@@ -22,10 +22,12 @@ import {
   ShoppingCart,
   Star,
   Store,
+  Trash2,
   X,
 } from 'lucide-react';
 import { Navbar } from '@/components/ui/layout/Navbar';
 import { AuthRequiredModal, AuthRequiredReason } from '@/components/ui/auth/AuthRequiredModal';
+import { ConfirmDeleteItemModal } from '@/components/ui/items/ConfirmDeleteItemModal';
 import { SellerContactModal } from '@/components/ui/home/SellerContactModal';
 import { itemsApi } from '@/lib/items-api';
 import { favoritesApi } from '@/lib/favorites-api';
@@ -90,6 +92,10 @@ export default function ProductDetailPage() {
   const [isBuyNowOpen, setIsBuyNowOpen] = useState(false);
   const [isSubmittingBuy, setIsSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState<string | null>(null);
+
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     initAuth();
@@ -288,6 +294,29 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleConfirmDeleteItem = async () => {
+    if (!item || isDeletingItem) return;
+    setIsDeletingItem(true);
+    setDeleteError(null);
+    try {
+      await itemsApi.deleteItem(item.id);
+      if (user) {
+        removeFromCart(user.id, item.id);
+      }
+      setIsDeleteConfirmOpen(false);
+      router.push('/profile#my-listings');
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setDeleteError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (isVi ? 'Không thể gỡ tin đăng. Vui lòng thử lại.' : 'Failed to remove listing.')
+      );
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
   const ratingAvg = item?.seller?.ratingAverage ?? null;
   const ratingCount = item?.seller?.ratingCount ?? 0;
   const displayStars = Math.round(ratingAvg ?? 0);
@@ -324,6 +353,19 @@ export default function ProductDetailPage() {
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
         product={productForModals}
+      />
+
+      <ConfirmDeleteItemModal
+        item={isDeleteConfirmOpen && item ? item : null}
+        isDeleting={isDeletingItem}
+        error={deleteError}
+        onCancel={() => {
+          if (!isDeletingItem) {
+            setIsDeleteConfirmOpen(false);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={() => void handleConfirmDeleteItem()}
       />
 
       {/* Buy Now Confirmation Modal */}
@@ -704,89 +746,142 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Action Row: Buy Now + Add to Cart + Share + Synced Favorite */}
-                <div className="pt-2 flex flex-wrap items-center gap-2.5">
-                  <button
-                    type="button"
-                    disabled={isSoldOrUnavailable}
-                    onClick={handleOpenBuyNow}
-                    className="flex-1 min-w-[140px] min-h-[46px] px-4 py-3 rounded-xl border-2 border-[#C46A28] text-[#C46A28] hover:bg-[#FAF7F2] dark:border-[#F5A764] dark:text-[#F5A764] dark:hover:bg-stone-800 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    <span>{isVi ? 'Mua ngay' : 'Buy Now'}</span>
-                  </button>
+                {/* Action Row: Owner Controls OR Buyer Actions */}
+                {isOwner ? (
+                  <div className="pt-2 space-y-3">
+                    <div className="rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-[#2A211B] dark:text-stone-100">
+                          {isVi ? 'Đây là tin đăng của bạn' : 'This is your listing'}
+                        </p>
+                        <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mt-0.5">
+                          {isVi
+                            ? 'Nếu bạn đăng nhầm thông tin hoặc đã bán xong bên ngoài, bạn có thể gỡ tin bất cứ lúc nào.'
+                            : 'If you posted by mistake or already sold it elsewhere, you can remove this listing anytime.'}
+                        </p>
+                      </div>
+                      <Link
+                        href="/profile#my-listings"
+                        className="text-xs font-bold text-[#C46A28] dark:text-[#F5A764] hover:underline shrink-0"
+                      >
+                        {isVi ? 'Quản lý tin đăng →' : 'Manage listings →'}
+                      </Link>
+                    </div>
 
-                  <button
-                    type="button"
-                    disabled={isSoldOrUnavailable}
-                    onClick={handleAddToCart}
-                    className="flex-1 min-w-[165px] min-h-[46px] px-4 py-3 rounded-xl bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:hover:bg-[#E89650] dark:text-stone-950 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>{isVi ? 'Thêm vào giỏ hàng' : 'Add to Cart'}</span>
-                  </button>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                        className="flex-1 min-w-[180px] min-h-[46px] px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>{isVi ? 'Gỡ tin / Xóa sản phẩm' : 'Remove Listing'}</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => void handleShare()}
-                    aria-label={isVi ? 'Chia sẻ sản phẩm' : 'Share product'}
-                    className="min-h-[46px] px-3.5 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-xs font-semibold flex flex-col items-center justify-center gap-0.5 cursor-pointer transition"
-                  >
-                    {copiedShare ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Share2 className="w-4 h-4 text-[#6D5D52] dark:text-stone-300" />
-                    )}
-                    <span className="text-[11px]">{isVi ? 'Chia sẻ' : 'Share'}</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleShare()}
+                        aria-label={isVi ? 'Chia sẻ sản phẩm' : 'Share product'}
+                        className="min-h-[46px] px-4 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition"
+                      >
+                        {copiedShare ? (
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Share2 className="w-4 h-4 text-[#6D5D52] dark:text-stone-300" />
+                        )}
+                        <span>{isVi ? 'Chia sẻ' : 'Share'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="pt-2 flex flex-wrap items-center gap-2.5">
+                      <button
+                        type="button"
+                        disabled={isSoldOrUnavailable}
+                        onClick={handleOpenBuyNow}
+                        className="flex-1 min-w-[140px] min-h-[46px] px-4 py-3 rounded-xl border-2 border-[#C46A28] text-[#C46A28] hover:bg-[#FAF7F2] dark:border-[#F5A764] dark:text-[#F5A764] dark:hover:bg-stone-800 font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>{isVi ? 'Mua ngay' : 'Buy Now'}</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    disabled={isTogglingFav}
-                    onClick={() => void handleToggleFavorite()}
-                    aria-pressed={isLiked}
-                    aria-label={
-                      isVi
-                        ? isLiked
-                          ? 'Bỏ yêu thích'
-                          : 'Yêu thích sản phẩm'
-                        : isLiked
-                          ? 'Remove favorite'
-                          : 'Favorite product'
-                    }
-                    className={`min-h-[46px] px-3.5 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-0.5 cursor-pointer transition disabled:opacity-60 ${
-                      isLiked
-                        ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400'
-                        : 'border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-[#6D5D52] dark:text-stone-300'
-                    }`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${
-                        isLiked ? 'fill-rose-500 text-rose-500' : ''
-                      }`}
-                    />
-                    <span className="text-[11px] tabular-nums">
-                      {isVi ? 'Thích' : 'Like'} ({favCount})
-                    </span>
-                  </button>
-                </div>
+                      <button
+                        type="button"
+                        disabled={isSoldOrUnavailable}
+                        onClick={handleAddToCart}
+                        className="flex-1 min-w-[165px] min-h-[46px] px-4 py-3 rounded-xl bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:hover:bg-[#E89650] dark:text-stone-950 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>{isVi ? 'Thêm vào giỏ hàng' : 'Add to Cart'}</span>
+                      </button>
 
-                {/* Contact / Exchange Modal trigger */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!requireAuth('contact')) return;
-                    setIsContactModalOpen(true);
-                  }}
-                  className="w-full py-3 px-4 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 border border-[#DEC9B0] dark:border-stone-700 text-[#3D2B1F] dark:text-stone-100 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>
-                    {isVi
-                      ? 'Liên hệ / Trao đổi trực tiếp với người bán'
-                      : 'Contact / Exchange with Seller'}
-                  </span>
-                </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleShare()}
+                        aria-label={isVi ? 'Chia sẻ sản phẩm' : 'Share product'}
+                        className="min-h-[46px] px-3.5 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-xs font-semibold flex flex-col items-center justify-center gap-0.5 cursor-pointer transition"
+                      >
+                        {copiedShare ? (
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Share2 className="w-4 h-4 text-[#6D5D52] dark:text-stone-300" />
+                        )}
+                        <span className="text-[11px]">{isVi ? 'Chia sẻ' : 'Share'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isTogglingFav}
+                        onClick={() => void handleToggleFavorite()}
+                        aria-pressed={isLiked}
+                        aria-label={
+                          isVi
+                            ? isLiked
+                              ? 'Bỏ yêu thích'
+                              : 'Yêu thích sản phẩm'
+                            : isLiked
+                              ? 'Remove favorite'
+                              : 'Favorite product'
+                        }
+                        className={`min-h-[46px] px-3.5 py-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-0.5 cursor-pointer transition disabled:opacity-60 ${
+                          isLiked
+                            ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400'
+                            : 'border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 text-[#6D5D52] dark:text-stone-300'
+                        }`}
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            isLiked ? 'fill-rose-500 text-rose-500' : ''
+                          }`}
+                        />
+                        <span className="text-[11px] tabular-nums">
+                          {isVi ? 'Thích' : 'Like'} ({favCount})
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Contact / Exchange Modal trigger */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!requireAuth('contact')) return;
+                        setIsContactModalOpen(true);
+                      }}
+                      className="w-full py-3 px-4 rounded-xl bg-[#F3E8DA] hover:bg-[#E7D6C0] dark:bg-stone-800 dark:hover:bg-stone-700 border border-[#DEC9B0] dark:border-stone-700 text-[#3D2B1F] dark:text-stone-100 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>
+                        {isVi
+                          ? 'Liên hệ / Trao đổi trực tiếp với người bán'
+                          : 'Contact / Exchange with Seller'}
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
             </section>
 
