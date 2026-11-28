@@ -26,6 +26,7 @@ import { useChatStore } from '@/lib/chat-store';
 import { startChatHub, stopChatHub } from '@/lib/chat-hub';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { AuthRequiredModal, AuthRequiredReason } from '@/components/ui/auth/AuthRequiredModal';
+import { MiniChatWidget } from '@/components/ui/chat/MiniChatWidget';
 
 // Crisp SVG Flag for Vietnam
 export function VietnamFlag({ className = 'w-5 h-3.5' }: { className?: string }) {
@@ -161,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const mobileNotificationPanelRef = useRef<HTMLDivElement | null>(null);
     const { user, isAuthenticated, isInitialized, initAuth, logout, syncProfile } = useAuthStore();
     const { initTheme } = useThemeStore();
-    const { totalUnread, refreshUnreadCount } = useChatStore();
+    const { totalUnread, isMiniChatOpen, toggleMiniChat, refreshUnreadCount } = useChatStore();
 
     useEffect(() => {
         initAuth();
@@ -1147,19 +1148,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                     />
                 </div>
             )}
-            {/* Pinned Floating Message Button at bottom-right corner (hidden on /chat) */}
-            {!isChatPage && (
+            {/* Pinned Floating Message Button at bottom-right corner (hidden on /chat or while MiniChat is open) */}
+            {!isChatPage && !(isAuthenticated && isMiniChatOpen) && (
                 <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 group/chat">
                     {isAuthenticated ? (
-                        <Link
-                            href="/chat"
+                        <button
+                            type="button"
+                            onClick={toggleMiniChat}
                             aria-label={
                                 totalUnread > 0
                                     ? `${t.navbar.messagesLabel} (${totalUnread})`
                                     : t.navbar.messagesLabel
                             }
+                            aria-expanded={isMiniChatOpen}
                             title={t.navbar.messagesLabel}
-                            className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C46A28] hover:bg-[#B55E20] dark:bg-[#F5A764] dark:hover:bg-[#E89650] text-white dark:text-stone-950 ring-4 ring-[#FAF7F2]/85 dark:ring-stone-950/85 shadow-[0_12px_30px_rgba(196,106,40,0.34)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.6)] active:scale-95 transition-all duration-200"
+                            className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#C46A28] hover:bg-[#B55E20] dark:bg-[#F5A764] dark:hover:bg-[#E89650] text-white dark:text-stone-950 ring-4 ring-[#FAF7F2]/85 dark:ring-stone-950/85 shadow-[0_12px_30px_rgba(196,106,40,0.34)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.6)] active:scale-95 transition-all duration-200 cursor-pointer"
                         >
                             <MessageCircle aria-hidden="true" className="w-6 h-6 transition-transform duration-200 group-hover/chat:scale-110" />
                             {totalUnread > 0 && (
@@ -1167,7 +1170,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                     {totalUnread > 99 ? '99+' : totalUnread}
                                 </span>
                             )}
-                        </Link>
+                        </button>
                     ) : (
                         <button
                             type="button"
@@ -1192,6 +1195,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                     </span>
                 </div>
             )}
+
+            {/* Shopee-style Floating Mini Chat Drawer */}
+            {!isChatPage && isAuthenticated && <MiniChatWidget />}
 
             {/* Auth Required Modal triggered by Cart / Chat / Shop Now for guests */}
             <AuthRequiredModal
