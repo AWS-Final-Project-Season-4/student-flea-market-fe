@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRightLeft,
-  Building2,
   CheckCircle2,
   Clock,
   Handshake,
@@ -14,7 +14,9 @@ import {
   Package,
   QrCode,
   RefreshCw,
+  ShieldAlert,
   ShieldCheck,
+  Truck,
   User,
   X,
   XCircle,
@@ -31,33 +33,45 @@ import {
   ExchangeRequestDto,
   exchangeApi,
 } from '@/lib/exchange-api';
+import AddressPicker from '@/components/ui/home/AddressPicker';
+import type { AddressPosition } from '@/components/ui/home/AddressMap';
 
 export default function TransactionsPage() {
   const { user, isAuthenticated, initAuth } = useAuthStore();
   const { language } = useLanguageStore();
   const isVi = language === 'vi';
 
-  // Active Tab: 'orders' | 'exchanges'
   const [activeTab, setActiveTab] = useState<'orders' | 'exchanges'>('orders');
 
-  // Transactions State
   const [transactions, setTransactions] = useState<TransactionDto[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
   const [transactionError, setTransactionError] = useState<string | null>(null);
-  const [directionFilter, setDirectionFilter] = useState<'incoming' | 'outgoing' | undefined>(undefined);
+  const [directionFilter, setDirectionFilter] = useState<'incoming' | 'outgoing' | undefined>(
+    undefined
+  );
 
-  // Exchange Requests State
   const [exchangeRequests, setExchangeRequests] = useState<ExchangeRequestDto[]>([]);
   const [loadingExchanges, setLoadingExchanges] = useState<boolean>(false);
   const [exchangeError, setExchangeError] = useState<string | null>(null);
 
-  // Selected Transaction Modal (for VietQR / Handover QR)
   const [activeModalTx, setActiveModalTx] = useState<TransactionDto | null>(null);
-  const [modalType, setModalType] = useState<'vietqr' | 'handover' | 'cancel' | null>(null);
+  const [modalType, setModalType] = useState<
+    'vietqr' | 'handover' | 'accept' | 'deliver' | 'cancel' | null
+  >(null);
   const [cancelReason, setCancelReason] = useState<string>('');
   const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  // Handover confirmation form
+  // Seller Accept / Deliver form
+  const [modalDeliveryMethod, setModalDeliveryMethod] = useState<1 | 2>(1);
+  const [modalLocation, setModalLocation] = useState<string>('');
+  const [modalPosition, setModalPosition] = useState<AddressPosition | null>(null);
+  const [showSellerMapPicker, setShowSellerMapPicker] = useState<boolean>(false);
+  const [modalCarrier, setModalCarrier] = useState<string>('');
+  const [modalTrackingCode, setModalTrackingCode] = useState<string>('');
+
+  // Handover & COD Inspection form
+  const [handoverMode, setHandoverMode] = useState<'ok' | 'reject'>('ok');
   const [handoverCode, setHandoverCode] = useState<string>('');
   const [handoverNote, setHandoverNote] = useState<string>('');
   const [handoverError, setHandoverError] = useState<string | null>(null);
@@ -67,15 +81,12 @@ export default function TransactionsPage() {
     initAuth();
   }, [initAuth]);
 
-  // Load Transactions
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!isAuthenticated) return;
     setLoadingTransactions(true);
     setTransactionError(null);
     try {
-      const res = await transactionsApi.list({
-        direction: directionFilter,
-      });
+      const res = await transactionsApi.list({ direction: directionFilter });
       const list = Array.isArray(res) ? res : res.items || [];
       setTransactions(list);
     } catch (err: unknown) {
@@ -84,10 +95,9 @@ export default function TransactionsPage() {
     } finally {
       setLoadingTransactions(false);
     }
-  };
+  }, [isAuthenticated, directionFilter]);
 
-  // Load Exchange Requests
-  const fetchExchanges = async () => {
+  const fetchExchanges = useCallback(async () => {
     if (!isAuthenticated) return;
     setLoadingExchanges(true);
     setExchangeError(null);
@@ -101,7 +111,7 @@ export default function TransactionsPage() {
     } finally {
       setLoadingExchanges(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -148,9 +158,87 @@ export default function TransactionsPage() {
     };
   }, [isAuthenticated, activeTab, directionFilter]);
 
-  // Actions
+  const closeModal = () => {
+    setActiveModalTx(null);
+    setModalType(null);
+    setActionError(null);
+    setHandoverError(null);
+    setHandoverSuccess(null);
+    setShowSellerMapPicker(false);
+  };
+
+  const openSellerActionModal = (tx: TransactionDto, type: 'accept' | 'deliver') => {
+    setActiveModalTx(tx);
+    setModalType(type);
+    setActionError(null);
+    setModalDeliveryMethod(tx.deliveryMethod === 2 ? 2 : 1);
+    setModalLocation(tx.meetingLocation || tx.item.location || '');
+    setModalPosition(
+      tx.meetingLatitude != null && tx.meetingLongitude != null
+        ? { lat: tx.meetingLatitude, lng: tx.meetingLongitude }
+        : null
+    );
+    setShowSellerMapPicker(false);
+    setModalCarrier(tx.deliveryCarrier || '');
+    setModalTrackingCode(tx.trackingCode || '');
+  };
+
+  const openHandoverModal = (tx: TransactionDto) => {
+    setActiveModalTx(tx);
+    setModalType('handover');
+    setHandoverMode('ok');
+    setHandoverCode('');
+    setHandoverNote('');
+    setHandoverError(null);
+    setHandoverSuccess(null);
+  };
+
+  const handleSellerAcceptOrDeliver = async () => {
+    if (!activeModalTx || isSubmittingAction) return;
+    setActionError(null);
+    setIsSubmittingAction(true);
+
+    try {
+      if (modalType === 'accept') {
+        await transactionsApi.accept(activeModalTx.id, {
+          deliveryMethod: modalDeliveryMethod,
+          meetingLocation: modalLocation.trim() || undefined,
+          meetingLatitude: modalPosition?.lat ?? null,
+          meetingLongitude: modalPosition?.lng ?? null,
+          deliveryCarrier: modalCarrier.trim() || undefined,
+          trackingCode: modalTrackingCode.trim() || undefined,
+        });
+      } else if (modalType === 'deliver') {
+        await transactionsApi.startDelivery(activeModalTx.id, {
+          meetingLocation: modalLocation.trim() || undefined,
+          meetingLatitude: modalPosition?.lat ?? null,
+          meetingLongitude: modalPosition?.lng ?? null,
+          deliveryCarrier: modalCarrier.trim() || undefined,
+          trackingCode: modalTrackingCode.trim() || undefined,
+        });
+      }
+      closeModal();
+      await fetchTransactions();
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setActionError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (isVi ? 'Không thể cập nhật đơn hàng.' : 'Failed to update order.')
+      );
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
   const handleCompleteOrder = async (txId: string) => {
-    if (!confirm(isVi ? 'Xác nhận đơn hàng đã hoàn tất thành công?' : 'Confirm this order is completed?')) {
+    if (
+      !confirm(
+        isVi
+          ? 'Xác nhận đơn hàng đã hoàn tất thành công?'
+          : 'Confirm this order is completed?'
+      )
+    ) {
       return;
     }
     try {
@@ -166,9 +254,8 @@ export default function TransactionsPage() {
     setIsSubmittingAction(true);
     try {
       await transactionsApi.cancel(activeModalTx.id, cancelReason);
-      setActiveModalTx(null);
-      setModalType(null);
       setCancelReason('');
+      closeModal();
       await fetchTransactions();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Không thể hủy đơn.');
@@ -180,9 +267,10 @@ export default function TransactionsPage() {
   const handleConfirmPayment = async (txId: string) => {
     try {
       await transactionsApi.confirmPayment(txId);
-      alert(isVi ? 'Đã thông báo xác nhận thanh toán thành công!' : 'Payment reported successfully!');
-      setActiveModalTx(null);
-      setModalType(null);
+      alert(
+        isVi ? 'Đã thông báo xác nhận thanh toán thành công!' : 'Payment reported successfully!'
+      );
+      closeModal();
       await fetchTransactions();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Không thể gửi xác nhận.');
@@ -193,35 +281,67 @@ export default function TransactionsPage() {
     if (!activeModalTx) return;
     setHandoverError(null);
     setHandoverSuccess(null);
+
+    if (handoverMode === 'reject' && !handoverNote.trim()) {
+      setHandoverError(
+        isVi
+          ? 'Vui lòng nhập lý do từ chối khi đồng kiểm.'
+          : 'Please provide a reason when rejecting upon inspection.'
+      );
+      return;
+    }
+
+    if (activeModalTx.type === 2 && !handoverCode.trim()) {
+      setHandoverError(
+        isVi
+          ? 'Đơn đổi đồ yêu cầu nhập mã hàng 8 ký tự để đối chiếu.'
+          : 'Exchange orders require the 8-character item code.'
+      );
+      return;
+    }
+
     setIsSubmittingAction(true);
     try {
       const payload: ConfirmHandoverDto = {
-        itemReceivedOk: true,
+        itemReceivedOk: handoverMode === 'ok',
         itemCodeVerified: handoverCode.trim() || undefined,
         note: handoverNote.trim() || undefined,
       };
       const res = await transactionsApi.confirmHandover(activeModalTx.id, payload);
-      setHandoverSuccess(
-        isVi
-          ? `Đã xác nhận bàn giao! (${res.confirmedCount}/${res.requiredCount} bên đã xác nhận).`
-          : `Handover confirmed! (${res.confirmedCount}/${res.requiredCount} parties confirmed).`
-      );
+      if (handoverMode === 'reject') {
+        setHandoverSuccess(
+          isVi
+            ? 'Đã ghi nhận từ chối nhận hàng khi đồng kiểm.'
+            : 'Recorded inspection rejection.'
+        );
+      } else {
+        setHandoverSuccess(
+          isVi
+            ? `Đã xác nhận đồng kiểm & bàn giao! (${res.confirmedCount}/${res.requiredCount} bên đã xác nhận).`
+            : `Inspection & handover confirmed! (${res.confirmedCount}/${res.requiredCount} parties confirmed).`
+        );
+      }
       setTimeout(() => {
-        setActiveModalTx(null);
-        setModalType(null);
+        closeModal();
         setHandoverCode('');
         setHandoverNote('');
-        fetchTransactions();
-      }, 1500);
+        void fetchTransactions();
+      }, 1400);
     } catch (err: unknown) {
-      setHandoverError(err instanceof Error ? err.message : 'Mã hàng không khớp hoặc có lỗi xảy ra.');
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setHandoverError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (isVi ? 'Mã hàng không khớp hoặc có lỗi xảy ra.' : 'Verification failed.')
+      );
     } finally {
       setIsSubmittingAction(false);
     }
   };
 
   const handleAcceptExchange = async (id: string) => {
-    if (!confirm(isVi ? 'Bạn đồng ý chấp nhận đổi món đồ này?' : 'Accept this exchange proposal?')) return;
+    if (!confirm(isVi ? 'Bạn đồng ý chấp nhận đổi món đồ này?' : 'Accept this exchange proposal?'))
+      return;
     try {
       await exchangeApi.accept(id);
       await fetchExchanges();
@@ -261,14 +381,35 @@ export default function TransactionsPage() {
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
             <Clock className="w-3 h-3" />
-            {isVi ? 'Đang xử lý' : statusName}
+            {isVi ? 'Chờ xác nhận' : statusName}
           </span>
         );
-      case 2: // Accepted / Confirmed
+      case 2: // Accepted
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
             <CheckCircle2 className="w-3 h-3" />
-            {isVi ? 'Đã duyệt / Sẵn sàng' : statusName}
+            {isVi ? 'Đã duyệt / Chuẩn bị giao' : statusName}
+          </span>
+        );
+      case 7: // Delivering
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+            <Truck className="w-3 h-3" />
+            {isVi ? 'Đang giao hàng' : statusName}
+          </span>
+        );
+      case 6: // AwaitingConfirmation
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-[#C46A28] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700">
+            <ShieldCheck className="w-3 h-3" />
+            {isVi ? 'Chờ xác nhận đồng kiểm' : statusName}
+          </span>
+        );
+      case 3: // Rejected
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+            <ShieldAlert className="w-3 h-3" />
+            {isVi ? 'Từ chối đồng kiểm' : statusName}
           </span>
         );
       case 4: // Cancelled
@@ -297,6 +438,14 @@ export default function TransactionsPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-stone-950 text-[#2A211B] dark:text-stone-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#6D5D52] dark:text-stone-300 hover:text-[#C46A28] dark:hover:text-[#F5A764] transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{isVi ? 'Quay lại trang chủ' : 'Back to Storefront'}</span>
+        </Link>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EADBCE] dark:border-stone-800">
           <div>
@@ -306,18 +455,18 @@ export default function TransactionsPage() {
             </h1>
             <p className="text-xs sm:text-sm text-[#7A6D63] dark:text-stone-400 mt-1">
               {isVi
-                ? 'Mạng lưới P2P độc quyền sinh viên: Thanh toán VietQR trực tiếp, quét mã bàn giao tại chỗ và bảo vệ quyền lợi.'
-                : 'Campus P2P: Direct VietQR transfer, verified on-site meetup handover, and safe exchange.'}
+                ? 'Hỗ trợ gặp trực tiếp (Seller chốt điểm hẹn) & Ship ngoài kèm Đồng kiểm COD an toàn.'
+                : 'Supports direct meetup (seller-confirmed location) & external shipping with COD inspection.'}
             </p>
           </div>
 
-          {/* Tab Switcher */}
           <div className="flex p-1 bg-white dark:bg-stone-900 rounded-2xl border border-[#EADBCE] dark:border-stone-800 shadow-xs self-start sm:self-auto">
             <button
+              type="button"
               onClick={() => setActiveTab('orders')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
                 activeTab === 'orders'
-                  ? 'bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white shadow-xs'
+                  ? 'bg-[#C46A28] text-white dark:bg-[#F5A764] dark:text-stone-950 shadow-xs'
                   : 'text-[#7A6D63] dark:text-stone-400 hover:text-[#2A211B] dark:hover:text-stone-100'
               }`}
             >
@@ -325,10 +474,11 @@ export default function TransactionsPage() {
               <span>{isVi ? 'Đơn mua & Bán' : 'Orders & Sales'}</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('exchanges')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
                 activeTab === 'exchanges'
-                  ? 'bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white shadow-xs'
+                  ? 'bg-[#C46A28] text-white dark:bg-[#F5A764] dark:text-stone-950 shadow-xs'
                   : 'text-[#7A6D63] dark:text-stone-400 hover:text-[#2A211B] dark:hover:text-stone-100'
               }`}
             >
@@ -341,45 +491,35 @@ export default function TransactionsPage() {
         {/* TAB 1: ORDERS & TRANSACTIONS */}
         {activeTab === 'orders' && (
           <div className="space-y-4">
-            {/* Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white dark:bg-stone-900 rounded-2xl border border-[#EADBCE] dark:border-stone-800">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-[#7A6D63] dark:text-stone-400">
                   {isVi ? 'Lọc vai trò:' : 'Role:'}
                 </span>
-                <button
-                  onClick={() => setDirectionFilter(undefined)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                    directionFilter === undefined
-                      ? 'bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700'
-                      : 'text-[#7A6D63] dark:text-stone-400 hover:bg-[#FAF7F2]/50'
-                  }`}
-                >
-                  {isVi ? 'Tất cả' : 'All'}
-                </button>
-                <button
-                  onClick={() => setDirectionFilter('outgoing')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                    directionFilter === 'outgoing'
-                      ? 'bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700'
-                      : 'text-[#7A6D63] dark:text-stone-400 hover:bg-[#FAF7F2]/50'
-                  }`}
-                >
-                  {isVi ? 'Tôi mua' : 'Purchases'}
-                </button>
-                <button
-                  onClick={() => setDirectionFilter('incoming')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                    directionFilter === 'incoming'
-                      ? 'bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700'
-                      : 'text-[#7A6D63] dark:text-stone-400 hover:bg-[#FAF7F2]/50'
-                  }`}
-                >
-                  {isVi ? 'Tôi bán' : 'Sales'}
-                </button>
+                {(
+                  [
+                    { key: undefined, label: isVi ? 'Tất cả' : 'All' },
+                    { key: 'outgoing', label: isVi ? 'Tôi mua' : 'Purchases' },
+                    { key: 'incoming', label: isVi ? 'Tôi bán' : 'Sales' },
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item.key ?? 'all'}
+                    type="button"
+                    onClick={() => setDirectionFilter(item.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                      directionFilter === item.key
+                        ? 'bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700'
+                        : 'text-[#7A6D63] dark:text-stone-400 hover:bg-[#FAF7F2]/50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
 
               <button
+                type="button"
                 onClick={fetchTransactions}
                 disabled={loadingTransactions}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#7A6D63] dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition cursor-pointer"
@@ -389,7 +529,6 @@ export default function TransactionsPage() {
               </button>
             </div>
 
-            {/* Error Message */}
             {transactionError && (
               <div className="flex items-center gap-2 p-4 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-2xl text-xs sm:text-sm text-rose-700 dark:text-rose-300">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -397,7 +536,6 @@ export default function TransactionsPage() {
               </div>
             )}
 
-            {/* Loading */}
             {loadingTransactions && (
               <div className="py-16 text-center text-[#7A6D63] dark:text-stone-400">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#E89650] mb-2" />
@@ -405,7 +543,6 @@ export default function TransactionsPage() {
               </div>
             )}
 
-            {/* Empty State */}
             {!loadingTransactions && transactions.length === 0 && (
               <div className="py-16 text-center bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 p-8 space-y-3">
                 <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FAF7F2] dark:bg-stone-800 flex items-center justify-center text-[#B8652B] dark:text-[#F5A764]">
@@ -416,40 +553,40 @@ export default function TransactionsPage() {
                 </h3>
                 <p className="text-xs text-[#7A6D63] dark:text-stone-400 max-w-md mx-auto">
                   {isVi
-                    ? 'Bạn có thể tìm kiếm các món đồ ưng ý trên Trang chủ, nhắn tin trao đổi với người bán và chốt đơn nhanh chóng.'
-                    : 'Browse campus listings, chat with sellers, and confirm orders to view them here.'}
+                    ? 'Khám phá sản phẩm trên Trang chủ, chọn Mua ngay hoặc trao đổi với người bán.'
+                    : 'Browse campus listings, buy directly or exchange with sellers.'}
                 </p>
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white text-xs font-bold shadow-xs hover:from-[#DC833B] hover:to-[#EC954B] transition"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 text-xs font-bold transition"
                 >
                   {isVi ? 'Khám phá sản phẩm' : 'Browse Marketplace'}
                 </Link>
               </div>
             )}
 
-            {/* List of Orders */}
             {!loadingTransactions && transactions.length > 0 && (
               <div className="space-y-4">
                 {transactions.map((tx) => {
-                  const isInitiator = tx.initiator.userId === user?.id;
-                  const partner = isInitiator ? tx.counterparty : tx.initiator;
-                  const roleLabel = isInitiator
-                    ? isVi
-                      ? 'Bạn là Người mua'
-                      : 'You are Buyer'
-                    : isVi
-                      ? 'Bạn là Người bán'
-                      : 'You are Seller';
+                  const isBuyer = (tx.initiator.id || tx.initiator.userId) === user?.id;
+                  const isSeller = !isBuyer;
+                  const partner = isBuyer ? tx.counterparty : tx.initiator;
+                  const isFinished = tx.status === 3 || tx.status === 4 || tx.status === 5;
+                  const isExternalShip = tx.deliveryMethod === 2;
+                  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    tx.meetingLatitude != null && tx.meetingLongitude != null
+                      ? `${tx.meetingLatitude},${tx.meetingLongitude}`
+                      : tx.meetingLocation
+                  )}`;
 
                   return (
                     <div
                       key={tx.id}
                       className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-xs p-5 sm:p-6 space-y-4 transition hover:border-[#D8C5B4] dark:hover:border-stone-700"
                     >
-                      {/* Top Bar: Order ID, Type, Status */}
+                      {/* Top Bar */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#FAF7F2] dark:border-stone-800/80">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-xs font-bold text-[#B8652B] dark:text-[#F5A764] bg-[#FAF7F2] dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-[#EADBCE] dark:border-stone-700">
                             SFM #{tx.id.substring(0, 8).toUpperCase()}
                           </span>
@@ -457,48 +594,95 @@ export default function TransactionsPage() {
                             • {new Date(tx.createdAt).toLocaleDateString(isVi ? 'vi-VN' : 'en-US')}
                           </span>
                           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#FAF7F2] dark:bg-stone-800 text-[#7A6D63] dark:text-stone-300">
-                            {roleLabel}
+                            {isBuyer
+                              ? isVi
+                                ? 'Bạn là Người mua'
+                                : 'You are Buyer'
+                              : isVi
+                                ? 'Bạn là Người bán'
+                                : 'You are Seller'}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-[#2A211B] dark:text-stone-200">
+                            <Truck className="w-3 h-3 text-[#C46A28] dark:text-[#F5A764]" />
+                            {tx.deliveryMethodName}
                           </span>
                         </div>
                         <div>{getStatusBadge(tx.status, tx.statusName)}</div>
                       </div>
 
-                      {/* Main Item & Counterparty info */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                        {/* Item Card */}
+                      {/* Item & Partner Info */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                         <div className="md:col-span-2 flex items-start gap-3.5">
-                          {tx.item.thumbnailUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={tx.item.thumbnailUrl}
-                              alt={tx.item.title}
-                              className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border border-[#EADBCE] dark:border-stone-800 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-800 flex items-center justify-center text-[#B8652B] shrink-0 font-bold">
-                              SFM
+                          <Link href={`/items/${tx.item.id}`} className="shrink-0">
+                            {tx.item.primaryImageUrl || tx.item.thumbnailUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={tx.item.primaryImageUrl || tx.item.thumbnailUrl || ''}
+                                alt={tx.item.title}
+                                className="w-20 h-20 rounded-2xl object-cover border border-[#EADBCE] dark:border-stone-800"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-800 flex items-center justify-center text-[#B8652B] font-bold">
+                                SFM
+                              </div>
+                            )}
+                          </Link>
+
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                                MÃ: {tx.item.itemCode}
+                              </span>
+                              {(tx.quantity ?? 1) > 1 && (
+                                <span className="text-[11px] font-semibold text-[#6D5D52] dark:text-stone-300">
+                                  SL: x{tx.quantity}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <div className="space-y-1 min-w-0">
-                            <span className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                              MÃ HÀNG: {tx.item.itemCode}
-                            </span>
-                            <h3 className="text-sm sm:text-base font-bold text-[#2A211B] dark:text-stone-100 truncate">
-                              {tx.item.title}
-                            </h3>
-                            <p className="text-xs text-[#7A6D63] dark:text-stone-400">
-                              {tx.item.conditionName || (isVi ? 'Đã qua sử dụng' : 'Pre-owned')}
-                            </p>
+
+                            <Link href={`/items/${tx.item.id}`} className="hover:underline block">
+                              <h3 className="text-sm sm:text-base font-bold text-[#2A211B] dark:text-stone-100 truncate">
+                                {tx.item.title}
+                              </h3>
+                            </Link>
+
                             <p className="text-sm font-extrabold text-[#B8652B] dark:text-[#F5A764]">
                               {formatPrice(tx.amount)}
                             </p>
+
+                            <div className="flex items-start gap-1.5 text-xs text-[#6D5D52] dark:text-stone-300 pt-0.5">
+                              <MapPin className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764] shrink-0 mt-0.5" />
+                              <a
+                                href={mapHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline underline-offset-2 break-words hover:text-[#C46A28]"
+                              >
+                                {isExternalShip
+                                  ? `${isVi ? 'Giao tới:' : 'Deliver to:'} ${tx.meetingLocation}`
+                                  : `${isVi ? 'Điểm hẹn:' : 'Meetup:'} ${tx.meetingLocation}`}
+                              </a>
+                            </div>
+
+                            {(tx.deliveryCarrier || tx.trackingCode) && (
+                              <p className="text-xs text-sky-700 dark:text-sky-300 font-medium">
+                                {isVi ? 'Vận chuyển ngoài:' : 'Courier:'}{' '}
+                                {[tx.deliveryCarrier, tx.trackingCode].filter(Boolean).join(' • ')}
+                              </p>
+                            )}
+
+                            {tx.inspectionNote && (
+                              <p className="text-xs text-[#6D5D52] dark:text-stone-300 italic">
+                                {isVi ? 'Ghi chú đồng kiểm:' : 'Inspection note:'} {tx.inspectionNote}
+                              </p>
+                            )}
                           </div>
                         </div>
 
-                        {/* Partner Details (Student KYC verification) */}
+                        {/* Counterparty Card */}
                         <div className="p-3 bg-[#FAF7F2]/80 dark:bg-stone-800/60 rounded-2xl border border-[#EADBCE] dark:border-stone-700/80 space-y-1.5 text-xs">
                           <p className="text-[10px] uppercase font-bold tracking-wider text-[#7A6D63] dark:text-stone-400">
-                            {isInitiator
+                            {isBuyer
                               ? isVi
                                 ? 'Người bán (Seller)'
                                 : 'Seller'
@@ -510,30 +694,26 @@ export default function TransactionsPage() {
                             <User className="w-3.5 h-3.5 text-[#B8652B]" />
                             {partner.fullName}
                           </p>
-                          {partner.schoolName && (
-                            <p className="text-[#7A6D63] dark:text-stone-300 flex items-center gap-1.5">
-                              <Building2 className="w-3.5 h-3.5 text-[#9B8E83]" />
-                              {partner.schoolName} {partner.studentCode ? `• MSSV: ${partner.studentCode}` : ''}
-                            </p>
-                          )}
                           {partner.phoneNumber && (
                             <p className="text-[#7A6D63] dark:text-stone-300 flex items-center gap-1.5">
-                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Zalo:</span>{' '}
+                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                SĐT / Zalo:
+                              </span>{' '}
                               {partner.phoneNumber}
                             </p>
                           )}
-                          {tx.meetingLocation && (
-                            <p className="text-[#7A6D63] dark:text-stone-300 flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-[#9B8E83] shrink-0" />
-                              {tx.meetingLocation}
+                          {isExternalShip && (
+                            <p className="text-[11px] text-amber-800 dark:text-amber-300 pt-1 border-t border-[#EADBCE] dark:border-stone-700">
+                              {isVi
+                                ? 'Cước ship bên ngoài do 2 bên tự thanh toán, sàn không thu hộ.'
+                                : 'External shipping fee is settled directly outside platform.'}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      {/* Action buttons & QR Triggers */}
+                      {/* Footer & Actions */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#FAF7F2] dark:border-stone-800">
-                        {/* Payment / Handover Status Note */}
                         <div className="text-xs text-[#7A6D63] dark:text-stone-400">
                           {tx.payment ? (
                             <span>
@@ -543,15 +723,47 @@ export default function TransactionsPage() {
                               </strong>
                             </span>
                           ) : (
-                            <span>{isVi ? 'Thanh toán khi gặp trực tiếp' : 'Pay in person'}</span>
+                            <span>{isVi ? 'Giao dịch trao đổi / 0 đ' : 'Exchange / Free'}</span>
                           )}
                         </div>
 
-                        {/* Control Buttons */}
                         <div className="flex flex-wrap items-center gap-2">
-                          {/* VietQR button (if BankTransfer & not completed) */}
-                          {tx.amount > 0 && tx.status !== 4 && tx.status !== 5 && (
+                          {/* Seller: Accept & Set Meetup / Delivery */}
+                          {isSeller && tx.status === 1 && (
                             <button
+                              type="button"
+                              onClick={() => openSellerActionModal(tx, 'accept')}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 transition cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>
+                                {isVi ? 'Duyệt & Chọn giao nhận' : 'Accept & Set Delivery'}
+                              </span>
+                            </button>
+                          )}
+
+                          {/* Seller: Mark Delivering */}
+                          {isSeller && (tx.status === 1 || tx.status === 2) && (
+                            <button
+                              type="button"
+                              onClick={() => openSellerActionModal(tx, 'deliver')}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition cursor-pointer"
+                            >
+                              <Truck className="w-4 h-4" />
+                              <span>
+                                {isVi
+                                  ? isExternalShip
+                                    ? 'Giao cho Shipper'
+                                    : 'Đang đi giao / Gặp mặt'
+                                  : 'Start Delivery'}
+                              </span>
+                            </button>
+                          )}
+
+                          {/* VietQR button */}
+                          {tx.amount > 0 && !isFinished && (
+                            <button
+                              type="button"
                               onClick={() => {
                                 setActiveModalTx(tx);
                                 setModalType('vietqr');
@@ -563,34 +775,39 @@ export default function TransactionsPage() {
                             </button>
                           )}
 
-                          {/* Handover QR button (for on-site meetup confirmation) */}
-                          {tx.status !== 4 && tx.status !== 5 && (
+                          {/* COD / Handover Verification (both parties) */}
+                          {!isFinished && (
                             <button
-                              onClick={() => {
-                                setActiveModalTx(tx);
-                                setModalType('handover');
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FAF7F2] dark:bg-stone-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                              <span>{isVi ? 'Mã Bàn giao & Đồng kiểm' : 'Handover & Verify'}</span>
-                            </button>
-                          )}
-
-                          {/* Complete button */}
-                          {tx.canManage && tx.status !== 4 && tx.status !== 5 && (
-                            <button
-                              onClick={() => handleCompleteOrder(tx.id)}
+                              type="button"
+                              onClick={() => openHandoverModal(tx)}
                               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
                             >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>{isVi ? 'Hoàn tất đơn' : 'Complete'}</span>
+                              <ShieldCheck className="w-4 h-4" />
+                              <span>
+                                {isVi
+                                  ? isBuyer
+                                    ? 'Đồng kiểm & Nhận hàng'
+                                    : 'Xác nhận đã giao & Thu tiền'
+                                  : 'Inspect & Confirm'}
+                              </span>
                             </button>
                           )}
 
-                          {/* Cancel button */}
-                          {tx.canManage && tx.status !== 4 && tx.status !== 5 && (
+                          {/* Quick Complete (for Exchange step 1 or simple order) */}
+                          {tx.canManage && (tx.status === 1 || tx.status === 2) && (
                             <button
+                              type="button"
+                              onClick={() => void handleCompleteOrder(tx.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                            >
+                              <span>{isVi ? 'Hoàn tất nhanh' : 'Quick Complete'}</span>
+                            </button>
+                          )}
+
+                          {/* Cancel */}
+                          {tx.canManage && (tx.status === 1 || tx.status === 2 || tx.status === 7) && (
+                            <button
+                              type="button"
                               onClick={() => {
                                 setActiveModalTx(tx);
                                 setModalType('cancel');
@@ -614,12 +831,12 @@ export default function TransactionsPage() {
         {/* TAB 2: EXCHANGE REQUESTS */}
         {activeTab === 'exchanges' && (
           <div className="space-y-4">
-            {/* Filter Bar */}
             <div className="flex items-center justify-between p-3 bg-white dark:bg-stone-900 rounded-2xl border border-[#EADBCE] dark:border-stone-800">
               <span className="text-xs font-semibold text-[#7A6D63] dark:text-stone-400">
                 {isVi ? 'Các đề xuất trao đổi đồ đang mở:' : 'Active exchange proposals:'}
               </span>
               <button
+                type="button"
                 onClick={fetchExchanges}
                 disabled={loadingExchanges}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#7A6D63] dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 transition cursor-pointer"
@@ -639,7 +856,9 @@ export default function TransactionsPage() {
             {loadingExchanges && (
               <div className="py-16 text-center text-[#7A6D63] dark:text-stone-400">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#E89650] mb-2" />
-                <p className="text-xs">{isVi ? 'Đang tải yêu cầu đổi đồ...' : 'Loading exchange proposals...'}</p>
+                <p className="text-xs">
+                  {isVi ? 'Đang tải yêu cầu đổi đồ...' : 'Loading exchange proposals...'}
+                </p>
               </div>
             )}
 
@@ -651,26 +870,19 @@ export default function TransactionsPage() {
                 <h3 className="text-base font-bold text-[#2A211B] dark:text-stone-100">
                   {isVi ? 'Chưa có yêu cầu đổi đồ nào' : 'No exchange proposals yet'}
                 </h3>
-                <p className="text-xs text-[#7A6D63] dark:text-stone-400 max-w-md mx-auto">
-                  {isVi
-                    ? 'Khi xem chi tiết các món đồ có bật tính năng "Cho phép đổi đồ", bạn có thể chọn một món đồ của mình để gửi đề nghị trao đổi.'
-                    : 'When browsing items with exchange enabled, you can offer one of your items to propose an exchange.'}
-                </p>
               </div>
             )}
 
             {!loadingExchanges && exchangeRequests.length > 0 && (
               <div className="space-y-4">
                 {exchangeRequests.map((ex) => {
-                  const isSender = ex.sender.userId === user?.id;
-                  const partner = isSender ? ex.receiver : ex.sender;
+                  const isSender = ex.requesterId === user?.id;
 
                   return (
                     <div
                       key={ex.id}
                       className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-xs p-5 sm:p-6 space-y-4"
                     >
-                      {/* Top Bar */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#FAF7F2] dark:border-stone-800/80">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs font-bold text-[#B8652B] dark:text-[#F5A764] bg-[#FAF7F2] dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-[#EADBCE] dark:border-stone-700">
@@ -692,51 +904,41 @@ export default function TransactionsPage() {
                         <div>{getStatusBadge(ex.status, ex.statusName)}</div>
                       </div>
 
-                      {/* 2 Items comparison */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        {/* Requested Item (Món muốn nhận) */}
-                        <div className="p-3.5 bg-[#FAF7F2]/60 dark:bg-stone-800/50 rounded-2xl border border-[#EADBCE] dark:border-stone-800 flex items-start gap-3">
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">
-                              {isVi ? 'Món nhận về (Requested):' : 'Item to receive:'}
-                            </span>
-                            <h4 className="text-sm font-bold text-[#2A211B] dark:text-stone-100 truncate">
-                              {ex.requestedItem.title}
-                            </h4>
-                            <p className="text-xs font-mono font-semibold text-[#7A6D63]">
-                              MÃ: {ex.requestedItem.itemCode}
-                            </p>
-                            <p className="text-xs font-bold text-[#B8652B]">
-                              {formatPrice(ex.requestedItem.price)}
-                            </p>
-                          </div>
+                        <div className="p-3.5 bg-[#FAF7F2]/60 dark:bg-stone-800/50 rounded-2xl border border-[#EADBCE] dark:border-stone-800 space-y-1 min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">
+                            {isVi ? 'Món nhận về:' : 'Item to receive:'}
+                          </span>
+                          <h4 className="text-sm font-bold truncate">{ex.requestedItem.title}</h4>
+                          <p className="text-xs font-mono text-[#7A6D63]">
+                            MÃ: {ex.requestedItem.itemCode}
+                          </p>
+                          <p className="text-xs font-bold text-[#B8652B]">
+                            {formatPrice(ex.requestedItem.price)}
+                          </p>
                         </div>
 
-                        {/* Offered Item (Món đem đổi) */}
-                        <div className="p-3.5 bg-[#FAF7F2]/60 dark:bg-stone-800/50 rounded-2xl border border-[#EADBCE] dark:border-stone-800 flex items-start gap-3">
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-400">
-                              {isVi ? 'Món đem đổi (Offered):' : 'Item offered:'}
-                            </span>
-                            <h4 className="text-sm font-bold text-[#2A211B] dark:text-stone-100 truncate">
-                              {ex.offeredItem.title}
-                            </h4>
-                            <p className="text-xs font-mono font-semibold text-[#7A6D63]">
-                              MÃ: {ex.offeredItem.itemCode}
-                            </p>
-                            <p className="text-xs font-bold text-[#B8652B]">
-                              {formatPrice(ex.offeredItem.price)}
-                            </p>
-                          </div>
+                        <div className="p-3.5 bg-[#FAF7F2]/60 dark:bg-stone-800/50 rounded-2xl border border-[#EADBCE] dark:border-stone-800 space-y-1 min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-400">
+                            {isVi ? 'Món đem đổi:' : 'Item offered:'}
+                          </span>
+                          <h4 className="text-sm font-bold truncate">{ex.offeredItem.title}</h4>
+                          <p className="text-xs font-mono text-[#7A6D63]">
+                            MÃ: {ex.offeredItem.itemCode}
+                          </p>
+                          <p className="text-xs font-bold text-[#B8652B]">
+                            {formatPrice(ex.offeredItem.price)}
+                          </p>
                         </div>
                       </div>
 
-                      {/* Additional Amount / Note */}
                       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div className="space-y-1">
                           {ex.additionalAmount !== 0 && (
-                            <p className="text-[#2A211B] dark:text-stone-200">
-                              <span className="text-[#7A6D63]">{isVi ? 'Tiền bù chênh lệch: ' : 'Cash offset: '}</span>
+                            <p>
+                              <span className="text-[#7A6D63]">
+                                {isVi ? 'Tiền bù chênh lệch: ' : 'Cash offset: '}
+                              </span>
                               <strong className="text-[#B8652B] font-bold">
                                 {formatPrice(ex.additionalAmount)}
                               </strong>
@@ -748,27 +950,27 @@ export default function TransactionsPage() {
                             </p>
                           )}
                         </div>
-
-                        {/* Partner KYC info */}
-                        <div className="text-right text-[#7A6D63] dark:text-stone-400">
-                          <span>{partner.fullName}</span>
-                          {partner.schoolName && <span> • {partner.schoolName}</span>}
+                        <div className="text-[#7A6D63] dark:text-stone-400">
+                          <span>
+                            {isVi ? 'Người gửi:' : 'Requester:'} {ex.requesterName}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Action buttons */}
                       <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#FAF7F2] dark:border-stone-800">
                         {ex.canRespond && (
                           <>
                             <button
-                              onClick={() => handleAcceptExchange(ex.id)}
+                              type="button"
+                              onClick={() => void handleAcceptExchange(ex.id)}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                               <span>{isVi ? 'Đồng ý đổi' : 'Accept'}</span>
                             </button>
                             <button
-                              onClick={() => handleRejectExchange(ex.id)}
+                              type="button"
+                              onClick={() => void handleRejectExchange(ex.id)}
                               className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 transition cursor-pointer"
                             >
                               <XCircle className="w-4 h-4" />
@@ -778,7 +980,8 @@ export default function TransactionsPage() {
                         )}
                         {ex.canCancel && (
                           <button
-                            onClick={() => handleCancelExchange(ex.id)}
+                            type="button"
+                            onClick={() => void handleCancelExchange(ex.id)}
                             className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 transition cursor-pointer"
                           >
                             <XCircle className="w-4 h-4" />
@@ -795,22 +998,222 @@ export default function TransactionsPage() {
         )}
       </div>
 
+      {/* MODAL: SELLER ACCEPT / START DELIVERY (with Seller Location Picker) */}
+      {(modalType === 'accept' || modalType === 'deliver') && activeModalTx && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#FAF7F2] dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <Truck className="w-5 h-5 text-[#C46A28] dark:text-[#F5A764]" />
+                <h3 className="text-base font-bold">
+                  {modalType === 'accept'
+                    ? isVi
+                      ? 'Duyệt đơn & Chốt giao nhận'
+                      : 'Accept & Confirm Delivery'
+                    : isVi
+                      ? 'Cập nhật Đang giao hàng'
+                      : 'Start Delivery'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label={isVi ? 'Đóng' : 'Close'}
+                className="p-1 rounded-lg text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {modalType === 'accept' && (
+                <div className="space-y-1.5">
+                  <label className="block font-bold">
+                    {isVi ? 'Hình thức giao nhận' : 'Delivery Method'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setModalDeliveryMethod(1)}
+                      className={`p-2.5 rounded-xl border text-left font-semibold cursor-pointer ${
+                        modalDeliveryMethod === 1
+                          ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
+                          : 'border-[#EADBCE] dark:border-stone-700'
+                      }`}
+                    >
+                      {isVi ? 'Gặp trực tiếp / Tự giao' : 'Direct Meetup'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalDeliveryMethod(2);
+                        setShowSellerMapPicker(false);
+                      }}
+                      className={`p-2.5 rounded-xl border text-left font-semibold cursor-pointer ${
+                        modalDeliveryMethod === 2
+                          ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
+                          : 'border-[#EADBCE] dark:border-stone-700'
+                      }`}
+                    >
+                      {isVi ? 'Đặt ship bên ngoài' : 'External Shipper'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Seller Location chốt sau khi 2 bên thống nhất */}
+              <div className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <label htmlFor="seller-meetup-location" className="font-bold">
+                    {(modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
+                      ? isVi
+                        ? 'Địa chỉ nhận hàng (sau khi 2 bên chốt)'
+                        : 'Delivery Address (Seller confirmed)'
+                      : isVi
+                        ? 'Location gặp giao dịch (Seller chốt)'
+                        : 'Final Meetup Location (Seller)'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowSellerMapPicker((p) => !p)}
+                    className="text-[11px] font-bold text-[#C46A28] dark:text-[#F5A764] hover:underline cursor-pointer"
+                  >
+                    {showSellerMapPicker
+                      ? isVi
+                        ? 'Ẩn bản đồ'
+                        : 'Hide map'
+                      : isVi
+                        ? 'Chọn bản đồ'
+                        : 'Pick on map'}
+                  </button>
+                </div>
+                <input
+                  id="seller-meetup-location"
+                  type="text"
+                  value={modalLocation}
+                  onChange={(e) => setModalLocation(e.target.value)}
+                  placeholder={
+                    (modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
+                      ? isVi
+                        ? 'Vd: KTX Khu B tòa B4, Thủ Đức...'
+                        : 'Delivery address...'
+                      : isVi
+                        ? 'Vd: KTX Khu A - Cổng chính...'
+                        : 'Meetup spot...'
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900"
+                />
+                {showSellerMapPicker && (
+                  <AddressPicker
+                    initialAddress={modalLocation}
+                    initialPosition={modalPosition}
+                    language={language}
+                    onCancel={() => setShowSellerMapPicker(false)}
+                    onConfirm={(val) => {
+                      setModalLocation(val.address);
+                      setModalPosition(val.position);
+                      setShowSellerMapPicker(false);
+                    }}
+                  />
+                )}
+
+                {(modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2 && (
+                  <div className="rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-2.5 text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed">
+                    {isVi
+                      ? 'Phí ship bên ngoài do 2 bên tự thoả thuận và thanh toán trực tiếp với shipper. Sàn không thu hộ hay chịu trách nhiệm cước vận chuyển.'
+                      : 'External shipping fees are paid directly between buyer, seller, and the courier. Platform does not handle shipping fees.'}
+                  </div>
+                )}
+              </div>
+
+              {(modalType === 'deliver' ||
+                modalDeliveryMethod === 2 ||
+                activeModalTx.deliveryMethod === 2) && (
+                <div className="space-y-2.5">
+                  <div>
+                    <label htmlFor="carrier-input" className="block font-bold mb-1">
+                      {isVi
+                        ? 'Đơn vị giao hàng / Người giao (tuỳ chọn)'
+                        : 'Carrier / Courier (optional)'}
+                    </label>
+                    <input
+                      id="carrier-input"
+                      type="text"
+                      value={modalCarrier}
+                      onChange={(e) => setModalCarrier(e.target.value)}
+                      placeholder={isVi ? 'Vd: GrabExpress, Ahamove, Tự giao...' : 'GrabExpress...'}
+                      className="w-full px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="tracking-input" className="block font-bold mb-1">
+                      {isVi
+                        ? 'Mã vận đơn / SĐT tài xế (tuỳ chọn)'
+                        : 'Tracking Code / Driver Phone (optional)'}
+                    </label>
+                    <input
+                      id="tracking-input"
+                      type="text"
+                      value={modalTrackingCode}
+                      onChange={(e) => setModalTrackingCode(e.target.value)}
+                      placeholder={isVi ? 'Vd: GRAB-8421 hoặc 090xxxxxxx' : 'Tracking / phone...'}
+                      className="w-full px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {actionError && (
+                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300">
+                  {actionError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
+              >
+                {isVi ? 'Hủy' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={isSubmittingAction}
+                onClick={() => void handleSellerAcceptOrDeliver()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingAction && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>
+                  {modalType === 'accept'
+                    ? isVi
+                      ? 'Xác nhận duyệt đơn'
+                      : 'Accept Order'
+                    : isVi
+                      ? 'Xác nhận Đang giao'
+                      : 'Mark Delivering'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL 1: DYNAMIC VIETQR PAYMENT */}
       {modalType === 'vietqr' && activeModalTx && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#FAF7F2] dark:border-stone-800">
               <div className="flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />
-                <h3 className="text-base font-bold text-[#2A211B] dark:text-stone-100">
+                <h3 className="text-base font-bold">
                   {isVi ? 'Thanh toán qua VietQR (Napas 247)' : 'VietQR Payment'}
                 </h3>
               </div>
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="p-1 rounded-lg text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -819,11 +1222,10 @@ export default function TransactionsPage() {
 
             <div className="text-center space-y-3">
               <div className="inline-block p-3 bg-white rounded-2xl border-2 border-[#EADBCE] shadow-inner">
-                {/* Dynamic VietQR Image */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getVietQrImageUrl({
-                    accountNo: '0901234567', // STK mẫu hoặc lấy từ Seller bank
+                    accountNo: '0901234567',
                     amount: activeModalTx.amount,
                     memo: `SFM ${activeModalTx.id.substring(0, 8).toUpperCase()}`,
                     accountName: activeModalTx.counterparty.fullName,
@@ -848,27 +1250,20 @@ export default function TransactionsPage() {
                   <strong>{activeModalTx.counterparty.fullName}</strong>
                 </p>
               </div>
-
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 text-left">
-                {isVi
-                  ? 'Sàn hoạt động P2P trực tiếp, không giữ tiền hộ. Sau khi chuyển tiền xong, bạn bấm "Báo đã chuyển khoản" để người bán kiểm tra.'
-                  : 'Platform is direct P2P and holds no funds. Once transferred, click "I have paid" to notify the seller.'}
-              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
               >
                 {isVi ? 'Đóng' : 'Close'}
               </button>
               <button
-                onClick={() => handleConfirmPayment(activeModalTx.id)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#E89650] to-[#F5A764] text-white shadow-xs hover:from-[#DC833B] hover:to-[#EC954B] cursor-pointer"
+                type="button"
+                onClick={() => void handleConfirmPayment(activeModalTx.id)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 cursor-pointer"
               >
                 {isVi ? 'Báo đã chuyển khoản' : 'I have transferred'}
               </button>
@@ -877,22 +1272,20 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* MODAL 2: HANDOVER & AS-IS CODE VERIFICATION */}
+      {/* MODAL 2: HANDOVER & COD INSPECTION */}
       {modalType === 'handover' && activeModalTx && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#FAF7F2] dark:border-stone-800">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-base font-bold text-[#2A211B] dark:text-stone-100">
-                  {isVi ? 'Bàn giao & Đồng kiểm tại chỗ' : 'Handover & Verification'}
+                <h3 className="text-base font-bold">
+                  {isVi ? 'Đồng kiểm & Xác nhận bàn giao' : 'COD Inspection & Handover'}
                 </h3>
               </div>
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="p-1 rounded-lg text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -901,18 +1294,46 @@ export default function TransactionsPage() {
 
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-[#FAF7F2] dark:bg-stone-800 rounded-2xl border border-[#EADBCE] dark:border-stone-700 space-y-1">
-                <p className="font-bold text-[#2A211B] dark:text-stone-100">
-                  {isVi ? 'Nguyên tắc Nguyên trạng (As-Is):' : 'As-Is Condition Rule:'}
+                <p className="font-bold">
+                  {isVi ? 'Kiểm tra hàng trước khi thanh toán COD:' : 'Inspect before paying COD:'}
                 </p>
                 <p className="text-[#7A6D63] dark:text-stone-400 leading-relaxed">
                   {isVi
-                    ? 'Hai bên đồng kiểm sản phẩm trực tiếp. Nhập mã hàng 8 ký tự in trên món đồ để hệ thống đối chiếu chống tráo hàng trước khi hoàn tất.'
-                    : 'Inspect the item together on campus. Enter the 8-character item code to verify authenticity and avoid item swapping.'}
+                    ? 'Khi nhận hàng trực tiếp hoặc từ shipper, hãy kiểm tra đúng sản phẩm rồi xác nhận. Nếu là COD, cả 2 bên xác nhận sẽ tự động đánh dấu Đã thanh toán & Hoàn thành.'
+                    : 'Inspect the item before paying cash. Dual confirmation marks COD as paid and completes the order.'}
                 </p>
-                <p className="text-xs font-mono font-bold text-[#B8652B]">
-                  MÃ HÀNG MONG ĐỢI: {activeModalTx.item.itemCode}
+                <p className="font-mono font-bold text-[#B8652B] dark:text-[#F5A764]">
+                  MÃ HÀNG: {activeModalTx.item.itemCode}
                 </p>
               </div>
+
+              {(activeModalTx.initiator.id || activeModalTx.initiator.userId) === user?.id &&
+                activeModalTx.type !== 2 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHandoverMode('ok')}
+                      className={`p-2.5 rounded-xl border text-left font-semibold cursor-pointer ${
+                        handoverMode === 'ok'
+                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
+                          : 'border-[#EADBCE] dark:border-stone-700'
+                      }`}
+                    >
+                      {isVi ? 'Đồng kiểm OK & Nhận' : 'Inspect OK & Accept'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHandoverMode('reject')}
+                      className={`p-2.5 rounded-xl border text-left font-semibold cursor-pointer ${
+                        handoverMode === 'reject'
+                          ? 'border-rose-600 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'
+                          : 'border-[#EADBCE] dark:border-stone-700'
+                      }`}
+                    >
+                      {isVi ? 'Từ chối nhận hàng' : 'Reject on Inspection'}
+                    </button>
+                  </div>
+                )}
 
               {handoverError && (
                 <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300">
@@ -928,56 +1349,85 @@ export default function TransactionsPage() {
                 </div>
               )}
 
-              <div>
-                <label className="block font-bold text-[#2A211B] dark:text-stone-200 mb-1">
-                  {isVi ? 'Nhập mã hàng 8 ký tự trên món đồ vừa nhận:' : 'Enter 8-character Item Code on received item:'}
-                </label>
-                <input
-                  type="text"
-                  maxLength={8}
-                  value={handoverCode}
-                  onChange={(e) => setHandoverCode(e.target.value.toUpperCase())}
-                  placeholder={activeModalTx.item.itemCode}
-                  className="w-full font-mono uppercase tracking-widest text-center text-base py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-[#F5A764]"
-                />
-              </div>
+              {handoverMode === 'ok' && (
+                <div>
+                  <label className="block font-bold mb-1">
+                    {activeModalTx.type === 2
+                      ? isVi
+                        ? 'Mã hàng 8 ký tự trên món đồ *'
+                        : '8-char Item Code *'
+                      : isVi
+                        ? 'Mã hàng 8 ký tự (tuỳ chọn đối chiếu)'
+                        : '8-char Item Code (optional)'}
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={8}
+                    value={handoverCode}
+                    onChange={(e) => setHandoverCode(e.target.value.toUpperCase())}
+                    placeholder={activeModalTx.item.itemCode}
+                    className="w-full font-mono uppercase tracking-widest text-center text-base py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-[#F5A764]"
+                  />
+                </div>
+              )}
 
               <div>
-                <label className="block font-bold text-[#2A211B] dark:text-stone-200 mb-1">
-                  {isVi ? 'Ghi chú bàn giao (tùy chọn):' : 'Handover note (optional):'}
+                <label className="block font-bold mb-1">
+                  {handoverMode === 'reject'
+                    ? isVi
+                      ? 'Lý do từ chối khi đồng kiểm *'
+                      : 'Rejection reason *'
+                    : isVi
+                      ? 'Ghi chú bàn giao (tuỳ chọn)'
+                      : 'Handover note (optional)'}
                 </label>
                 <input
                   type="text"
                   maxLength={255}
                   value={handoverNote}
                   onChange={(e) => setHandoverNote(e.target.value)}
-                  placeholder={isVi ? 'Hàng đúng mô tả, hoạt động tốt' : 'Item in good condition'}
-                  className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-[#F5A764]"
+                  placeholder={
+                    handoverMode === 'reject'
+                      ? isVi
+                        ? 'Vd: Hàng móp méo / sai màu...'
+                        : 'Damaged / wrong item...'
+                      : isVi
+                        ? 'Đã kiểm tra hàng OK và thanh toán COD'
+                        : 'Checked OK and paid COD'
+                  }
+                  className="w-full py-2 px-3 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-[#F5A764]"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
               >
-                {isVi ? 'Hủy bỏ' : 'Cancel'}
+                {isVi ? 'Đóng' : 'Close'}
               </button>
               <button
-                onClick={handleConfirmHandover}
-                disabled={isSubmittingAction || !handoverCode.trim()}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer disabled:opacity-50"
+                type="button"
+                onClick={() => void handleConfirmHandover()}
+                disabled={isSubmittingAction}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50 ${
+                  handoverMode === 'reject'
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
               >
-                {isSubmittingAction ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4" />
-                )}
-                <span>{isVi ? 'Xác nhận đã nhận đúng đồ' : 'Confirm & Complete'}</span>
+                {isSubmittingAction && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>
+                  {handoverMode === 'reject'
+                    ? isVi
+                      ? 'Xác nhận từ chối nhận'
+                      : 'Confirm Rejection'
+                    : isVi
+                      ? 'Xác nhận hoàn tất'
+                      : 'Confirm Handover'}
+                </span>
               </button>
             </div>
           </div>
@@ -994,10 +1444,8 @@ export default function TransactionsPage() {
                 {isVi ? 'Hủy giao dịch' : 'Cancel Transaction'}
               </h3>
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="p-1 rounded-lg text-[#7A6D63] hover:bg-[#FAF7F2] cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -1007,35 +1455,36 @@ export default function TransactionsPage() {
             <div className="space-y-2 text-xs">
               <p className="text-[#7A6D63] dark:text-stone-300">
                 {isVi
-                  ? 'Khi hủy đơn, sản phẩm sẽ được mở lại trạng thái "Đang bán" trên sàn.'
-                  : 'When cancelled, the item will return to active listing status.'}
+                  ? 'Khi hủy đơn, số lượng sản phẩm sẽ được mở lại để người khác đặt mua.'
+                  : 'When cancelled, item availability will be restored.'}
               </p>
               <div>
-                <label className="block font-bold text-[#2A211B] dark:text-stone-200 mb-1">
+                <label className="block font-bold mb-1">
                   {isVi ? 'Lý do hủy (không bắt buộc):' : 'Reason for cancellation (optional):'}
                 </label>
                 <textarea
                   rows={3}
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder={isVi ? 'Vd: Không liên lạc được, bận đột xuất...' : 'e.g., Schedule conflict...'}
-                  className="w-full p-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 text-[#2A211B] dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-[#F5A764] resize-none"
+                  placeholder={
+                    isVi ? 'Vd: Không liên lạc được, bận đột xuất...' : 'e.g., Schedule conflict...'
+                  }
+                  className="w-full p-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-[#F5A764] resize-none"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
               <button
-                onClick={() => {
-                  setActiveModalTx(null);
-                  setModalType(null);
-                }}
+                type="button"
+                onClick={closeModal}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] cursor-pointer"
               >
                 {isVi ? 'Quay lại' : 'Back'}
               </button>
               <button
-                onClick={handleCancelOrder}
+                type="button"
+                onClick={() => void handleCancelOrder()}
                 disabled={isSubmittingAction}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition cursor-pointer disabled:opacity-50"
               >

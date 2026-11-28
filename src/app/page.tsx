@@ -25,6 +25,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useCartStore } from '@/lib/cart-store';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { itemsApi } from '@/lib/items-api';
+import { useItemInteractionStore } from '@/lib/item-interaction-store';
 import { ItemDetailDto, ItemSearchQuery, ItemSummaryDto } from '@/types/item';
 
 function mapItemSummaryToProduct(item: ItemSummaryDto): ProductItem {
@@ -40,6 +41,10 @@ function mapItemSummaryToProduct(item: ItemSummaryDto): ProductItem {
       item.primaryImageUrl ||
       'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80',
     category: item.categorySlug,
+    color: item.color,
+    quantity: item.quantity,
+    favoriteCount: item.favoriteCount,
+    isFavorited: item.isFavorited,
   };
 }
 
@@ -56,6 +61,10 @@ function mapDetailToProduct(item: ItemDetailDto): ProductItem {
       (item.images && item.images.length > 0 ? item.images[0].imageUrl : null) ||
       'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80',
     category: item.category?.slug || 'other',
+    color: item.color,
+    quantity: item.quantity,
+    favoriteCount: item.favoriteCount,
+    isFavorited: item.isFavorited,
   };
 }
 
@@ -102,6 +111,13 @@ function HomeContent() {
       .then((res) => {
         if (!isCancelled) {
           if (res && Array.isArray(res.items)) {
+            useItemInteractionStore.getState().seedFavorites(
+              res.items.map((it) => ({
+                id: it.id,
+                isFavorited: it.isFavorited,
+                favoriteCount: it.favoriteCount,
+              }))
+            );
             const mapped = res.items.map(mapItemSummaryToProduct);
             setProducts(mapped);
           } else {
@@ -300,6 +316,11 @@ function HomeContent() {
                 key={product.id}
                 product={product}
                 onContact={handleContactExchange}
+                onAddToCart={handleAddToCart}
+                onAuthRequired={(prod) => {
+                  setSelectedProduct(prod);
+                  setIsAuthRequiredOpen(true);
+                }}
               />
             ))}
           </div>

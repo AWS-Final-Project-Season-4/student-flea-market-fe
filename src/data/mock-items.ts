@@ -14,6 +14,10 @@ export interface ProductItem {
     location: string;
     imageUrl: string;
     category: string;
+    color?: string | null;
+    quantity?: number;
+    favoriteCount?: number;
+    isFavorited?: boolean;
 }
 
 export const CATEGORIES: CategoryItem[] = [

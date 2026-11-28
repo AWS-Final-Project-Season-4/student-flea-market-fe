@@ -19,6 +19,8 @@ export interface ItemSummaryDto {
   slug: string;
   itemCode: string;
   price: number;
+  color?: string | null;
+  quantity?: number;
   condition: number;
   conditionName: string;
   isExchangeEnabled: boolean;
@@ -42,6 +44,8 @@ export interface ItemDetailDto {
   slug: string;
   itemCode: string;
   description?: string | null;
+  color?: string | null;
+  quantity?: number;
   price: number;
   condition: number;
   conditionName: string;
@@ -56,6 +60,8 @@ export interface ItemDetailDto {
     avatarUrl?: string | null;
     schoolName?: string | null;
     studentCode?: string | null;
+    ratingAverage?: number | null;
+    ratingCount?: number;
     memberSince: string;
   };
   images: Array<{
@@ -74,6 +80,8 @@ export interface CreateItemRequestDto {
   title: string;
   categoryId: number;
   description?: string | null;
+  color?: string | null;
+  quantity?: number;
   price: number;
   condition: number; // 1: New, 2: LikeNew, 3: Good, 4: Fair, 5: Poor
   isExchangeEnabled: boolean;

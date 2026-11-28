@@ -63,6 +63,8 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [price, setPrice] = useState('50000');
   const [isFree, setIsFree] = useState(false);
   const [condition, setCondition] = useState<number>(2); // 2: LikeNew
+  const [color, setColor] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [isExchangeEnabled, setIsExchangeEnabled] = useState(true);
   const [location, setLocation] = useState('KTX Khu A - Sảnh chính');
   const [description, setDescription] = useState('');
@@ -124,6 +126,8 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     setPrice('50000');
     setIsFree(false);
     setCondition(2);
+    setColor('');
+    setQuantity('1');
     setIsExchangeEnabled(true);
     setLocation('KTX Khu A - Sảnh chính');
     setDescription('');
@@ -229,11 +233,14 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     }
 
     const numericPrice = isFree ? 0 : parseFloat(price.replace(/[^0-9]/g, '')) || 0;
+    const numericQuantity = Math.max(1, Math.min(999, parseInt(quantity, 10) || 1));
 
     const payload: CreateItemRequestDto = {
       title: title.trim(),
       categoryId: selectedCategoryId,
       description: description.trim() || undefined,
+      color: color.trim() || undefined,
+      quantity: numericQuantity,
       price: numericPrice,
       condition,
       isExchangeEnabled,
@@ -605,6 +612,50 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                       <span>{language === 'vi' ? 'Bật cho phép đổi đồ' : 'Allow Item Exchange'}</span>
                     </span>
                   </label>
+                </div>
+              </div>
+
+              {/* 4b. Color & Quantity */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="post-item-color"
+                    className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1"
+                  >
+                    {language === 'vi' ? 'Màu sắc / Phân loại' : 'Color / Variant'}
+                  </label>
+                  <input
+                    id="post-item-color"
+                    type="text"
+                    maxLength={80}
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    placeholder={
+                      language === 'vi'
+                        ? 'Vd: Đen nhám, Bìa ngẫu nhiên...'
+                        : 'E.g. Matte Black, Assorted...'
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="post-item-quantity"
+                    className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1"
+                  >
+                    {language === 'vi' ? 'Số lượng *' : 'Quantity *'}
+                  </label>
+                  <input
+                    id="post-item-quantity"
+                    type="number"
+                    min={1}
+                    max={999}
+                    required
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
+                  />
                 </div>
               </div>
 

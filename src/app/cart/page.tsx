@@ -3,19 +3,27 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Trash2, ArrowLeft, Loader2, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useCartStore } from '@/lib/cart-store';
+import { transactionsApi } from '@/lib/transactions-api';
 
 export default function CartPage() {
+    const router = useRouter();
     const { user, isAuthenticated, isInitialized, initAuth } =
         useAuthStore();
 
     const carts = useCartStore((state) => state.carts);
+    const updateQuantity = useCartStore((state) => state.updateQuantity);
     const removeFromCart = useCartStore((state) => state.removeFromCart);
 
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [prevUserId, setPrevUserId] = useState(user?.id);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<1 | 2>(1);
+    const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     if (prevUserId !== user?.id) {
         setPrevUserId(user?.id);
@@ -39,7 +47,8 @@ export default function CartPage() {
 
     const totalPrice = selectedItems.reduce((total, item) => {
         const price = Number(item.price.replace(/[^0-9]/g, ''));
-        return total + price;
+        const qty = item.selectedQuantity ?? 1;
+        return total + price * qty;
     }, 0);
 
     const toggleSelect = (productId: string) => {
@@ -68,11 +77,41 @@ export default function CartPage() {
 
     const handleCheckout = () => {
         if (selectedItems.length === 0) return;
+        setCheckoutError(null);
+        setIsCheckoutOpen(true);
+    };
 
-        alert(
-            `Bạn đã chọn ${selectedItems.length} sản phẩm.\n` +
-            `Tổng tiền: ${totalPrice.toLocaleString('vi-VN')} VND`
-        );
+    const handleConfirmCheckout = async () => {
+        if (!user || selectedItems.length === 0 || isSubmittingCheckout) return;
+        setCheckoutError(null);
+        setIsSubmittingCheckout(true);
+
+        try {
+            for (const item of selectedItems) {
+                if (!item.itemCode) {
+                    throw new Error(`Sản phẩm "${item.title}" thiếu mã hàng, vui lòng xóa và thêm lại.`);
+                }
+                await transactionsApi.createPurchaseDirect({
+                    itemCode: item.itemCode,
+                    quantity: item.selectedQuantity ?? 1,
+                    meetingLocation: item.location,
+                    paymentMethod,
+                });
+                removeFromCart(user.id, item.id);
+                setSelectedIds((prev) => prev.filter((id) => id !== item.id));
+            }
+            setIsCheckoutOpen(false);
+            router.push('/transactions');
+        } catch (err: unknown) {
+            const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+            setCheckoutError(
+                apiErr?.response?.data?.message ||
+                apiErr?.message ||
+                'Không thể tạo đơn hàng. Vui lòng thử lại.'
+            );
+        } finally {
+            setIsSubmittingCheckout(false);
+        }
     };
 
     if (!isInitialized) {
@@ -175,25 +214,68 @@ export default function CartPage() {
                                         className="w-5 h-5 shrink-0 accent-[#855A3C] cursor-pointer"
                                     />
 
-                                    <img
-                                        src={product.imageUrl}
-                                        alt={product.title}
-                                        className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 object-cover rounded-xl"
-                                    />
+                                    <Link href={`/items/${product.id}`} className="shrink-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={product.imageUrl}
+                                            alt={product.title}
+                                            className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl"
+                                        />
+                                    </Link>
 
                                     <div className="flex-1 min-w-0">
 
-                                        <h2 className="font-bold truncate">
-                                            {product.title}
-                                        </h2>
+                                        <Link href={`/items/${product.id}`} className="hover:underline">
+                                            <h2 className="font-bold truncate">
+                                                {product.title}
+                                            </h2>
+                                        </Link>
 
                                         <p className="text-sm text-stone-500 mt-1">
                                             {product.location}
                                         </p>
 
-                                        <p className="font-bold text-[#7D5435] dark:text-[#E5C9A8] mt-2">
-                                            {product.price}
-                                        </p>
+                                        <div className="flex flex-wrap items-center gap-3 mt-2">
+                                            <p className="font-bold text-[#7D5435] dark:text-[#E5C9A8]">
+                                                {product.price}
+                                            </p>
+                                            <div className="inline-flex items-center border border-stone-200 dark:border-stone-700 rounded-lg overflow-hidden text-xs">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateQuantity(
+                                                            user.id,
+                                                            product.id,
+                                                            Math.max(1, (product.selectedQuantity ?? 1) - 1)
+                                                        )
+                                                    }
+                                                    aria-label={`Giảm số lượng ${product.title}`}
+                                                    className="px-2 py-1 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="px-2.5 py-1 font-semibold tabular-nums">
+                                                    {product.selectedQuantity ?? 1}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        updateQuantity(
+                                                            user.id,
+                                                            product.id,
+                                                            Math.min(
+                                                                product.quantity ?? 999,
+                                                                (product.selectedQuantity ?? 1) + 1
+                                                            )
+                                                        )
+                                                    }
+                                                    aria-label={`Tăng số lượng ${product.title}`}
+                                                    className="px-2 py-1 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
 
                                     </div>
 
@@ -265,6 +347,137 @@ export default function CartPage() {
                 )}
 
             </main>
+
+            {/* Modal Xác nhận đặt mua từ Giỏ hàng (giống Mua ngay) */}
+            {isCheckoutOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs">
+                    <div className="bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-800 rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+                        <button
+                            type="button"
+                            onClick={() => setIsCheckoutOpen(false)}
+                            aria-label="Đóng"
+                            className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+
+                        <h2 className="font-serif text-xl font-bold mb-1">
+                            Xác nhận đặt mua ({selectedItems.length} sản phẩm)
+                        </h2>
+                        <p className="text-xs text-[#6D5D52] dark:text-stone-400 mb-4">
+                            Đơn giao dịch sẽ được gửi tới người bán và theo dõi tại trang Giao dịch.
+                        </p>
+
+                        <div className="rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 p-3.5 space-y-2.5 mb-4 text-xs max-h-56 overflow-y-auto">
+                            {selectedItems.map((item) => {
+                                const unitPrice = Number(item.price.replace(/[^0-9]/g, ''));
+                                const qty = item.selectedQuantity ?? 1;
+                                const lineTotal = unitPrice * qty;
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="flex items-start justify-between gap-3 pb-2 border-b border-[#EADBCE]/60 dark:border-stone-700/60 last:border-b-0 last:pb-0"
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="font-semibold truncate">{item.title}</p>
+                                            <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 truncate">
+                                                Location: {item.location} • SL: x{qty}
+                                            </p>
+                                        </div>
+                                        <span className="font-bold text-[#C46A28] dark:text-[#F5A764] shrink-0 tabular-nums">
+                                            {lineTotal === 0
+                                                ? 'Miễn phí'
+                                                : `${lineTotal.toLocaleString('vi-VN')} ₫`}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex justify-between items-center px-1 mb-3">
+                            <span className="text-xs font-semibold text-[#6D5D52] dark:text-stone-300">
+                                Tổng tiền hàng:
+                            </span>
+                            <span className="text-lg font-extrabold text-[#C46A28] dark:text-[#F5A764] tabular-nums">
+                                {totalPrice === 0
+                                    ? '0 VND (Miễn phí)'
+                                    : `${totalPrice.toLocaleString('vi-VN')} ₫`}
+                            </span>
+                        </div>
+
+                        <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mb-4 leading-relaxed">
+                            Hình thức giao nhận (gặp trực tiếp hay đặt ship ngoài) và điểm hẹn cuối cùng sẽ do người bán chọn &amp; cập nhật trên đơn sau khi hai bên chốt qua chat.
+                        </p>
+
+                        {totalPrice > 0 && (
+                            <div className="space-y-2 mb-4">
+                                <p className="text-xs font-semibold text-[#6D5D52] dark:text-stone-300">
+                                    Phương thức thanh toán
+                                </p>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <label
+                                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
+                                            paymentMethod === 1
+                                                ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
+                                                : 'border-[#EADBCE] dark:border-stone-700'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="cartPaymentMethod"
+                                            checked={paymentMethod === 1}
+                                            onChange={() => setPaymentMethod(1)}
+                                            className="accent-[#C46A28]"
+                                        />
+                                        <span>Tiền mặt khi đồng kiểm &amp; nhận hàng (COD)</span>
+                                    </label>
+                                    <label
+                                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
+                                            paymentMethod === 2
+                                                ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
+                                                : 'border-[#EADBCE] dark:border-stone-700'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="cartPaymentMethod"
+                                            checked={paymentMethod === 2}
+                                            onChange={() => setPaymentMethod(2)}
+                                            className="accent-[#C46A28]"
+                                        />
+                                        <span>Chuyển khoản QR ngân hàng</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {checkoutError && (
+                            <div className="mb-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-3 text-xs text-rose-700 dark:text-rose-300">
+                                {checkoutError}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsCheckoutOpen(false)}
+                                className="flex-1 py-2.5 rounded-xl border border-[#EADBCE] dark:border-stone-700 text-xs font-semibold hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isSubmittingCheckout}
+                                onClick={() => void handleConfirmCheckout()}
+                                className="flex-1 py-2.5 rounded-xl bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:hover:bg-[#E89650] dark:text-stone-950 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                            >
+                                {isSubmittingCheckout && <Loader2 className="w-4 h-4 animate-spin" />}
+                                <span>Xác nhận mua hàng</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

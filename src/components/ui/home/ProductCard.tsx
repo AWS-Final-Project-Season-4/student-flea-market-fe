@@ -2,14 +2,19 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Heart, MapPin, ShoppingCart } from 'lucide-react';
 import { ProductItem, formatItemCodeDisplay } from '@/data/mock-items';
 import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
+import { useAuthStore } from '@/lib/auth-store';
+import { favoritesApi } from '@/lib/favorites-api';
+import { useItemInteractionStore } from '@/lib/item-interaction-store';
 
 interface ProductCardProps {
     product: ProductItem;
     onContact?: (product: ProductItem) => void;
     onAddToCart?: (product: ProductItem) => void;
+    onAuthRequired?: (product: ProductItem) => void;
 }
 
 export const formatCardCondition = (cond: string, lang: 'vi' | 'en') => {
@@ -32,10 +37,51 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     product,
     onContact,
     onAddToCart,
+    onAuthRequired,
 }) => {
-    const [isLiked, setIsLiked] = useState(false);
+    const [isTogglingFav, setIsTogglingFav] = useState(false);
     const { language } = useLanguageStore();
     const t = DICTIONARY[language];
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const favEntry = useItemInteractionStore((s) => s.favorites[product.id]);
+    const setFavorite = useItemInteractionStore((s) => s.setFavorite);
+
+    const isLiked = favEntry ? favEntry.isFavorited : Boolean(product.isFavorited);
+    const favCount = favEntry ? favEntry.favoriteCount : (product.favoriteCount ?? 0);
+
+    const handleToggleFavorite = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isAuthenticated) {
+            onAuthRequired?.(product);
+            return;
+        }
+
+        if (isTogglingFav) return;
+        const optimisticLiked = !isLiked;
+        const optimisticCount = Math.max(0, favCount + (optimisticLiked ? 1 : -1));
+        setFavorite(product.id, {
+            isFavorited: optimisticLiked,
+            favoriteCount: optimisticCount,
+        });
+        setIsTogglingFav(true);
+
+        try {
+            const res = await favoritesApi.toggle(product.id);
+            setFavorite(product.id, {
+                isFavorited: res.isFavorited,
+                favoriteCount: res.favoriteCount,
+            });
+        } catch {
+            setFavorite(product.id, {
+                isFavorited: isLiked,
+                favoriteCount: favCount,
+            });
+        } finally {
+            setIsTogglingFav(false);
+        }
+    };
 
     return (
         <div className="group bg-white dark:bg-stone-900 rounded-2xl border border-slate-100 dark:border-stone-800 p-2.5 sm:p-3 shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
@@ -44,17 +90,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div>
                 <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-stone-800 mb-3">
 
-                    {/* Product Thumbnail */}
-                    <img
-                        src={product.imageUrl}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-                        loading="lazy"
-                    />
+                    {/* Product Thumbnail Link */}
+                    <Link
+                        href={`/items/${product.id}`}
+                        className="block w-full h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C46A28]"
+                        aria-label={product.title}
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={product.imageUrl}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
+                            loading="lazy"
+                        />
+                    </Link>
 
                     {/* Floating Condition Badge */}
                     <div
-                        className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-white shadow-xs ${
+                        className={`pointer-events-none absolute top-2 left-2 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-white shadow-xs ${
                             product.conditionVariant === 'orange'
                                 ? 'bg-[#855A3C]'
                                 : 'bg-emerald-700/95'
@@ -66,10 +119,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     {/* Favorite Button */}
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setIsLiked(!isLiked);
-                        }}
+                        disabled={isTogglingFav}
+                        onClick={handleToggleFavorite}
                         aria-pressed={isLiked}
                         aria-label={
                             language === 'vi'
@@ -80,7 +131,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                                     ? 'Remove from favorites'
                                     : 'Save to favorite list')
                         }
-                        className="absolute top-1.5 right-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-white/90 dark:bg-stone-900/90 backdrop-blur-xs hover:bg-white dark:hover:bg-stone-900 text-slate-600 dark:text-stone-300 hover:text-rose-500 shadow-xs transition-colors cursor-pointer"
+                        className="absolute top-1.5 right-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full bg-white/90 dark:bg-stone-900/90 backdrop-blur-xs hover:bg-white dark:hover:bg-stone-900 text-slate-600 dark:text-stone-300 hover:text-rose-500 shadow-xs transition-colors cursor-pointer disabled:opacity-60"
                     >
                         <Heart
                             aria-hidden="true"
@@ -97,12 +148,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <div className="space-y-1.5">
 
                     {/* Title */}
-                    <h3
-                        title={product.title}
-                        className="font-serif font-bold text-sm sm:text-base text-[#2A211B] dark:text-stone-100 line-clamp-1 group-hover:text-[#7D563A] dark:group-hover:text-[#E5C9A8] transition-colors"
-                    >
-                        {product.title}
-                    </h3>
+                    <Link href={`/items/${product.id}`} className="block">
+                        <h3
+                            title={product.title}
+                            className="font-serif font-bold text-sm sm:text-base text-[#2A211B] dark:text-stone-100 line-clamp-1 group-hover:text-[#7D563A] dark:group-hover:text-[#E5C9A8] transition-colors"
+                        >
+                            {product.title}
+                        </h3>
+                    </Link>
 
                     {/* Price and Item Code */}
                     <div className="flex items-center justify-between gap-2">
