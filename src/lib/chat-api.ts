@@ -100,15 +100,109 @@ export const chatApi = {
     }
   },
 
-  async sendMessageRest(conversationId: string, content: string): Promise<MessageDto> {
+  async sendMessageRest(
+    conversationId: string,
+    content: string,
+    replyToMessageId?: string | null
+  ): Promise<MessageDto> {
     try {
       const response = await apiClient.post<MessageDto>(
         `/Chat/conversations/${conversationId}/messages`,
-        { content }
+        { content, ...(replyToMessageId ? { replyToMessageId } : {}) }
       );
       return response.data;
     } catch (err: unknown) {
       throw new Error(extractChatErrorMessage(err, 'Unable to send message.'));
+    }
+  },
+
+  async editMessage(
+    conversationId: string,
+    messageId: string,
+    content: string
+  ): Promise<MessageDto> {
+    try {
+      const response = await apiClient.put<MessageDto>(
+        `/Chat/conversations/${conversationId}/messages/${messageId}`,
+        { content }
+      );
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to edit message.'));
+    }
+  },
+
+  async recallMessage(conversationId: string, messageId: string): Promise<MessageDto> {
+    try {
+      const response = await apiClient.delete<MessageDto>(
+        `/Chat/conversations/${conversationId}/messages/${messageId}`
+      );
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to recall message.'));
+    }
+  },
+
+  async pinMessage(conversationId: string, messageId: string): Promise<MessageDto> {
+    try {
+      const response = await apiClient.post<MessageDto>(
+        `/Chat/conversations/${conversationId}/messages/${messageId}/pin`
+      );
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to pin message.'));
+    }
+  },
+
+  async unpinMessage(conversationId: string, messageId: string): Promise<MessageDto> {
+    try {
+      const response = await apiClient.delete<MessageDto>(
+        `/Chat/conversations/${conversationId}/messages/${messageId}/pin`
+      );
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to unpin message.'));
+    }
+  },
+
+  async listPinnedMessages(conversationId: string): Promise<MessageDto[]> {
+    try {
+      const response = await apiClient.get<MessageDto[]>(
+        `/Chat/conversations/${conversationId}/pinned`
+      );
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to load pinned messages.'));
+    }
+  },
+
+  async reactToMessage(
+    conversationId: string,
+    messageId: string,
+    emoji: string
+  ): Promise<MessageDto> {
+    try {
+      const response = await apiClient.post<MessageDto>(
+        `/Chat/conversations/${conversationId}/messages/${messageId}/reactions`,
+        { emoji }
+      );
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to react to message.'));
+    }
+  },
+
+  async reportMessage(payload: {
+    conversationId: string;
+    messageId: string;
+    reason: number;
+    description: string;
+  }): Promise<{ id: string }> {
+    try {
+      const response = await apiClient.post<{ id: string }>('/Reports', payload);
+      return response.data;
+    } catch (err: unknown) {
+      throw new Error(extractChatErrorMessage(err, 'Unable to submit message report.'));
     }
   },
 

@@ -383,6 +383,15 @@ export default function AdminReportsPage() {
                     {rpt.description}
                   </p>
 
+                  {rpt.messageEvidence && (
+                    <p className="text-xs text-[#6D5D52] dark:text-stone-300 bg-rose-50/70 dark:bg-rose-950/30 p-2.5 rounded-xl border border-rose-200/80 dark:border-rose-900/60 break-words">
+                      <strong className="text-rose-800 dark:text-rose-300">
+                        {isVi ? 'Tin nhắn vi phạm:' : 'Reported message:'}
+                      </strong>{' '}
+                      &ldquo;{rpt.messageEvidence}&rdquo;
+                    </p>
+                  )}
+
                   <div className="flex flex-wrap gap-4 text-[11px] text-[#6D5D52] dark:text-stone-400">
                     <span>
                       {isVi ? 'Người báo cáo:' : 'Reporter:'}{' '}

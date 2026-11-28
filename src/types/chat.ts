@@ -4,6 +4,21 @@
 //                                                       //
 ///////////////////////////////////////////////////////////
 
+export interface ReplyPreviewDto {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content?: string | null;
+  isDeleted: boolean;
+}
+
+export interface MessageReactionDto {
+  userId: string;
+  userName: string;
+  emoji: string;
+  reactedAt: string;
+}
+
 export interface MessageDto {
   id: string;
   conversationId: string;
@@ -15,6 +30,14 @@ export interface MessageDto {
   isRead: boolean;
   sentAt: string;
   readAt?: string | null;
+  editedAt?: string | null;
+  isPinned: boolean;
+  pinnedAt?: string | null;
+  pinnedById?: string | null;
+  pinnedByName?: string | null;
+  replyToMessageId?: string | null;
+  replyTo?: ReplyPreviewDto | null;
+  reactions?: MessageReactionDto[];
 }
 
 export interface ChatPartyDto {

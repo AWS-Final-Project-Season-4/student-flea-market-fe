@@ -99,6 +99,8 @@ export interface ModerationReportDto {
   itemCode?: string | null;
   transactionId?: string | null;
   conversationId?: string | null;
+  messageId?: string | null;
+  messageEvidence?: string | null;
   transactionCompleted?: boolean | null;
   adminNote?: string | null;
   resolvedById?: string | null;

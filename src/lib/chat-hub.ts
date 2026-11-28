@@ -27,6 +27,7 @@ function resolveChatHubUrl(): string {
 
 export interface ChatHubHandlers {
   onReceiveMessage?: (msg: MessageDto) => void;
+  onMessageUpdated?: (msg: MessageDto) => void;
   onMessageRead?: (evt: MessageReadEvent) => void;
   onConversationUpdated?: (evt: ConversationUpdatedEvent) => void;
   onNotifyUnreadCount?: (evt: UnreadCountEvent) => void;
@@ -49,8 +50,16 @@ const signalRLogger: signalR.ILogger = {
 };
 
 function attachCoreHubBindings(conn: signalR.HubConnection) {
+  conn.on('JoinedConversation', () => {
+    // Server acknowledgment on room join
+  });
+
   conn.on('ReceiveMessage', (msg: MessageDto) => {
     activeListeners.forEach((h) => h.onReceiveMessage?.(msg));
+  });
+
+  conn.on('MessageUpdated', (msg: MessageDto) => {
+    activeListeners.forEach((h) => h.onMessageUpdated?.(msg));
   });
 
   conn.on('MessageRead', (evt: MessageReadEvent) => {
@@ -188,9 +197,60 @@ export async function leaveConversationHub(conversationId: string): Promise<void
   }
 }
 
-export async function sendMessageViaHub(conversationId: string, content: string): Promise<void> {
+export async function sendMessageViaHub(
+  conversationId: string,
+  content: string,
+  replyToMessageId?: string | null
+): Promise<void> {
   if (connection && connection.state === signalR.HubConnectionState.Connected) {
-    await connection.invoke('SendMessage', conversationId, content);
+    await connection.invoke('SendMessage', conversationId, content, replyToMessageId ?? null);
+    return;
+  }
+  throw new Error('HUB_NOT_CONNECTED');
+}
+
+export async function editMessageViaHub(
+  conversationId: string,
+  messageId: string,
+  content: string
+): Promise<void> {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    await connection.invoke('EditMessage', conversationId, messageId, content);
+    return;
+  }
+  throw new Error('HUB_NOT_CONNECTED');
+}
+
+export async function recallMessageViaHub(
+  conversationId: string,
+  messageId: string
+): Promise<void> {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    await connection.invoke('RecallMessage', conversationId, messageId);
+    return;
+  }
+  throw new Error('HUB_NOT_CONNECTED');
+}
+
+export async function pinMessageViaHub(
+  conversationId: string,
+  messageId: string,
+  isPinned: boolean
+): Promise<void> {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    await connection.invoke('PinMessage', conversationId, messageId, isPinned);
+    return;
+  }
+  throw new Error('HUB_NOT_CONNECTED');
+}
+
+export async function reactToMessageViaHub(
+  conversationId: string,
+  messageId: string,
+  emoji: string
+): Promise<void> {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    await connection.invoke('ReactToMessage', conversationId, messageId, emoji);
     return;
   }
   throw new Error('HUB_NOT_CONNECTED');
