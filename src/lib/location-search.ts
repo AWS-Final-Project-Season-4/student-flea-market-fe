@@ -36,6 +36,8 @@ export async function searchPhotonAddresses(
   url.searchParams.set('limit', '5');
   url.searchParams.set('lat', '10.8231');
   url.searchParams.set('lon', '106.6297');
+  // Photon has no Vietnamese; without this it follows Accept-Language (e.g. fr -> "Hồ Chí Minh-Ville").
+  url.searchParams.set('lang', 'default');
 
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error('Address search failed');

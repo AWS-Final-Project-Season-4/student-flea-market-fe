@@ -47,18 +47,32 @@ async function compressBillImage(file: File): Promise<string> {
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const maxDim = 800;
-        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        // BE rejects ProofImageUrl longer than 350_000 chars; keep a safety margin.
+        const maxLength = 340_000;
         const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('Không thể xử lý ảnh.'));
           return;
         }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
+        let maxDim = 800;
+        let quality = 0.75;
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          ctx.fillStyle = '#ffffff'; // transparent PNG -> white, not black, in JPEG
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          if (dataUrl.length <= maxLength) {
+            resolve(dataUrl);
+            return;
+          }
+          if (quality > 0.5) quality -= 0.1;
+          else maxDim = Math.round(maxDim * 0.8);
+        }
+        reject(new Error('Ảnh bill quá lớn, vui lòng chọn ảnh khác.'));
       };
       img.onerror = () => reject(new Error('File ảnh không hợp lệ.'));
       img.src = String(reader.result);
