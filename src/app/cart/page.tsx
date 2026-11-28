@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ShoppingCart, Trash2, ArrowLeft, Loader2, X } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useCartStore } from '@/lib/cart-store';
+import { itemsApi } from '@/lib/items-api';
 import { transactionsApi } from '@/lib/transactions-api';
 
 export default function CartPage() {
@@ -23,6 +24,7 @@ export default function CartPage() {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [cleanupNotice, setCleanupNotice] = useState<string | null>(null);
 
     if (prevUserId !== user?.id) {
         setPrevUserId(user?.id);
@@ -32,6 +34,55 @@ export default function CartPage() {
     useEffect(() => {
         initAuth();
     }, [initAuth]);
+
+    useEffect(() => {
+        if (!isAuthenticated || !user) return;
+        const currentItems = useCartStore.getState().carts[user.id] ?? [];
+        if (currentItems.length === 0) return;
+
+        let cancelled = false;
+
+        Promise.allSettled(
+            currentItems.map(async (cartItem) => {
+                try {
+                    const detail = await itemsApi.getItemById(cartItem.id);
+                    const unavailable = detail.status !== 1 || (detail.quantity ?? 1) <= 0;
+                    return { id: cartItem.id, remove: unavailable, maxQty: detail.quantity ?? 1 };
+                } catch (err: unknown) {
+                    const status = (err as { response?: { status?: number } })?.response?.status;
+                    return { id: cartItem.id, remove: status === 404, maxQty: cartItem.quantity ?? 1 };
+                }
+            })
+        ).then((results) => {
+            if (cancelled) return;
+            let removedCount = 0;
+            for (const r of results) {
+                if (r.status === 'fulfilled') {
+                    if (r.value.remove) {
+                        removeFromCart(user.id, r.value.id);
+                        setSelectedIds((prev) => prev.filter((id) => id !== r.value.id));
+                        removedCount++;
+                    } else {
+                        const existing = useCartStore
+                            .getState()
+                            .carts[user.id]?.find((x) => x.id === r.value.id);
+                        if (existing && (existing.selectedQuantity ?? 1) > r.value.maxQty) {
+                            updateQuantity(user.id, r.value.id, r.value.maxQty);
+                        }
+                    }
+                }
+            }
+            if (removedCount > 0) {
+                setCleanupNotice(
+                    `Đã tự động dọn ${removedCount} sản phẩm đã bán / hết hàng khỏi giỏ hàng.`
+                );
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated, user, removeFromCart, updateQuantity]);
 
     const items = isAuthenticated && user
         ? carts[user.id] ?? []
@@ -148,6 +199,19 @@ export default function CartPage() {
                     <ShoppingCart className="w-8 h-8" />
                     Giỏ hàng ({items.length})
                 </h1>
+
+                {cleanupNotice && (
+                    <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
+                        <span>{cleanupNotice}</span>
+                        <button
+                            type="button"
+                            onClick={() => setCleanupNotice(null)}
+                            className="font-semibold hover:underline cursor-pointer"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                )}
 
                 {items.length === 0 ? (
                     <div className="bg-white dark:bg-stone-900 rounded-2xl p-12 text-center">

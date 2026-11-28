@@ -67,6 +67,7 @@ export default function ProductDetailPage() {
   const isVi = language === 'vi';
   const { user, isAuthenticated, initAuth } = useAuthStore();
   const addToCart = useCartStore((s) => s.addToCart);
+  const removeFromCart = useCartStore((s) => s.removeFromCart);
 
   const favEntry = useItemInteractionStore((s) => (itemId ? s.favorites[itemId] : undefined));
   const setFavorite = useItemInteractionStore((s) => s.setFavorite);
@@ -270,6 +271,9 @@ export default function ProductDetailPage() {
         meetingLocation: item.location,
         paymentMethod: 1,
       });
+      if (user) {
+        removeFromCart(user.id, item.id);
+      }
       setIsBuyNowOpen(false);
       router.push('/transactions');
     } catch (err: unknown) {

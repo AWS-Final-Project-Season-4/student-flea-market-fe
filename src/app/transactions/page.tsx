@@ -26,6 +26,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useCartStore } from '@/lib/cart-store';
 import { useLanguageStore } from '@/lib/language-store';
 import { chatApi } from '@/lib/chat-api';
 import {
@@ -38,8 +39,7 @@ import {
   ExchangeRequestDto,
   exchangeApi,
 } from '@/lib/exchange-api';
-import AddressPicker from '@/components/ui/home/AddressPicker';
-import type { AddressPosition } from '@/components/ui/home/AddressMap';
+import { searchPhotonAddresses } from '@/lib/location-search';
 
 async function compressBillImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -95,11 +95,12 @@ export default function TransactionsPage() {
   const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Seller Accept / Deliver form
+  // Seller Accept / Deliver form (Photon autocomplete, no map)
   const [modalDeliveryMethod, setModalDeliveryMethod] = useState<1 | 2>(1);
   const [modalLocation, setModalLocation] = useState<string>('');
-  const [modalPosition, setModalPosition] = useState<AddressPosition | null>(null);
-  const [showSellerMapPicker, setShowSellerMapPicker] = useState<boolean>(false);
+  const [modalLocationQuery, setModalLocationQuery] = useState<string>('');
+  const [modalLocationSuggestions, setModalLocationSuggestions] = useState<string[]>([]);
+  const [isSearchingModalLocation, setIsSearchingModalLocation] = useState<boolean>(false);
   const [modalCarrier, setModalCarrier] = useState<string>('');
   const [modalTrackingCode, setModalTrackingCode] = useState<string>('');
 
@@ -129,6 +130,15 @@ export default function TransactionsPage() {
       const res = await transactionsApi.list({ direction: directionFilter });
       const list = Array.isArray(res) ? res : res.items || [];
       setTransactions(list);
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        const removeFromCart = useCartStore.getState().removeFromCart;
+        for (const tx of list) {
+          if (tx.status === 5 && (tx.initiator.id || tx.initiator.userId) === currentUser.id) {
+            removeFromCart(currentUser.id, tx.item.id);
+          }
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Không thể tải danh sách giao dịch.';
       setTransactionError(msg);
@@ -164,6 +174,15 @@ export default function TransactionsPage() {
           if (!active) return;
           const list = Array.isArray(res) ? res : res.items || [];
           setTransactions(list);
+          const currentUser = useAuthStore.getState().user;
+          if (currentUser) {
+            const removeFromCart = useCartStore.getState().removeFromCart;
+            for (const tx of list) {
+              if (tx.status === 5 && (tx.initiator.id || tx.initiator.userId) === currentUser.id) {
+                removeFromCart(currentUser.id, tx.item.id);
+              }
+            }
+          }
           setTransactionError(null);
         })
         .catch((err: unknown) => {
@@ -198,13 +217,38 @@ export default function TransactionsPage() {
     };
   }, [isAuthenticated, activeTab, directionFilter]);
 
+  useEffect(() => {
+    const trimmed = modalLocationQuery.trim();
+    if ((modalType !== 'accept' && modalType !== 'deliver') || trimmed.length < 3) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSearchingModalLocation(true);
+      try {
+        const labels = await searchPhotonAddresses(trimmed, controller.signal);
+        if (!controller.signal.aborted) setModalLocationSuggestions(labels);
+      } catch {
+        if (!controller.signal.aborted) setModalLocationSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setIsSearchingModalLocation(false);
+      }
+    }, 550);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [modalType, modalLocationQuery]);
+
   const closeModal = () => {
     setActiveModalTx(null);
     setModalType(null);
     setActionError(null);
     setHandoverError(null);
     setHandoverSuccess(null);
-    setShowSellerMapPicker(false);
+    setModalLocationQuery('');
+    setModalLocationSuggestions([]);
+    setIsSearchingModalLocation(false);
   };
 
   const openSellerActionModal = (tx: TransactionDto, type: 'accept' | 'deliver') => {
@@ -213,12 +257,9 @@ export default function TransactionsPage() {
     setActionError(null);
     setModalDeliveryMethod(tx.deliveryMethod === 2 ? 2 : 1);
     setModalLocation(tx.meetingLocation || tx.item.location || '');
-    setModalPosition(
-      tx.meetingLatitude != null && tx.meetingLongitude != null
-        ? { lat: tx.meetingLatitude, lng: tx.meetingLongitude }
-        : null
-    );
-    setShowSellerMapPicker(false);
+    setModalLocationQuery('');
+    setModalLocationSuggestions([]);
+    setIsSearchingModalLocation(false);
     setModalCarrier(tx.deliveryCarrier || '');
     setModalTrackingCode(tx.trackingCode || '');
   };
@@ -243,16 +284,12 @@ export default function TransactionsPage() {
         await transactionsApi.accept(activeModalTx.id, {
           deliveryMethod: modalDeliveryMethod,
           meetingLocation: modalLocation.trim() || undefined,
-          meetingLatitude: modalPosition?.lat ?? null,
-          meetingLongitude: modalPosition?.lng ?? null,
           deliveryCarrier: modalCarrier.trim() || undefined,
           trackingCode: modalTrackingCode.trim() || undefined,
         });
       } else if (modalType === 'deliver') {
         await transactionsApi.startDelivery(activeModalTx.id, {
           meetingLocation: modalLocation.trim() || undefined,
-          meetingLatitude: modalPosition?.lat ?? null,
-          meetingLongitude: modalPosition?.lng ?? null,
           deliveryCarrier: modalCarrier.trim() || undefined,
           trackingCode: modalTrackingCode.trim() || undefined,
         });
@@ -1172,10 +1209,7 @@ export default function TransactionsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setModalDeliveryMethod(2);
-                        setShowSellerMapPicker(false);
-                      }}
+                      onClick={() => setModalDeliveryMethod(2)}
                       className={`p-2.5 rounded-xl border text-left font-semibold cursor-pointer ${
                         modalDeliveryMethod === 2
                           ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
@@ -1188,60 +1222,66 @@ export default function TransactionsPage() {
                 </div>
               )}
 
-              {/* Seller Location chốt sau khi 2 bên thống nhất */}
+              {/* Seller Location chốt sau khi 2 bên thống nhất (autocomplete, no map) */}
               <div className="p-3 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <label htmlFor="seller-meetup-location" className="font-bold">
-                    {(modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
-                      ? isVi
-                        ? 'Địa chỉ nhận hàng (sau khi 2 bên chốt)'
-                        : 'Delivery Address (Seller confirmed)'
-                      : isVi
-                        ? 'Location gặp giao dịch (Seller chốt)'
-                        : 'Final Meetup Location (Seller)'}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowSellerMapPicker((p) => !p)}
-                    className="text-[11px] font-bold text-[#C46A28] dark:text-[#F5A764] hover:underline cursor-pointer"
-                  >
-                    {showSellerMapPicker
-                      ? isVi
-                        ? 'Ẩn bản đồ'
-                        : 'Hide map'
-                      : isVi
-                        ? 'Chọn bản đồ'
-                        : 'Pick on map'}
-                  </button>
-                </div>
-                <input
-                  id="seller-meetup-location"
-                  type="text"
-                  value={modalLocation}
-                  onChange={(e) => setModalLocation(e.target.value)}
-                  placeholder={
-                    (modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
-                      ? isVi
-                        ? 'Vd: KTX Khu B tòa B4, Thủ Đức...'
-                        : 'Delivery address...'
-                      : isVi
-                        ? 'Vd: KTX Khu A - Cổng chính...'
-                        : 'Meetup spot...'
-                  }
-                  className="w-full px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900"
-                />
-                {showSellerMapPicker && (
-                  <AddressPicker
-                    initialAddress={modalLocation}
-                    initialPosition={modalPosition}
-                    language={language}
-                    onCancel={() => setShowSellerMapPicker(false)}
-                    onConfirm={(val) => {
-                      setModalLocation(val.address);
-                      setModalPosition(val.position);
-                      setShowSellerMapPicker(false);
+                <label htmlFor="seller-meetup-location" className="block font-bold">
+                  {(modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
+                    ? isVi
+                      ? 'Địa chỉ nhận hàng (sau khi 2 bên chốt)'
+                      : 'Delivery Address (Seller confirmed)'
+                    : isVi
+                      ? 'Location gặp giao dịch (Seller chốt)'
+                      : 'Final Meetup Location (Seller)'}
+                </label>
+                <div className="relative">
+                  <input
+                    id="seller-meetup-location"
+                    type="text"
+                    maxLength={255}
+                    value={modalLocation}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setModalLocation(val);
+                      setModalLocationQuery(val);
+                      if (val.trim().length < 3) {
+                        setModalLocationSuggestions([]);
+                        setIsSearchingModalLocation(false);
+                      }
                     }}
+                    placeholder={
+                      (modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2
+                        ? isVi
+                          ? 'Vd: KTX Khu B tòa B4, Thủ Đức...'
+                          : 'Delivery address...'
+                        : isVi
+                          ? 'Vd: KTX Khu A - Cổng chính...'
+                          : 'Meetup spot...'
+                    }
+                    className="w-full px-3 py-2 pr-8 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900"
                   />
+                  {isSearchingModalLocation && (
+                    <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-[#C46A28]" />
+                  )}
+                </div>
+
+                {modalLocationSuggestions.length > 0 && (
+                  <div className="max-h-32 overflow-y-auto rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 divide-y divide-[#FAF7F2] dark:divide-stone-800">
+                    {modalLocationSuggestions.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setModalLocation(s);
+                          setModalLocationQuery('');
+                          setModalLocationSuggestions([]);
+                        }}
+                        className="w-full px-2.5 py-1.5 text-left text-[11px] hover:bg-amber-50 dark:hover:bg-stone-800 cursor-pointer flex items-start gap-1.5"
+                      >
+                        <MapPin className="w-3 h-3 text-[#C46A28] shrink-0 mt-0.5" />
+                        <span>{s}</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 {(modalType === 'accept' ? modalDeliveryMethod : activeModalTx.deliveryMethod) === 2 && (

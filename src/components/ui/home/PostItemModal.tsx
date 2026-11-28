@@ -23,6 +23,7 @@ import { canUserSell } from '@/lib/seller-api';
 import { SellerRequestCard } from '@/components/ui/seller/SellerRequestCard';
 import { CategoryDto, CreateItemRequestDto, ItemDetailDto } from '@/types/item';
 import { detectCategoryFromTitle, CategoryDetectorResult } from '@/lib/category-detector';
+import { searchPhotonAddresses } from '@/lib/location-search';
 import { formatItemCodeDisplay } from '@/data/mock-items';
 import {
   ALLOWED_IMAGE_TYPES,
@@ -67,6 +68,9 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
   const [quantity, setQuantity] = useState('1');
   const [isExchangeEnabled, setIsExchangeEnabled] = useState(true);
   const [location, setLocation] = useState('KTX Khu A - Sảnh chính');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   // Photos picked from the device: uploaded to S3 after the item is created.
@@ -117,6 +121,35 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     };
   }, [isOpen, isAuthenticated, syncProfile]);
 
+  useEffect(() => {
+    const trimmed = locationQuery.trim();
+    if (!isOpen || trimmed.length < 3) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSearchingLocation(true);
+      try {
+        const labels = await searchPhotonAddresses(trimmed, controller.signal);
+        if (!controller.signal.aborted) {
+          setLocationSuggestions(labels);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setLocationSuggestions([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearchingLocation(false);
+        }
+      }
+    }, 550);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [isOpen, locationQuery]);
+
   if (!isOpen) return null;
 
   const handleResetAndClose = () => {
@@ -130,6 +163,9 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
     setQuantity('1');
     setIsExchangeEnabled(true);
     setLocation('KTX Khu A - Sảnh chính');
+    setLocationQuery('');
+    setLocationSuggestions([]);
+    setIsSearchingLocation(false);
     setDescription('');
     setImageUrl('');
     pickedImages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
@@ -314,17 +350,17 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
           void syncProfile();
           setErrorMessage(
             backendMsg ||
-              (language === 'vi'
-                ? 'Tài khoản của bạn chưa được cấp quyền Người Bán hoặc quyền đã thay đổi.'
-                : 'Your account does not have active seller permission yet.')
+            (language === 'vi'
+              ? 'Tài khoản của bạn chưa được cấp quyền Người Bán hoặc quyền đã thay đổi.'
+              : 'Your account does not have active seller permission yet.')
           );
           return;
         }
         setErrorMessage(
           backendMsg ||
-            (language === 'vi'
-              ? 'Không thể đăng tin. Vui lòng kiểm tra lại thông tin kết nối.'
-              : 'Failed to post item. Please verify your connection.')
+          (language === 'vi'
+            ? 'Không thể đăng tin. Vui lòng kiểm tra lại thông tin kết nối.'
+            : 'Failed to post item. Please verify your connection.')
         );
         return;
       }
@@ -659,26 +695,62 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 </div>
               </div>
 
-              {/* 5. Meeting Location */}
+              {/* 5. Meeting Location (with Photon address autocomplete, no map) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1">
+                <label
+                  htmlFor="post-item-location"
+                  className="block text-xs font-semibold text-slate-700 dark:text-stone-200 mb-1"
+                >
                   {t.postItemModal.location} *
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
+                    id="post-item-location"
                     type="text"
                     required
+                    maxLength={200}
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setLocation(val);
+                      setLocationQuery(val);
+                      if (val.trim().length < 3) {
+                        setLocationSuggestions([]);
+                        setIsSearchingLocation(false);
+                      }
+                    }}
                     placeholder={
                       language === 'vi'
-                        ? 'Vd: KTX Khu A, Thư viện, Quận 9...'
-                        : 'E.g.: Dorm Area A, Main Gate...'
+                        ? 'Nhập địa chỉ hoặc tìm tên đường / trường / KTX...'
+                        : 'Enter or search street, campus, or dorm...'
                     }
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
+                    className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 dark:border-stone-700 bg-slate-50/50 dark:bg-stone-800/80 text-slate-900 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:bg-white dark:focus:bg-stone-800 transition"
                   />
+                  {isSearchingLocation && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[#C46A28] dark:text-[#F5A764]" />
+                  )}
                 </div>
+
+                {locationSuggestions.length > 0 && (
+                  <div className="mt-1.5 max-h-40 overflow-y-auto rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-white dark:bg-stone-900 shadow-md divide-y divide-[#FAF7F2] dark:divide-stone-800">
+                    {locationSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => {
+                          setLocation(suggestion);
+                          setLocationQuery('');
+                          setLocationSuggestions([]);
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs text-[#2A211B] dark:text-stone-100 hover:bg-amber-50 dark:hover:bg-stone-800 flex items-start gap-2 cursor-pointer transition"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764] shrink-0 mt-0.5" />
+                        <span className="break-words">{suggestion}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 6. Image Selection (Preset or custom URL) */}
@@ -733,23 +805,23 @@ export const PostItemModal: React.FC<PostItemModalProps> = ({
                 </div>
 
                 {pickedImages.length === 0 && (
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-stone-700 text-xs text-slate-800 dark:text-stone-100 bg-slate-50/50 dark:bg-stone-800/80 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-stone-800"
-                  />
-                  {imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={imageUrl}
-                      alt="Preview"
-                      className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-stone-700 shrink-0"
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-stone-700 text-xs text-slate-800 dark:text-stone-100 bg-slate-50/50 dark:bg-stone-800/80 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white dark:focus:bg-stone-800"
                     />
-                  )}
-                </div>
+                    {imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imageUrl}
+                        alt="Preview"
+                        className="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-stone-700 shrink-0"
+                      />
+                    )}
+                  </div>
                 )}
               </div>
 
