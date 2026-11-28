@@ -21,7 +21,6 @@ export default function CartPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [prevUserId, setPrevUserId] = useState(user?.id);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<1 | 2>(1);
     const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -95,7 +94,7 @@ export default function CartPage() {
                     itemCode: item.itemCode,
                     quantity: item.selectedQuantity ?? 1,
                     meetingLocation: item.location,
-                    paymentMethod,
+                    paymentMethod: 1,
                 });
                 removeFromCart(user.id, item.id);
                 setSelectedIds((prev) => prev.filter((id) => id !== item.id));
@@ -405,51 +404,18 @@ export default function CartPage() {
                             </span>
                         </div>
 
-                        <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mb-4 leading-relaxed">
+                        <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mb-3 leading-relaxed">
                             Hình thức giao nhận (gặp trực tiếp hay đặt ship ngoài) và điểm hẹn cuối cùng sẽ do người bán chọn &amp; cập nhật trên đơn sau khi hai bên chốt qua chat.
                         </p>
 
-                        {totalPrice > 0 && (
-                            <div className="space-y-2 mb-4">
-                                <p className="text-xs font-semibold text-[#6D5D52] dark:text-stone-300">
-                                    Phương thức thanh toán
-                                </p>
-                                <div className="grid grid-cols-1 gap-2">
-                                    <label
-                                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
-                                            paymentMethod === 1
-                                                ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
-                                                : 'border-[#EADBCE] dark:border-stone-700'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="cartPaymentMethod"
-                                            checked={paymentMethod === 1}
-                                            onChange={() => setPaymentMethod(1)}
-                                            className="accent-[#C46A28]"
-                                        />
-                                        <span>Tiền mặt khi đồng kiểm &amp; nhận hàng (COD)</span>
-                                    </label>
-                                    <label
-                                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
-                                            paymentMethod === 2
-                                                ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
-                                                : 'border-[#EADBCE] dark:border-stone-700'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="cartPaymentMethod"
-                                            checked={paymentMethod === 2}
-                                            onChange={() => setPaymentMethod(2)}
-                                            className="accent-[#C46A28]"
-                                        />
-                                        <span>Chuyển khoản QR ngân hàng</span>
-                                    </label>
-                                </div>
-                            </div>
-                        )}
+                        <div className="mb-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 p-3 text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
+                            <p className="font-bold mb-0.5">
+                                Thanh toán khi đồng kiểm &amp; nhận hàng (COD / VietQR)
+                            </p>
+                            <p className="text-[11px] opacity-90">
+                                Sau khi nhận và kiểm tra hàng OK, bạn có thể trả tiền mặt hoặc quét mã VietQR ngay trên đơn để chuyển khoản cho người bán rồi chụp ảnh bill gửi xác nhận.
+                            </p>
+                        </div>
 
                         {checkoutError && (
                             <div className="mb-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-3 text-xs text-rose-700 dark:text-rose-300">

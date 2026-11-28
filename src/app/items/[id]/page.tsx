@@ -87,7 +87,6 @@ export default function ProductDetailPage() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const [isBuyNowOpen, setIsBuyNowOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<1 | 2>(1);
   const [isSubmittingBuy, setIsSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState<string | null>(null);
 
@@ -269,7 +268,7 @@ export default function ProductDetailPage() {
         itemCode: item.itemCode,
         quantity,
         meetingLocation: item.location,
-        paymentMethod,
+        paymentMethod: 1,
       });
       setIsBuyNowOpen(false);
       router.push('/transactions');
@@ -384,61 +383,24 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mb-4 leading-relaxed">
+            <p className="text-[11px] text-[#6D5D52] dark:text-stone-400 mb-3 leading-relaxed">
               {isVi
                 ? 'Hình thức giao nhận (gặp trực tiếp hay đặt ship ngoài) và điểm hẹn cuối cùng sẽ do người bán chọn & cập nhật trên đơn sau khi hai bên chốt qua chat.'
                 : 'Delivery method (direct meetup or external shipper) and final location will be confirmed on the order by the seller after chatting.'}
             </p>
 
-            {item.price > 0 && (
-              <div className="space-y-2 mb-4">
-                <p className="text-xs font-semibold text-[#6D5D52] dark:text-stone-300">
-                  {isVi ? 'Phương thức thanh toán' : 'Payment Method'}
-                </p>
-                <div className="grid grid-cols-1 gap-2">
-                  <label
-                    className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
-                      paymentMethod === 1
-                        ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
-                        : 'border-[#EADBCE] dark:border-stone-700'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      checked={paymentMethod === 1}
-                      onChange={() => setPaymentMethod(1)}
-                      className="accent-[#C46A28]"
-                    />
-                    <span>
-                      {isVi
-                        ? 'Tiền mặt khi đồng kiểm & nhận hàng (COD)'
-                        : 'Cash on Inspection & Delivery (COD)'}
-                    </span>
-                  </label>
-                  <label
-                    className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-medium cursor-pointer transition ${
-                      paymentMethod === 2
-                        ? 'border-[#C46A28] bg-[#FAF7F2] dark:border-[#F5A764] dark:bg-stone-800'
-                        : 'border-[#EADBCE] dark:border-stone-700'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      checked={paymentMethod === 2}
-                      onChange={() => setPaymentMethod(2)}
-                      className="accent-[#C46A28]"
-                    />
-                    <span>
-                      {isVi
-                        ? 'Chuyển khoản QR ngân hàng'
-                        : 'Bank Transfer (VietQR)'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            )}
+            <div className="mb-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 p-3 text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
+              <p className="font-bold mb-0.5">
+                {isVi
+                  ? 'Thanh toán khi đồng kiểm & nhận hàng (COD / VietQR)'
+                  : 'Pay on Inspection & Delivery (COD / VietQR)'}
+              </p>
+              <p className="text-[11px] opacity-90">
+                {isVi
+                  ? 'Sau khi kiểm tra hàng đạt yêu cầu, bạn có thể trả tiền mặt hoặc quét mã VietQR trên đơn để chuyển khoản trực tiếp cho người bán và chụp ảnh bill gửi xác nhận.'
+                  : 'After inspecting the item, pay cash or scan the order VietQR to transfer directly to the seller and upload your transfer receipt.'}
+              </p>
+            </div>
 
             {buyError && (
               <div className="mb-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-3 text-xs text-rose-700 dark:text-rose-300">

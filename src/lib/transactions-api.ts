@@ -43,6 +43,7 @@ export interface PaymentDto {
   transactionRef: string;
   payerId: string;
   payerName: string;
+  proofImageUrl?: string | null;
   paidAt?: string | null;
   createdAt: string;
 }
@@ -68,12 +69,15 @@ export interface TransactionDto {
   deliveryCarrier?: string | null;
   trackingCode?: string | null;
   inspectionNote?: string | null;
+  autoCompleteAt?: string | null;
   payment?: PaymentDto | null;
   createdAt: string;
   completedAt?: string | null;
   cancelledAt?: string | null;
   cancelReason?: string | null;
   canManage: boolean;
+  hasUserConfirmed?: boolean;
+  confirmedCount?: number;
 }
 
 export interface CreatePurchaseTransactionDto {
@@ -220,8 +224,11 @@ export const transactionsApi = {
     return res.data;
   },
 
-  async confirmPayment(id: string, transactionRef?: string): Promise<PaymentDto> {
-    const res = await apiClient.post<PaymentDto>(`/Transactions/${id}/payment`, { transactionRef });
+  async confirmPayment(
+    id: string,
+    payload?: { transactionRef?: string; proofImageUrl?: string }
+  ): Promise<PaymentDto> {
+    const res = await apiClient.post<PaymentDto>(`/Transactions/${id}/payment`, payload ?? {});
     return res.data;
   },
 

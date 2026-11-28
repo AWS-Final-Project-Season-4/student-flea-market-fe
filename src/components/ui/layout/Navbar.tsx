@@ -24,6 +24,8 @@ import { useLanguageStore, DICTIONARY } from '@/lib/language-store';
 import { useThemeStore } from '@/lib/theme-store';
 import { useChatStore } from '@/lib/chat-store';
 import { startChatHub, stopChatHub } from '@/lib/chat-hub';
+import { transactionsApi, TransactionDto } from '@/lib/transactions-api';
+import { exchangeApi, ExchangeRequestDto } from '@/lib/exchange-api';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { AuthRequiredModal, AuthRequiredReason } from '@/components/ui/auth/AuthRequiredModal';
 import { MiniChatWidget } from '@/components/ui/chat/MiniChatWidget';
@@ -143,6 +145,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [orderNotifications, setOrderNotifications] = useState<
+        Array<{ id: string; title: string; subtitle: string; time: string; href: string; urgent?: boolean }>
+    >([]);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
     const [isAuthRequiredOpen, setIsAuthRequiredOpen] = useState(false);
     const [authRequiredReason, setAuthRequiredReason] = useState<AuthRequiredReason>('cart');
     const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
@@ -220,6 +226,163 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
             cancelled = true;
         };
     }, [isInitialized, isAuthenticated, syncProfile, refreshUnreadCount]);
+
+    const fetchOrderNotifications = React.useCallback(async () => {
+        const currentUser = useAuthStore.getState().user;
+        if (!useAuthStore.getState().isAuthenticated || !currentUser) {
+            setOrderNotifications([]);
+            return;
+        }
+        setLoadingNotifications(true);
+        try {
+            const [txRes, exRes] = await Promise.allSettled([
+                transactionsApi.list({ page: 1, pageSize: 20 }),
+                exchangeApi.list({ page: 1, pageSize: 20 }),
+            ]);
+            const nextList: Array<{
+                id: string;
+                title: string;
+                subtitle: string;
+                time: string;
+                href: string;
+                urgent?: boolean;
+            }> = [];
+
+            if (txRes.status === 'fulfilled') {
+                const txItems: TransactionDto[] = Array.isArray(txRes.value)
+                    ? txRes.value
+                    : txRes.value?.items ?? [];
+
+                for (const tx of txItems) {
+                    const isBuyer = (tx.initiator.id || tx.initiator.userId) === currentUser.id;
+                    const isSeller = !isBuyer;
+                    const shortCode = `SFM #${tx.id.substring(0, 8).toUpperCase()}`;
+
+                    if (isSeller) {
+                        if (tx.status === 1) {
+                            nextList.push({
+                                id: `tx-pending-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `Đơn hàng mới từ ${tx.initiator.fullName}`
+                                        : `New order from ${tx.initiator.fullName}`,
+                                subtitle: `${shortCode} • ${tx.item.title} (${tx.amount.toLocaleString('vi-VN')} đ) — Cần duyệt & chọn giao nhận`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                                urgent: true,
+                            });
+                        } else if (tx.status === 6 && !tx.hasUserConfirmed) {
+                            nextList.push({
+                                id: `tx-await-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `${tx.initiator.fullName} đã đồng kiểm xong`
+                                        : `${tx.initiator.fullName} confirmed inspection`,
+                                subtitle: `${shortCode} • ${tx.item.title} — Bấm xác nhận đã nhận tiền`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                                urgent: true,
+                            });
+                        } else if (tx.payment?.status === 2 && tx.status !== 5 && tx.status !== 3 && tx.status !== 4) {
+                            nextList.push({
+                                id: `tx-paid-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `${tx.initiator.fullName} đã báo chuyển khoản`
+                                        : `${tx.initiator.fullName} sent transfer proof`,
+                                subtitle: `${shortCode} • ${tx.item.title} — Kiểm tra bill & xác nhận`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                                urgent: true,
+                            });
+                        }
+                    } else {
+                        if (tx.status === 2) {
+                            nextList.push({
+                                id: `tx-acc-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `Người bán đã duyệt đơn ${shortCode}`
+                                        : `Seller accepted ${shortCode}`,
+                                subtitle: `${tx.item.title} • ${tx.deliveryMethodName}`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                            });
+                        } else if (tx.status === 7) {
+                            nextList.push({
+                                id: `tx-del-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `Đơn ${shortCode} đang được giao`
+                                        : `Order ${shortCode} is delivering`,
+                                subtitle: `${tx.item.title} — Đồng kiểm khi nhận hàng`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                                urgent: true,
+                            });
+                        } else if (tx.status === 6 && !tx.hasUserConfirmed) {
+                            nextList.push({
+                                id: `tx-bawait-${tx.id}`,
+                                title:
+                                    language === 'vi'
+                                        ? `Người bán đã xác nhận giao ${shortCode}`
+                                        : `Seller confirmed handover ${shortCode}`,
+                                subtitle: `${tx.item.title} — Bấm đồng kiểm & nhận hàng`,
+                                time: tx.createdAt,
+                                href: '/transactions',
+                                urgent: true,
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (exRes.status === 'fulfilled') {
+                const exItems: ExchangeRequestDto[] = Array.isArray(exRes.value)
+                    ? exRes.value
+                    : exRes.value?.items ?? [];
+
+                for (const ex of exItems) {
+                    if (ex.canRespond && ex.status === 1) {
+                        nextList.push({
+                            id: `ex-${ex.id}`,
+                            title:
+                                language === 'vi'
+                                    ? `Đề xuất đổi đồ từ ${ex.requesterName}`
+                                    : `Exchange request from ${ex.requesterName}`,
+                            subtitle: `${ex.offeredItem.title} ⇄ ${ex.requestedItem.title}`,
+                            time: ex.createdAt,
+                            href: '/transactions',
+                            urgent: true,
+                        });
+                    }
+                }
+            }
+
+            setOrderNotifications(nextList);
+        } finally {
+            setLoadingNotifications(false);
+        }
+    }, [language]);
+
+    useEffect(() => {
+        if (!isInitialized || !isAuthenticated) return;
+        const initialTimer = window.setTimeout(() => {
+            void fetchOrderNotifications();
+        }, 0);
+        const interval = window.setInterval(() => {
+            void fetchOrderNotifications();
+        }, 15000);
+        const onFocus = () => void fetchOrderNotifications();
+        window.addEventListener('focus', onFocus);
+        window.addEventListener('sfm:notifications-refresh', onFocus);
+        return () => {
+            window.clearTimeout(initialTimer);
+            window.clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+            window.removeEventListener('sfm:notifications-refresh', onFocus);
+        };
+    }, [isInitialized, isAuthenticated, pathname, fetchOrderNotifications]);
 
     // Focus input and lock body scroll when search overlay opens
     useEffect(() => {
@@ -453,6 +616,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                 setIsLanguageOpen(false);
                 setIsProfileMenuOpen(false);
                 setIsMobileMenuOpen(false);
+                void fetchOrderNotifications();
             }
             return next;
         });
@@ -473,6 +637,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                     <Bell className="w-4 h-4 text-[#C46A28] dark:text-[#F5A764]" aria-hidden="true" />
                     <span className="text-xs font-bold text-[#2A211B] dark:text-stone-100">
                         {t.navbar.notificationsTitle}
+                        {orderNotifications.length > 0 ? ` (${orderNotifications.length})` : ''}
                     </span>
                 </div>
                 <button
@@ -485,17 +650,57 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                 </button>
             </div>
 
-            <div className="px-5 py-7 text-center">
-                <div className="w-12 h-12 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
-                    <Bell className="w-5 h-5 text-[#C46A28] dark:text-[#F5A764]" aria-hidden="true" />
+            {loadingNotifications && orderNotifications.length === 0 ? (
+                <div className="px-5 py-7 text-center text-xs text-[#6D5D52] dark:text-stone-400">
+                    {language === 'vi' ? 'Đang tải thông báo...' : 'Loading notifications...'}
                 </div>
-                <p className="font-serif text-sm font-bold text-[#2A211B] dark:text-stone-100 mb-1">
-                    {t.navbar.notificationsEmptyTitle}
-                </p>
-                <p className="text-xs text-[#6D5D52] dark:text-stone-400 leading-relaxed max-w-[260px] mx-auto">
-                    {t.navbar.notificationsEmptyDesc}
-                </p>
-            </div>
+            ) : orderNotifications.length === 0 ? (
+                <div className="px-5 py-7 text-center">
+                    <div className="w-12 h-12 rounded-full bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                        <Bell className="w-5 h-5 text-[#C46A28] dark:text-[#F5A764]" aria-hidden="true" />
+                    </div>
+                    <p className="font-serif text-sm font-bold text-[#2A211B] dark:text-stone-100 mb-1">
+                        {t.navbar.notificationsEmptyTitle}
+                    </p>
+                    <p className="text-xs text-[#6D5D52] dark:text-stone-400 leading-relaxed max-w-[260px] mx-auto">
+                        {t.navbar.notificationsEmptyDesc}
+                    </p>
+                </div>
+            ) : (
+                <div className="max-h-72 overflow-y-auto divide-y divide-[#F0E4D7] dark:divide-stone-800">
+                    {orderNotifications.map((item) => (
+                        <Link
+                            key={item.id}
+                            href={item.href}
+                            onClick={() => setIsNotificationsOpen(false)}
+                            className="block px-4 py-3 hover:bg-[#FAF7F2] dark:hover:bg-stone-800/80 transition text-left"
+                        >
+                            <div className="flex items-start gap-2.5">
+                                <span
+                                    className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
+                                        item.urgent
+                                            ? 'bg-[#C46A28] dark:bg-[#F5A764]'
+                                            : 'bg-emerald-500'
+                                    }`}
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-[#2A211B] dark:text-stone-100">
+                                        {item.title}
+                                    </p>
+                                    <p className="text-[11px] text-[#6D5D52] dark:text-stone-300 mt-0.5 line-clamp-2">
+                                        {item.subtitle}
+                                    </p>
+                                    <p className="text-[10px] text-[#8C7E74] dark:text-stone-400 mt-1">
+                                        {new Date(item.time).toLocaleString(
+                                            language === 'vi' ? 'vi-VN' : 'en-US'
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
 
             <div className="px-3 py-2.5 border-t border-[#F0E4D7] dark:border-stone-800 bg-[#FBF8F3] dark:bg-stone-950/50 grid grid-cols-2 gap-2">
                 <Link
@@ -875,6 +1080,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 }`}
                                             >
                                                 <Bell className="w-5 h-5" />
+                                                {orderNotifications.length > 0 && (
+                                                    <span className="absolute top-1 right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                                                        {orderNotifications.length > 99 ? '99+' : orderNotifications.length}
+                                                    </span>
+                                                )}
                                             </button>
 
                                             {isNotificationsOpen && (
@@ -992,6 +1202,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onPostAdClick }) => {
                                                 }`}
                                             >
                                                 <Bell aria-hidden="true" className="w-5 h-5" />
+                                                {orderNotifications.length > 0 && (
+                                                    <span className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold tabular-nums text-white bg-rose-600 rounded-full">
+                                                        {orderNotifications.length > 99 ? '99+' : orderNotifications.length}
+                                                    </span>
+                                                )}
                                             </button>
                                         </div>
                                     )}

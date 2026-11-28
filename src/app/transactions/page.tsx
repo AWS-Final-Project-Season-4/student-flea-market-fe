@@ -2,15 +2,19 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   AlertCircle,
   ArrowLeft,
   ArrowRightLeft,
+  Camera,
   CheckCircle2,
   Clock,
   Handshake,
+  Image as ImageIcon,
   Loader2,
   MapPin,
+  MessageSquare,
   Package,
   QrCode,
   RefreshCw,
@@ -23,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useLanguageStore } from '@/lib/language-store';
+import { chatApi } from '@/lib/chat-api';
 import {
   TransactionDto,
   transactionsApi,
@@ -36,7 +41,35 @@ import {
 import AddressPicker from '@/components/ui/home/AddressPicker';
 import type { AddressPosition } from '@/components/ui/home/AddressMap';
 
+async function compressBillImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 800;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Không thể xử lý ảnh.'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => reject(new Error('File ảnh không hợp lệ.'));
+      img.src = String(reader.result);
+    };
+    reader.onerror = () => reject(new Error('Không thể đọc file ảnh.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function TransactionsPage() {
+  const router = useRouter();
   const { user, isAuthenticated, initAuth } = useAuthStore();
   const { language } = useLanguageStore();
   const isVi = language === 'vi';
@@ -69,6 +102,13 @@ export default function TransactionsPage() {
   const [showSellerMapPicker, setShowSellerMapPicker] = useState<boolean>(false);
   const [modalCarrier, setModalCarrier] = useState<string>('');
   const [modalTrackingCode, setModalTrackingCode] = useState<string>('');
+
+  // VietQR & Bill Transfer Proof
+  const [qrBankId, setQrBankId] = useState<string>('MB');
+  const [qrAccountNo, setQrAccountNo] = useState<string>('0901234567');
+  const [billProofUrl, setBillProofUrl] = useState<string | null>(null);
+  const [notifyChatOnBill, setNotifyChatOnBill] = useState<boolean>(true);
+  const [previewBillUrl, setPreviewBillUrl] = useState<string | null>(null);
 
   // Handover & COD Inspection form
   const [handoverMode, setHandoverMode] = useState<'ok' | 'reject'>('ok');
@@ -264,16 +304,66 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleConfirmPayment = async (txId: string) => {
+  const handleConfirmPayment = async (tx: TransactionDto) => {
+    setIsSubmittingAction(true);
+    setActionError(null);
     try {
-      await transactionsApi.confirmPayment(txId);
-      alert(
-        isVi ? 'Đã thông báo xác nhận thanh toán thành công!' : 'Payment reported successfully!'
-      );
+      await transactionsApi.confirmPayment(tx.id, {
+        transactionRef: `SFM ${tx.id.substring(0, 8).toUpperCase()}`,
+        proofImageUrl: billProofUrl || undefined,
+      });
+
+      if (notifyChatOnBill) {
+        try {
+          const conv = await chatApi.getOrCreateConversation(tx.item.id);
+          await chatApi.sendMessageRest(
+            conv.id,
+            billProofUrl
+              ? `Mình đã chuyển khoản VietQR đơn SFM #${tx.id.substring(0, 8).toUpperCase()} và đính kèm ảnh bill trên trang Giao dịch.`
+              : `Mình đã chuyển khoản VietQR đơn SFM #${tx.id.substring(0, 8).toUpperCase()}, bạn kiểm tra giúp mình nhé.`
+          );
+        } catch {
+          // Chat notice is best-effort; payment update already succeeded.
+        }
+      }
+
+      setBillProofUrl(null);
       closeModal();
       await fetchTransactions();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Không thể gửi xác nhận.');
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setActionError(
+        apiErr?.response?.data?.message ||
+          apiErr?.message ||
+          (isVi ? 'Không thể gửi xác nhận chuyển khoản.' : 'Failed to confirm transfer.')
+      );
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  };
+
+  const handleOpenBillChat = async (tx: TransactionDto) => {
+    try {
+      const conv = await chatApi.getOrCreateConversation(tx.item.id);
+      closeModal();
+      router.push(`/chat?c=${encodeURIComponent(conv.id)}`);
+    } catch (err: unknown) {
+      setActionError(
+        err instanceof Error ? err.message : 'Không thể mở khung chat với người bán.'
+      );
+    }
+  };
+
+  const handleBillFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setActionError(null);
+    try {
+      const compressed = await compressBillImage(file);
+      setBillProofUrl(compressed);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Không thể đọc ảnh bill.');
     }
   };
 
@@ -714,16 +804,36 @@ export default function TransactionsPage() {
 
                       {/* Footer & Actions */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#FAF7F2] dark:border-stone-800">
-                        <div className="text-xs text-[#7A6D63] dark:text-stone-400">
+                        <div className="text-xs text-[#7A6D63] dark:text-stone-400 space-y-1">
                           {tx.payment ? (
-                            <span>
-                              {isVi ? 'Thanh toán: ' : 'Payment: '}
-                              <strong className="text-[#2A211B] dark:text-stone-200">
-                                {tx.payment.methodName} ({tx.payment.statusName})
-                              </strong>
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span>
+                                {isVi ? 'Thanh toán: ' : 'Payment: '}
+                                <strong className="text-[#2A211B] dark:text-stone-200">
+                                  {tx.payment.methodName} ({tx.payment.statusName})
+                                </strong>
+                              </span>
+                              {tx.payment.proofImageUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewBillUrl(tx.payment!.proofImageUrl!)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#FAF7F2] dark:bg-stone-800 border border-[#EADBCE] dark:border-stone-700 text-[#C46A28] dark:text-[#F5A764] font-semibold hover:underline cursor-pointer"
+                                >
+                                  <ImageIcon className="w-3 h-3" />
+                                  <span>{isVi ? 'Xem ảnh bill CK' : 'View Transfer Receipt'}</span>
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <span>{isVi ? 'Giao dịch trao đổi / 0 đ' : 'Exchange / Free'}</span>
+                          )}
+                          {tx.autoCompleteAt && (tx.status === 6 || tx.status === 7) && (
+                            <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                              ⏳{' '}
+                              {isVi
+                                ? `Tự động hoàn thành lúc ${new Date(tx.autoCompleteAt).toLocaleString('vi-VN')} nếu không có phản hồi.`
+                                : `Auto-completes at ${new Date(tx.autoCompleteAt).toLocaleString('en-US')} if no response.`}
+                            </p>
                           )}
                         </div>
 
@@ -766,6 +876,8 @@ export default function TransactionsPage() {
                               type="button"
                               onClick={() => {
                                 setActiveModalTx(tx);
+                                setBillProofUrl(tx.payment?.proofImageUrl ?? null);
+                                setActionError(null);
                                 setModalType('vietqr');
                               }}
                               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#FAF7F2] dark:bg-stone-800 text-[#B8652B] dark:text-[#F5A764] border border-[#EADBCE] dark:border-stone-700 hover:bg-[#F0E4D7] transition cursor-pointer"
@@ -777,20 +889,35 @@ export default function TransactionsPage() {
 
                           {/* COD / Handover Verification (both parties) */}
                           {!isFinished && (
-                            <button
-                              type="button"
-                              onClick={() => openHandoverModal(tx)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                              <span>
-                                {isVi
-                                  ? isBuyer
-                                    ? 'Đồng kiểm & Nhận hàng'
-                                    : 'Xác nhận đã giao & Thu tiền'
-                                  : 'Inspect & Confirm'}
+                            tx.hasUserConfirmed ? (
+                              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>
+                                  {isVi
+                                    ? 'Bạn đã xác nhận — Chờ đối tác'
+                                    : 'Confirmed — Waiting for partner'}
+                                </span>
                               </span>
-                            </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openHandoverModal(tx)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>
+                                  {isVi
+                                    ? tx.status === 6
+                                      ? isSeller
+                                        ? 'Đối tác đã đồng kiểm — Xác nhận nhận tiền'
+                                        : 'Đối tác đã xác nhận — Đồng kiểm ngay'
+                                      : isBuyer
+                                        ? 'Đồng kiểm & Nhận hàng'
+                                        : 'Xác nhận đã giao & Thu tiền'
+                                    : 'Inspect & Confirm'}
+                                </span>
+                              </button>
+                            )
                           )}
 
                           {/* Quick Complete (for Exchange step 1 or simple order) */}
@@ -1200,15 +1327,15 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* MODAL 1: DYNAMIC VIETQR PAYMENT */}
+      {/* MODAL 1: DYNAMIC VIETQR PAYMENT & BILL UPLOAD */}
       {modalType === 'vietqr' && activeModalTx && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl border border-[#EADBCE] dark:border-stone-800 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#FAF7F2] dark:border-stone-800">
               <div className="flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-[#B8652B] dark:text-[#F5A764]" />
                 <h3 className="text-base font-bold">
-                  {isVi ? 'Thanh toán qua VietQR (Napas 247)' : 'VietQR Payment'}
+                  {isVi ? 'VietQR & Gửi ảnh bill chuyển khoản' : 'VietQR & Upload Receipt'}
                 </h3>
               </div>
               <button
@@ -1220,18 +1347,55 @@ export default function TransactionsPage() {
               </button>
             </div>
 
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <label htmlFor="vietqr-bank" className="block font-semibold mb-1">
+                  {isVi ? 'Ngân hàng' : 'Bank'}
+                </label>
+                <select
+                  id="vietqr-bank"
+                  value={qrBankId}
+                  onChange={(e) => setQrBankId(e.target.value)}
+                  className="w-full px-2 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800"
+                >
+                  <option value="MB">MB Bank</option>
+                  <option value="VCB">Vietcombank</option>
+                  <option value="TCB">Techcombank</option>
+                  <option value="ICB">VietinBank</option>
+                  <option value="ACB">ACB</option>
+                  <option value="BIDV">BIDV</option>
+                  <option value="VPB">VPBank</option>
+                  <option value="TPB">TPBank</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="vietqr-account" className="block font-semibold mb-1">
+                  {isVi ? 'Số tài khoản người bán' : 'Seller Account No.'}
+                </label>
+                <input
+                  id="vietqr-account"
+                  type="text"
+                  value={qrAccountNo}
+                  onChange={(e) => setQrAccountNo(e.target.value)}
+                  placeholder="0901234567"
+                  className="w-full px-3 py-2 rounded-xl border border-[#EADBCE] dark:border-stone-700 bg-[#FAF7F2]/60 dark:bg-stone-800 font-mono"
+                />
+              </div>
+            </div>
+
             <div className="text-center space-y-3">
               <div className="inline-block p-3 bg-white rounded-2xl border-2 border-[#EADBCE] shadow-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getVietQrImageUrl({
-                    accountNo: '0901234567',
+                    bankId: qrBankId,
+                    accountNo: qrAccountNo.trim() || '0901234567',
                     amount: activeModalTx.amount,
                     memo: `SFM ${activeModalTx.id.substring(0, 8).toUpperCase()}`,
                     accountName: activeModalTx.counterparty.fullName,
                   })}
                   alt="VietQR Code"
-                  className="w-56 h-56 mx-auto object-contain rounded-xl"
+                  className="w-48 h-48 mx-auto object-contain rounded-xl"
                 />
               </div>
 
@@ -1252,22 +1416,129 @@ export default function TransactionsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
+            {(activeModalTx.initiator.id || activeModalTx.initiator.userId) === user?.id && (
+              <div className="space-y-2.5 p-3 rounded-2xl bg-[#FAF7F2] dark:bg-stone-800/70 border border-[#EADBCE] dark:border-stone-700 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold">
+                    {isVi ? 'Chụp / Tải ảnh bill chuyển khoản' : 'Upload Transfer Bill'}
+                  </span>
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-[#EADBCE] dark:border-stone-700 text-[#C46A28] dark:text-[#F5A764] font-semibold cursor-pointer hover:bg-amber-50/50">
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{billProofUrl ? (isVi ? 'Đổi ảnh' : 'Change') : (isVi ? 'Chọn ảnh' : 'Upload')}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => void handleBillFilePicked(e)}
+                    />
+                  </label>
+                </div>
+
+                {billProofUrl && (
+                  <div className="relative inline-block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={billProofUrl}
+                      alt="Bill Preview"
+                      className="max-h-40 rounded-xl border border-[#EADBCE] dark:border-stone-700 object-contain"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-[11px] text-[#6D5D52] dark:text-stone-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notifyChatOnBill}
+                    onChange={(e) => setNotifyChatOnBill(e.target.checked)}
+                    className="accent-[#C46A28]"
+                  />
+                  <span>
+                    {isVi
+                      ? 'Đồng thời gửi tin nhắn báo đã chuyển khoản cho người bán trong Chat'
+                      : 'Also notify seller via Chat'}
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {actionError && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                {actionError}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#FAF7F2] dark:border-stone-800">
               <button
                 type="button"
-                onClick={closeModal}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
+                onClick={() => void handleOpenBillChat(activeModalTx)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-[#EADBCE] dark:border-stone-700 hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
               >
-                {isVi ? 'Đóng' : 'Close'}
+                <MessageSquare className="w-3.5 h-3.5 text-[#C46A28] dark:text-[#F5A764]" />
+                <span>{isVi ? 'Mở Chat' : 'Open Chat'}</span>
               </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#7A6D63] hover:bg-[#FAF7F2] dark:hover:bg-stone-800 cursor-pointer"
+                >
+                  {isVi ? 'Đóng' : 'Close'}
+                </button>
+                {(activeModalTx.initiator.id || activeModalTx.initiator.userId) === user?.id && (
+                  <button
+                    type="button"
+                    disabled={isSubmittingAction}
+                    onClick={() => void handleConfirmPayment(activeModalTx)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>
+                      {billProofUrl
+                        ? isVi
+                          ? 'Gửi ảnh bill & Báo đã CK'
+                          : 'Send Bill & Confirm'
+                        : isVi
+                          ? 'Báo đã chuyển khoản'
+                          : 'I have transferred'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BILL PROOF LIGHTBOX */}
+      {previewBillUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setPreviewBillUrl(null)}
+        >
+          <div
+            className="bg-white dark:bg-stone-900 rounded-3xl p-4 max-w-lg w-full space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold">
+                {isVi ? 'Ảnh bill chuyển khoản' : 'Transfer Receipt'}
+              </h4>
               <button
                 type="button"
-                onClick={() => void handleConfirmPayment(activeModalTx.id)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#C46A28] hover:bg-[#A65A24] text-white dark:bg-[#F5A764] dark:text-stone-950 cursor-pointer"
+                onClick={() => setPreviewBillUrl(null)}
+                className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
               >
-                {isVi ? 'Báo đã chuyển khoản' : 'I have transferred'}
+                <X className="w-4 h-4" />
               </button>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewBillUrl}
+              alt="Payment Proof"
+              className="w-full max-h-[75vh] object-contain rounded-2xl border border-[#EADBCE] dark:border-stone-700"
+            />
           </div>
         </div>
       )}
